@@ -103,6 +103,46 @@ require __DIR__ . '/includes/header.php';
                 title="Envoyer à la corbeille">🗑</button>
     </div>
 
+    <!-- Barre d'outils (actions : assets/js/outils-editeur.js) -->
+    <div id="barre-outils" class="barre-outils mathjax_ignore" role="toolbar" aria-label="Mise en forme">
+        <button type="button" data-action="annuler" title="Annuler (Ctrl+Z)">↶</button>
+        <button type="button" data-action="retablir" title="Rétablir (Ctrl+Y)">↷</button>
+        <span class="outil-sep"></span>
+        <button type="button" data-action="titre1" title="Grand titre (#)"><b>H1</b></button>
+        <button type="button" data-action="titre2" title="Sous-titre (##)"><b>H2</b></button>
+        <button type="button" data-action="titre3" title="Petit titre (###)"><b>H3</b></button>
+        <span class="outil-sep"></span>
+        <button type="button" data-action="gras" title="Gras (Ctrl+B)"><b>G</b></button>
+        <button type="button" data-action="italique" title="Italique (Ctrl+I)"><i>I</i></button>
+        <button type="button" data-action="barre" title="Barré"><s>S</s></button>
+        <div class="outil-deroulant">
+            <button type="button" data-ouvrir="couleurs" title="Texte en couleur / surligner">
+                <span class="icone-couleur">A</span> ▾</button>
+            <div class="outil-menu menu-couleurs" data-menu="couleurs"></div>
+        </div>
+        <span class="outil-sep"></span>
+        <button type="button" data-action="puces" title="Liste à puces">• Liste</button>
+        <button type="button" data-action="numeros" title="Liste numérotée">1. Liste</button>
+        <button type="button" data-action="cases" title="Cases à cocher">☑</button>
+        <button type="button" data-action="citation" title="Citation / rappel">❝</button>
+        <span class="outil-sep"></span>
+        <button type="button" data-action="tableau"
+                title="Créer / modifier un tableau (éditeur visuel). Astuce : tape « Nom | Âge » puis Entrée">▦ Tableau</button>
+        <div class="outil-deroulant">
+            <button type="button" data-ouvrir="maths" title="Maths : symboles, modèles, recherche (dans une formule, tape \ pour l'autocomplétion)">∑ Maths ▾</button>
+            <div class="outil-menu menu-maths" data-menu="maths"></div>
+        </div>
+        <div class="outil-deroulant">
+            <button type="button" data-ouvrir="code" title="Bloc de code (pseudo-code, C, SQL…)">&lt;/&gt; Code ▾</button>
+            <div class="outil-menu menu-code" data-menu="code"></div>
+        </div>
+        <button type="button" data-action="code" title="Code dans le texte">`c`</button>
+        <button type="button" data-action="lien" title="Lien">🔗</button>
+        <button type="button" data-action="separateur" title="Ligne de séparation">―</button>
+        <span class="outil-sep"></span>
+        <button type="button" data-action="enregistrer" title="Enregistrer maintenant (Ctrl+S)">💾</button>
+    </div>
+
     <div class="editeur-corps">
         <textarea id="note-contenu" class="editeur-saisie" spellcheck="false"
                   placeholder="Prends tes notes en Markdown…"><?= e($note['contenu']) ?></textarea>
@@ -175,14 +215,10 @@ require __DIR__ . '/includes/header.php';
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.9/purify.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-<script>
-    window.MathJax = {
-        tex: { inlineMath: [['$', '$'], ['\\(', '\\)']],
-               displayMath: [['$$', '$$'], ['\\[', '\\]']] },
-        options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'] }
-    };
-</script>
+<script src="assets/js/mathjax-config.js"></script>
 <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js"></script>
 <script defer src="assets/js/rendu.js"></script>
+<script defer src="assets/js/maths-symboles.js"></script>
+<script defer src="assets/js/outils-editeur.js"></script>
 <script defer src="assets/js/editeur.js"></script>
 <?php require __DIR__ . '/includes/footer.php'; ?>

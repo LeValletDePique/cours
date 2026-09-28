@@ -26,9 +26,11 @@ $sections = [
     ],
     [
         'titre' => 'Tableaux',
-        'intro' => 'Les « | » séparent les colonnes ; la ligne de tirets sépare l\'en-tête.',
+        'intro' => 'Pas besoin de taper les | et les tirets à la main : voir « Créer un tableau en 5 secondes » plus haut. Voici la syntaxe obtenue (:--- à gauche, :---: centré, ---: à droite).',
         'exemples' => [
-            "| Notion | Exemple |\n|--------|---------|\n| Variable | x = 5 |\n| Boucle | for/while |",
+            "| Notion   | Exemple   |\n| -------- | --------- |\n| Variable | x = 5     |\n| Boucle   | for/while |",
+            '| Loi         | Espérance  | Variance    |' . "\n" . '| :---------- | :--------: | ----------: |' . "\n"
+                . '| Binomiale   | $np$       | $np(1-p)$   |' . "\n" . '| **Poisson** | $\lambda$ | $\lambda$  |',
         ],
     ],
     [
@@ -41,17 +43,86 @@ $sections = [
         ],
     ],
     [
+        'titre' => 'Couleurs et surlignage',
+        'intro' => 'Dans l\'éditeur : sélectionne le texte puis clique sur « A ▾ » dans la barre d\'outils. Couleurs : rouge, orange, jaune, vert, bleu, violet, rose, gris (ou un code #hexa).',
+        'exemples' => [
+            "Un mot [important]{rouge}, une [définition]{bleu} et un [exemple]{vert}.",
+            "Tu peux aussi ==surligner== un passage, ou [**mettre en gras et en couleur**]{violet}.",
+            "Couleur libre : [texte]{#e11d48}",
+        ],
+    ],
+    [
+        'titre' => 'Notes indentées',
+        'intro' => 'Tu peux décaler tes lignes avec Tab (4 espaces) pour structurer ta note : le gras, les puces et les couleurs restent actifs, et le décalage est conservé à l\'affichage.',
+        'exemples' => [
+            "Rappels :\n    **Définition :** une entité est un objet du besoin\n    - attribut\n    - identifiant\n        - unique pour chaque objet",
+        ],
+    ],
+    [
+        'titre' => 'Pseudo-code',
+        'intro' => 'Comme pour le C ou le SQL : ```pseudo puis ton algorithme. Les mots-clés (SI, ALORS, POUR, TANT QUE, Entier…) sont colorés. Alias acceptés : algo, algorithme, pseudocode.',
+        'exemples' => [
+            "```pseudo\nAlgorithme maximum\nVariables\n    a, b, max : Entier\n{\n    Lire(a)\n    Lire(b)\n    SI (a > b) ALORS {\n        max <- a\n    } SINON {\n        max <- b\n    }\n    Ecrire(\"Le max est \", max)\n}\n```",
+            "```pseudo\nPOUR i DE 1 À n FAIRE {\n    TANT QUE (x ≠ 0) FAIRE {\n        x <- x DIV 2   // division entière\n    }\n}\n```",
+        ],
+    ],
+    [
         'titre' => 'Mathématiques (LaTeX)',
-        'intro' => 'Entoure d\'un $ pour une formule dans le texte, de deux $$ pour une formule centrée.',
+        'intro' => 'Entoure d\'un $ pour une formule dans le texte, de deux $$ (ou d\'un bloc ```math) pour une formule centrée. Toutes les commandes sont dans la « Référence complète » plus bas.',
         'exemples' => [
             'La vitesse vaut $v = \frac{d}{t}$ dans le texte.',
-            'Puissances et indices : $x^2$, $a_{i}$, $x_1^2$',
+            'Puissances et indices : $x^2$, $a_{i}$, $x_1^2$, $e^{i\pi}$',
             'Racines : $\sqrt{2}$ et $\sqrt[3]{x}$',
-            'Fraction centrée :\n\n$$\frac{a + b}{2}$$',
-            'Somme :\n\n$$\sum_{i=1}^{n} i = \frac{n(n+1)}{2}$$',
-            'Intégrale :\n\n$$\int_0^1 x^2 \, dx = \frac{1}{3}$$',
-            'Lettres grecques : $\alpha, \beta, \pi, \Delta, \lambda$',
-            'Matrice :\n\n$$\begin{pmatrix} a & b \\\\ c & d \end{pmatrix}$$',
+            'Fraction centrée :' . "\n\n" . '$$\frac{a + b}{2}$$',
+            'Somme et produit :' . "\n\n" . '$$\sum_{i=1}^{n} i = \frac{n(n+1)}{2} \qquad \prod_{k=1}^{n} k = n!$$',
+            'Intégrale et limite :' . "\n\n" . '$$\int_0^1 x^2 \, dx = \frac{1}{3} \qquad \lim_{x \to +\infty} \frac{1}{x} = 0$$',
+            'Lettres grecques : $\alpha, \beta, \gamma, \delta, \varepsilon, \lambda, \pi, \sigma, \Delta, \Omega$',
+            "```math\n" . 'f(x) = \sum_{n=0}^{+\infty} \frac{f^{(n)}(0)}{n!} x^n' . "\n```",
+            'Raccourcis du site : $\R, \N, \Z, \Q, \C$, $\abs{x}$, $\norm{u}$, $\ens{1, 2, 3}$, $\llbracket 1, n \rrbracket$, $\int_0^1 f(x) \dx$',
+        ],
+    ],
+    [
+        'titre' => 'Maths : logique et quantificateurs',
+        'exemples' => [
+            'Quantificateurs : $\forall x \in \mathbb{R}, \exists n \in \mathbb{N}, n > x$',
+            'Unicité et négation : $\exists! x$, $\nexists x$, $\neg P$',
+            'Connecteurs : $P \land Q$, $P \lor Q$, $P \Rightarrow Q$, $P \Leftrightarrow Q$, $P \iff Q$',
+            'Définition formelle de la limite :' . "\n\n" . '$$\forall \varepsilon > 0, \exists \eta > 0, \forall x, |x - a| < \eta \implies |f(x) - \ell| < \varepsilon$$',
+        ],
+    ],
+    [
+        'titre' => 'Maths : ensembles et relations',
+        'exemples' => [
+            'Ensembles usuels : $\mathbb{N} \subset \mathbb{Z} \subset \mathbb{Q} \subset \mathbb{R} \subset \mathbb{C}$',
+            'Appartenance : $x \in A$, $x \notin B$, $A \subseteq B$, $\emptyset$',
+            'Opérations : $A \cup B$, $A \cap B$, $A \setminus B$, $\overline{A}$',
+            'En compréhension : $E = \{ x \in \mathbb{R} \mid x^2 < 4 \}$ et $[\![ 1, n ]\!]$',
+            'Relations : $a \neq b$, $a \leq b$, $a \geq b$, $a \approx b$, $a \equiv b \pmod{n}$',
+            'Opérateurs : $a \times b$, $a \cdot b$, $a \pm b$, $f \circ g$, $+\infty$',
+            'Flèches : $x \to 0$, $f : x \mapsto x^2$, $u_n \longrightarrow \ell$',
+        ],
+    ],
+    [
+        'titre' => 'Maths : analyse, algèbre, probabilités',
+        'exemples' => [
+            'Dérivées : $f\'(x)$, $\frac{\mathrm{d}y}{\mathrm{d}x}$, $\frac{\partial f}{\partial x}$, $f^{(n)}$',
+            'Suites : $u_n \xrightarrow[n \to +\infty]{} \ell$ et $\sin x \underset{x \to 0}{\sim} x$',
+            'Algèbre linéaire : $A^{\top}$, $A^{-1}$, $\det(A)$, $\ker f$, $\operatorname{Im} f$, $\vec{u} \cdot \vec{v}$, $\lVert \vec{u} \rVert$',
+            'Complexes : $z = a + ib$, $\overline{z}$, $\lvert z \rvert$, $e^{i\theta} = \cos\theta + i\sin\theta$',
+            'Probabilités : $\mathbb{P}(A \mid B)$, $\mathbb{E}(X)$, $\mathbb{V}(X)$, $X \sim \mathcal{B}(n, p)$, $X \sim \mathcal{N}(\mu, \sigma^2)$',
+            'Arithmétique : $a \equiv b \pmod{n}$, $\pgcd(a, b)$, $a \mid b$, $\lfloor x \rfloor$, $\binom{n}{k}$',
+            'Mise en valeur : $\boxed{x = 2}$, $\underbrace{1 + 1 + \cdots + 1}_{n \text{ fois}}$, $\cancel{x}$, $\color{red}{x}$',
+        ],
+    ],
+    [
+        'titre' => 'Maths : structures',
+        'exemples' => [
+            'Valeur absolue, norme, vecteur : $\lvert x \rvert$, $\lVert \vec{u} \rVert$, $\lfloor x \rfloor$, $\binom{n}{k}$',
+            'Définition par cas :' . "\n\n" . '$$|x| = \begin{cases} x & \text{si } x \geq 0 \\\\ -x & \text{sinon} \end{cases}$$',
+            'Matrice :' . "\n\n" . '$$\begin{pmatrix} a & b \\\\ c & d \end{pmatrix}$$',
+            'Calcul aligné :' . "\n\n" . '$$\begin{aligned} (a+b)^2 &= (a+b)(a+b) \\\\ &= a^2 + 2ab + b^2 \end{aligned}$$',
+            'Système :' . "\n\n" . '$$\begin{cases} 2x + y = 3 \\\\ x - y = 0 \end{cases}$$',
+            'Tableau de variations :' . "\n\n" . '$$\begin{array}{c|ccccc} x & -\infty & & 0 & & +\infty \\\\ \hline f\'(x) & & - & 0 & + & \\\\ \hline f(x) & & \searrow & 1 & \nearrow & \end{array}$$',
         ],
     ],
 ];
@@ -75,6 +146,59 @@ require __DIR__ . '/includes/header.php';
 <p class="intro-aide">Le Markdown, c'est du texte normal avec quelques symboles pour la mise en forme.
    Pour chaque exemple : à gauche <strong>ce que tu tapes</strong>, à droite <strong>ce que ça donne</strong>.</p>
 
+<section class="bloc">
+    <h2>⌨️ Raccourcis de l'éditeur</h2>
+    <table class="tableau-raccourcis">
+        <tr><td><kbd>Ctrl</kbd> + <kbd>S</kbd></td><td>Enregistrer tout de suite (l'enregistrement auto continue aussi)</td></tr>
+        <tr><td><kbd>Ctrl</kbd> + <kbd>Z</kbd></td><td>Annuler</td></tr>
+        <tr><td><kbd>Ctrl</kbd> + <kbd>Y</kbd> ou <kbd>Ctrl</kbd> + <kbd>Maj</kbd> + <kbd>Z</kbd></td><td>Rétablir</td></tr>
+        <tr><td><kbd>Ctrl</kbd> + <kbd>B</kbd> / <kbd>Ctrl</kbd> + <kbd>I</kbd></td><td>Gras / italique</td></tr>
+        <tr><td><kbd>Tab</kbd> / <kbd>Maj</kbd> + <kbd>Tab</kbd></td><td>Décaler / recaler les lignes — dans un tableau : case suivante / précédente</td></tr>
+        <tr><td><kbd>Entrée</kbd> dans une liste</td><td>Nouvelle puce automatiquement (Entrée sur une puce vide = fin de la liste)</td></tr>
+        <tr><td><kbd>Entrée</kbd> dans un tableau</td><td>Nouvelle ligne (Entrée sur une ligne vide = sortir du tableau)</td></tr>
+        <tr><td><kbd>Ctrl</kbd> + <kbd>M</kbd></td><td>Nouvelle formule <code>$…$</code></td></tr>
+        <tr><td><kbd>\</kbd> + lettres dans une formule</td><td>Autocomplétion LaTeX (<code>\pour</code> → ∀, <code>\int</code> → ∫…)</td></tr>
+        <tr><td><kbd>Tab</kbd> dans une formule</td><td>Champ suivant à remplir (numérateur → dénominateur…), puis sortie de la formule</td></tr>
+    </table>
+    <p class="astuce-mini">Un problème ? Clique sur <strong>🤖 Aide IA</strong> en bas à droite de l'écran.</p>
+</section>
+
+<section class="bloc">
+    <h2>▦ Créer un tableau en 5 secondes</h2>
+    <ol class="guide">
+        <li><strong>Le plus rapide :</strong> tape les titres des colonnes séparés par <code>|</code>
+            puis <kbd>Entrée</kbd> :
+            <pre class="src"><code>Loi | Espérance | Variance</code></pre>
+            → le tableau est créé et le curseur est dans la première case.
+            <kbd>Tab</kbd> = case suivante, <kbd>Entrée</kbd> = nouvelle ligne,
+            <kbd>Entrée</kbd> sur une ligne vide = fin du tableau. Les colonnes s'alignent toutes seules.</li>
+        <li><strong>Comme dans un tableur :</strong> bouton <strong>▦ Tableau</strong> de la barre d'outils.
+            Tu remplis une grille (Tab / Entrée pour avancer), tu ajoutes lignes et colonnes,
+            tu choisis l'alignement, puis « Insérer ». Curseur dans un tableau existant = le même bouton le <strong>modifie</strong>.</li>
+        <li><strong>Depuis Excel / Google Sheets / LibreOffice :</strong> copie les cellules et colle-les
+            dans la note (ou dans une case de l'éditeur de tableau) : c'est converti automatiquement.</li>
+    </ol>
+</section>
+
+<section class="bloc">
+    <h2>∑ Écrire des maths vite</h2>
+    <ul class="guide">
+        <li><kbd>Ctrl</kbd>+<kbd>M</kbd> (ou le menu <strong>∑ Maths ▾</strong>) ouvre une formule <code>$…$</code>.</li>
+        <li>Dans une formule, tape <code>\</code> puis le début du nom <strong>ou du mot français</strong> :
+            <code>\pour</code> → <code>\forall</code>, <code>\appart</code> → <code>\in</code>,
+            <code>\integ</code> → intégrale, <code>\lam</code> → λ. <kbd>Entrée</kbd> valide.</li>
+        <li>Les modèles (fraction, somme, intégrale, matrice…) sélectionnent la première case à remplir ;
+            <kbd>Tab</kbd> passe à la suivante.</li>
+        <li>Une <strong>bulle d'aperçu</strong> affiche la formule rendue sous le curseur pendant que tu tapes
+            (les erreurs apparaissent en rouge).</li>
+        <li>Le menu <strong>∑ Maths ▾</strong> a une barre de recherche (« intégrale », « matrice », « appartient »…)
+            et un générateur de matrice n × p.</li>
+        <li>Raccourcis propres au site : <code>\R \N \Z \Q \C</code>, <code>\abs{x}</code>, <code>\norm{u}</code>,
+            <code>\ens{…}</code>, <code>\pgcd</code>, <code>\dx</code>, <code>\eps</code>.</li>
+        <li>Toutes les commandes : <a href="#reference-maths">référence complète</a> en bas de la page.</li>
+    </ul>
+</section>
+
 <?php foreach ($sections as $sec): ?>
     <section class="bloc">
         <h2><?= e($sec['titre']) ?></h2>
@@ -92,6 +216,14 @@ require __DIR__ . '/includes/header.php';
     </section>
 <?php endforeach; ?>
 
+<section class="bloc" id="reference-maths">
+    <h2>📖 Référence complète des maths</h2>
+    <p class="astuce-mini">Clique sur un code pour le copier. Dans l'éditeur, le menu ∑ Maths et la touche <kbd>\</kbd> insèrent ces codes directement.</p>
+    <input type="search" id="ref-recherche" class="maths-recherche"
+           placeholder="Chercher un symbole : pour tout, appartient, intégrale, matrice, variance…">
+    <div id="ref-maths" class="ref-maths"></div>
+</section>
+
 <section class="bloc">
     <h2>🧪 À toi d'essayer</h2>
     <p class="astuce-mini">Écris à gauche, le rendu apparaît à droite. (Rien n'est enregistré ici.)</p>
@@ -105,15 +237,10 @@ require __DIR__ . '/includes/header.php';
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.9/purify.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-<script>
-    window.MathJax = {
-        tex: { inlineMath: [['$', '$'], ['\\(', '\\)']],
-               displayMath: [['$$', '$$'], ['\\[', '\\]']] },
-        options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'] }
-    };
-</script>
+<script src="assets/js/mathjax-config.js"></script>
 <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js"></script>
 <script defer src="assets/js/rendu.js"></script>
+<script defer src="assets/js/maths-symboles.js"></script>
 <script>
     // Coloration : suit le thème clair / sombre du site.
     function majThemeCodeAide() {
@@ -141,6 +268,42 @@ require __DIR__ . '/includes/header.php';
             clearTimeout(minuteur); minuteur = setTimeout(rendre, 250);
         });
         rendre();
+
+        // Référence complète des maths (données : maths-symboles.js).
+        const ref = document.getElementById('ref-maths');
+        const echapper = (t) => t.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+        const sansAccents = (t) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        ref.innerHTML = (window.MATHS_SYMBOLES || []).map(({ groupe, items }) =>
+            '<div class="ref-groupe"><h3>' + echapper(groupe) + '</h3><table class="ref-table">'
+            + items.map(([label, code, desc]) => {
+                const brut = code.trim();
+                const propre = brut.replace(/[‹›]/g, '');
+                return '<tr data-cherche="' + echapper(sansAccents(label + ' ' + propre + ' ' + (desc || '') + ' ' + groupe)) + '">'
+                    + '<td class="ref-rendu">\\(' + echapper(propre) + '\\)</td>'
+                    + '<td><code class="ref-code" title="Cliquer pour copier">' + echapper(propre) + '</code></td>'
+                    + '<td class="ref-desc">' + echapper(desc || '') + '</td></tr>';
+            }).join('') + '</table></div>').join('');
+        if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([ref]).catch(() => {});
+        ref.addEventListener('click', (e) => {
+            const c = e.target.closest('.ref-code');
+            if (!c || !navigator.clipboard) return;
+            navigator.clipboard.writeText(c.textContent.replace(/[‹›]/g, '')).then(() => {
+                c.classList.add('copie');
+                setTimeout(() => c.classList.remove('copie'), 900);
+            }).catch(() => {});
+        });
+        document.getElementById('ref-recherche').addEventListener('input', (e) => {
+            const q = sansAccents(e.target.value.trim());
+            ref.querySelectorAll('.ref-groupe').forEach((g) => {
+                let n = 0;
+                g.querySelectorAll('tr').forEach((tr) => {
+                    const ok = !q || tr.dataset.cherche.includes(q);
+                    tr.hidden = !ok;
+                    if (ok) n++;
+                });
+                g.hidden = !n;
+            });
+        });
     });
 </script>
 <?php require __DIR__ . '/includes/footer.php'; ?>
