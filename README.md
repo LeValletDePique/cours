@@ -50,10 +50,14 @@ Ouvre <http://localhost/cours/>.
   Ctrl+B / Ctrl+I, Tab / Maj+Tab, Entrée continue une liste.
 - **Notes indentées** acceptées : le gras et les puces marchent même décalés.
 - **Texte en couleur** `[texte]{rouge}` et **surlignage** `==texte==`.
-- **Tableaux faciles** : grille de taille, Tab de case en case (alignement auto),
-  collage depuis Excel / Google Sheets.
+- **Tableaux faciles** : `Titre 1 | Titre 2` + Entrée crée le tableau, Entrée ajoute
+  une ligne, Tab passe de case en case (alignement auto), éditeur visuel type
+  tableur (création et modification), collage depuis Excel / Google Sheets.
 - **Coloration du code** (C, Python, SQL, JS…, et **pseudo-code** ```` ```pseudo ````)
-  et **formules LaTeX** (MathJax) avec palette de symboles (∀, ∃, ∈, ℝ, Σ, ∫…).
+  et **formules LaTeX** (MathJax) : palette de ~280 symboles et modèles avec
+  recherche, autocomplétion en tapant `\`, champs à remplir (Tab), aperçu de la
+  formule sous le curseur, raccourcis `\R`, `\abs{x}`… et référence complète
+  dans la page Aide.
 - **Assistant IA** (Claude) pour dépanner ou expliquer un cours, avec la note jointe.
 - **Tags** transversaux, **favoris** (⭐), **corbeille** (restauration possible).
 - **Import de fichiers** (PDF, images, .txt, .docx… 20 Mo max) rattachés aux notes.
@@ -85,7 +89,7 @@ includes/             connexion PDO, auth, fonctions, gabarits (header/footer)
 api/                  points d'entrée AJAX JSON (notes, tags, structure,
                       echeances, flashcards, upload, preferences, assistant)
 assets/css, assets/js CSS + JavaScript (app, editeur, outils-editeur,
-                      rendu, assistant)
+                      rendu, assistant, maths-symboles, mathjax-config)
 composer.json         dépendance du SDK Anthropic (assistant IA)
 uploads/              fichiers importés (accès via telecharger.php)
 index.php             tableau de bord            recherche.php   recherche

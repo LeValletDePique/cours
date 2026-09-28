@@ -104,7 +104,7 @@ require __DIR__ . '/includes/header.php';
     </div>
 
     <!-- Barre d'outils (actions : assets/js/outils-editeur.js) -->
-    <div id="barre-outils" class="barre-outils" role="toolbar" aria-label="Mise en forme">
+    <div id="barre-outils" class="barre-outils mathjax_ignore" role="toolbar" aria-label="Mise en forme">
         <button type="button" data-action="annuler" title="Annuler (Ctrl+Z)">↶</button>
         <button type="button" data-action="retablir" title="Rétablir (Ctrl+Y)">↷</button>
         <span class="outil-sep"></span>
@@ -126,12 +126,10 @@ require __DIR__ . '/includes/header.php';
         <button type="button" data-action="cases" title="Cases à cocher">☑</button>
         <button type="button" data-action="citation" title="Citation / rappel">❝</button>
         <span class="outil-sep"></span>
+        <button type="button" data-action="tableau"
+                title="Créer / modifier un tableau (éditeur visuel). Astuce : tape « Nom | Âge » puis Entrée">▦ Tableau</button>
         <div class="outil-deroulant">
-            <button type="button" data-ouvrir="tableau" title="Insérer un tableau">▦ Tableau ▾</button>
-            <div class="outil-menu menu-tableau" data-menu="tableau"></div>
-        </div>
-        <div class="outil-deroulant">
-            <button type="button" data-ouvrir="maths" title="Symboles mathématiques (∀, ∃, ∈, Σ…)">∑ Maths ▾</button>
+            <button type="button" data-ouvrir="maths" title="Maths : symboles, modèles, recherche (dans une formule, tape \ pour l'autocomplétion)">∑ Maths ▾</button>
             <div class="outil-menu menu-maths" data-menu="maths"></div>
         </div>
         <div class="outil-deroulant">
@@ -217,15 +215,10 @@ require __DIR__ . '/includes/header.php';
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.9/purify.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-<script>
-    window.MathJax = {
-        tex: { inlineMath: [['$', '$'], ['\\(', '\\)']],
-               displayMath: [['$$', '$$'], ['\\[', '\\]']] },
-        options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'] }
-    };
-</script>
+<script src="assets/js/mathjax-config.js"></script>
 <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js"></script>
 <script defer src="assets/js/rendu.js"></script>
+<script defer src="assets/js/maths-symboles.js"></script>
 <script defer src="assets/js/outils-editeur.js"></script>
 <script defer src="assets/js/editeur.js"></script>
 <?php require __DIR__ . '/includes/footer.php'; ?>

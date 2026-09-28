@@ -648,23 +648,51 @@ h2 { font-size: 1.2rem; }
     box-shadow: 0 0 0 1px var(--bordure); cursor: pointer;
 }
 .pastille:hover { transform: scale(1.12); }
-.menu-maths { width: min(420px, 90vw); max-height: 60vh; overflow-y: auto; }
+.menu-maths { width: min(480px, 92vw); max-height: 70vh; overflow-y: auto; left: auto; right: 0; }
+.maths-recherche {
+    width: 100%; padding: .45rem .6rem; margin-bottom: .4rem; font-size: .9rem;
+    border: 1px solid var(--bordure); border-radius: 8px; background: var(--fond); color: var(--texte);
+}
+.maths-matrice {
+    display: flex; align-items: center; gap: .3rem; flex-wrap: wrap; font-size: .85rem;
+    margin: .4rem 0; padding: .3rem .4rem; background: var(--fond-doux); border-radius: 8px;
+}
+.maths-matrice input { width: 3.2rem; padding: .15rem .3rem; }
+.maths-matrice select, .maths-matrice input {
+    border: 1px solid var(--bordure); border-radius: 6px; background: var(--fond-carte); color: var(--texte);
+}
+.maths-matrice .menu-ligne { width: auto; margin-left: auto; background: var(--accent); color: #fff; }
+.menu-aide code { font-size: .95em; }
+
+/* Autocomplétion LaTeX et aperçu de formule (flottants) */
+.maths-auto, .maths-bulle {
+    position: fixed; z-index: 120; background: var(--fond-carte); color: var(--texte);
+    border: 1px solid var(--bordure); border-radius: 10px; box-shadow: var(--ombre);
+}
+.maths-auto { min-width: 300px; max-width: min(460px, 92vw); padding: .3rem; font-size: .85rem; }
+.auto-ligne {
+    display: grid; grid-template-columns: 2.6rem minmax(0, auto) 1fr; gap: .5rem; align-items: center;
+    padding: .3rem .45rem; border-radius: 6px; cursor: pointer;
+}
+.auto-ligne.actif, .auto-ligne:hover { background: var(--accent-clair); }
+.auto-rendu { font-family: "Cambria Math", "STIX Two Math", serif; font-size: 1.05rem; text-align: center; }
+.auto-ligne code {
+    font-size: .8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 12rem;
+}
+.auto-desc { color: var(--texte-doux); font-size: .8rem; }
+.auto-aide { color: var(--texte-doux); font-size: .72rem; padding: .25rem .45rem 0; border-top: 1px solid var(--bordure); margin-top: .2rem; }
+.maths-bulle { padding: .2rem .8rem; max-width: min(640px, 92vw); overflow-x: auto; pointer-events: none; }
+.maths-bulle mjx-container[display="true"] { margin: .4em 0 !important; }
 .menu-actions { display: flex; gap: .3rem; flex-wrap: wrap; }
 .menu-actions .menu-ligne { width: auto; flex: 1; background: var(--fond-doux); text-align: center; }
-.grille-symboles { display: grid; grid-template-columns: repeat(auto-fill, minmax(2.6rem, 1fr)); gap: .2rem; }
+.grille-symboles { display: flex; flex-wrap: wrap; gap: .2rem; }
 .symbole {
     background: var(--fond-doux); border: 1px solid var(--bordure); border-radius: 6px;
     color: var(--texte); padding: .3rem .1rem; cursor: pointer; font-size: .95rem;
-    font-family: "Cambria Math", "STIX Two Math", serif; white-space: nowrap; overflow: hidden;
+    font-family: "Cambria Math", "STIX Two Math", serif; white-space: nowrap;
+    min-width: 2.6rem; padding: .3rem .4rem;
 }
 .symbole:hover { background: var(--accent-clair); border-color: var(--accent); }
-.menu-tableau { width: 220px; }
-.grille-tableau { display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; margin: .3rem 0; }
-.grille-tableau button {
-    aspect-ratio: 1; border: 1px solid var(--bordure); background: var(--fond-doux);
-    border-radius: 3px; cursor: pointer; padding: 0;
-}
-.grille-tableau button.actif { background: var(--accent); border-color: var(--accent); }
 @media (max-width: 640px) {
     .outil-menu { position: fixed; left: 16px; right: 16px; top: auto; width: auto; }
 }
@@ -726,3 +754,67 @@ kbd {
     background: var(--fond-doux); border: 1px solid var(--bordure); border-bottom-width: 2px;
     border-radius: 5px; padding: .05rem .4rem; font-size: .82em; font-family: inherit;
 }
+
+/* ---------------- Fenêtre (modale) : éditeur de tableau ---------------- */
+.modale-fond {
+    position: fixed; inset: 0; z-index: 200; background: rgba(15, 18, 30, .45);
+    display: flex; align-items: flex-start; justify-content: center; padding: 6vh 16px;
+}
+.modale {
+    background: var(--fond-carte); color: var(--texte); border-radius: var(--rayon);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, .3); width: min(900px, 100%);
+    max-height: 88vh; display: flex; flex-direction: column; overflow: hidden;
+}
+.modale-entete {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: .7rem 1rem; border-bottom: 1px solid var(--bordure);
+}
+.modale-entete h3 { margin: 0; font-size: 1.05rem; }
+.modale-x { background: none; border: 0; font-size: 1.1rem; cursor: pointer; color: var(--texte-doux); }
+.modale-pied {
+    display: flex; justify-content: flex-end; gap: .5rem;
+    padding: .7rem 1rem; border-top: 1px solid var(--bordure);
+}
+.btn-primaire {
+    background: var(--accent); color: #fff; border: 0; border-radius: 8px;
+    padding: .5rem 1rem; font-size: .9rem; cursor: pointer;
+}
+.tab-actions {
+    display: flex; flex-wrap: wrap; align-items: center; gap: .3rem;
+    padding: .5rem 1rem; background: var(--fond-doux);
+}
+.tab-actions button {
+    background: var(--fond-carte); border: 1px solid var(--bordure); color: var(--texte);
+    border-radius: 6px; padding: .3rem .6rem; cursor: pointer; font-size: .85rem;
+}
+.tab-actions button:hover { background: var(--accent-clair); }
+.tab-libelle { font-size: .82rem; color: var(--texte-doux); }
+.tab-grille-cadre { overflow: auto; padding: .8rem 1rem; }
+.tab-grille { border-collapse: collapse; }
+.tab-grille td { border: 1px solid var(--bordure); padding: 0; min-width: 8rem; }
+.tab-grille input {
+    width: 100%; min-width: 8rem; border: 0; padding: .45rem .55rem; font: inherit; font-size: .9rem;
+    background: transparent; color: var(--texte);
+}
+.tab-grille input:focus { outline: 2px solid var(--accent); outline-offset: -2px; background: var(--accent-clair); }
+.tab-grille td.entete { background: var(--fond-doux); }
+.tab-grille td.entete input { font-weight: 600; }
+.modale .menu-aide { padding: 0 1rem; }
+
+/* ---------------- Page d'aide : guides et référence maths ---------------- */
+.guide { padding-left: 1.3rem; line-height: 1.7; }
+.guide li { margin-bottom: .5rem; }
+.guide pre.src { margin: .4rem 0; padding: .4rem .7rem; background: var(--fond-doux); border-radius: 6px; }
+.ref-maths { columns: 2 440px; column-gap: 1.5rem; }
+.ref-groupe { break-inside: avoid; margin-bottom: 1rem; }
+.ref-groupe h3 { font-size: .95rem; margin: .6rem 0 .3rem; color: var(--accent); }
+.ref-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+.ref-table td { border-bottom: 1px solid var(--bordure); padding: .25rem .4rem; vertical-align: middle; }
+.ref-rendu { width: 7rem; text-align: center; overflow-x: auto; max-width: 12rem; }
+.ref-code {
+    cursor: copy; font-size: .8rem; background: var(--fond-doux); padding: .1em .35em;
+    border-radius: 5px; overflow-wrap: anywhere;
+}
+.ref-code.copie { background: #dcfce7; color: #166534; }
+.ref-code.copie::after { content: "  ✓ copié"; }
+.ref-desc { color: var(--texte-doux); }

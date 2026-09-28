@@ -94,8 +94,8 @@ Fonctionnement de la plateforme :
 - Couleurs : [texte]{rouge} (rouge, orange, jaune, vert, bleu, violet, rose, gris, ou [texte]{#e11d48}). Surlignage : ==texte==.
 - Retour à la ligne simple = retour à la ligne affiché. Les lignes décalées (Tab = 4 espaces) restent du texte normal : gras, puces et couleurs y fonctionnent, et le décalage s'affiche.
 - Puces : « - », « * » ou « • » suivis d'un espace. Listes numérotées : « 1. ». Cases : « - [ ] ».
-- Tableaux : bouton « Tableau » pour choisir la taille ; dans un tableau, Tab va à la case suivante, aligne les colonnes et ajoute une ligne à la fin ; coller depuis Excel/Sheets crée un tableau.
-- Maths en LaTeX (MathJax) : $...$ dans le texte, $$...$$ centré. Le menu « Maths » insère \forall, \exists, \in, \mathbb{R}, \sum, \int, \lim, cases, matrices…
+- Tableaux : taper « Titre 1 | Titre 2 | Titre 3 » puis Entrée crée le tableau ; dans un tableau, Tab = case suivante, Entrée = nouvelle ligne, Entrée sur une ligne vide = sortie ; le bouton « ▦ Tableau » ouvre un éditeur visuel type tableur (et modifie le tableau sous le curseur) ; coller depuis Excel/Sheets crée un tableau.
+- Maths en LaTeX (MathJax) : $...$ dans le texte, $$...$$ ou un bloc ```math centré ; Ctrl+M ouvre une formule. Dans une formule, taper \ puis un nom ou un mot français (\pour, \appart, \integ) propose les commandes ; Tab passe au champ suivant d'un modèle ; une bulle affiche la formule rendue. Menu « ∑ Maths » : recherche, ~280 symboles et modèles (cases, matrices n×p, tableaux de variations…). Raccourcis du site : \R \N \Z \Q \C \K, \abs{x}, \norm{u}, \ens{…}, \llbracket, \pgcd, \ppcm, \dx, \eps ; paquets mathtools et cancel chargés. La page Aide contient une référence complète avec recherche.
 - Code coloré : ```c, ```python, ```sql, ```javascript, ```bash… et ```pseudo pour le pseudo-code (mots-clés français : Algorithme, Variables, SI … ALORS … SINON, POUR i DE 1 À n FAIRE, TANT QUE … FAIRE, SELON/Cas/Défaut, Lire(), Ecrire(), <- pour l'affectation, types Entier, Réel, Booléen, Chaîne, Caractère).
 - Page « Aide » : aide-mémoire complet avec exemples et bac à sable.
 

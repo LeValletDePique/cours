@@ -19,6 +19,9 @@
         const remplacer = (s) => 'MJXPH' + (math.push(s) - 1) + 'ENDPH';
         return {
             texte: src
+                // Bloc ```math … ``` = formule centrée.
+                .replace(/^[ \t]*(`{3,}|~{3,})[ \t]*(?:math|latex|tex)[ \t]*\n([\s\S]*?)\n[ \t]*\1[ \t]*$/gm,
+                    (m, f, dedans) => remplacer('$$' + dedans + '$$'))
                 .replace(/\$\$([\s\S]+?)\$\$/g, (m) => remplacer(m))
                 .replace(/\\\[([\s\S]+?)\\\]/g, (m) => remplacer(m))
                 .replace(/\\\(([\s\S]+?)\\\)/g, (m) => remplacer(m))
