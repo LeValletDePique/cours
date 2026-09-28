@@ -19,4 +19,10 @@ return [
     'dossier_uploads' => __DIR__ . '/uploads',
     // Taille maximale d'un fichier importé (en octets). 20 Mo par défaut.
     'upload_taille_max' => 20 * 1024 * 1024,
+
+    // --- Assistant IA (bouton « 🤖 Aide IA ») ---
+    // Clé à créer sur https://console.anthropic.com (laisser vide = assistant désactivé ;
+    // la variable d'environnement ANTHROPIC_API_KEY est aussi lue).
+    'anthropic_api_key' => '',
+    'assistant_modele'  => 'claude-opus-5-5',
 ];

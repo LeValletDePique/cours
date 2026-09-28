@@ -44,8 +44,10 @@
         clearTimeout(minuteurSave);
         minuteurSave = setTimeout(sauvegarder, 1000);
     }
-    async function sauvegarder() {
-        if (!modifie) return;
+    // force = true : enregistre même sans modification (Ctrl+S).
+    async function sauvegarder(force = false) {
+        if (!modifie && !force) return;
+        clearTimeout(minuteurSave);
         elStatut.textContent = 'Enregistrement…';
         elStatut.className = 'statut-save';
         try {
@@ -74,15 +76,12 @@
     elTitre.addEventListener('input', marquerModifie);
     elMatiere.addEventListener('change', () => { marquerModifie(); sauvegarder(); });
 
-    // Tabulation = indentation dans le textarea.
-    elContenu.addEventListener('keydown', (e) => {
-        if (e.key === 'Tab') {
-            e.preventDefault();
-            const d = elContenu.selectionStart, f = elContenu.selectionEnd;
-            elContenu.value = elContenu.value.slice(0, d) + '    ' + elContenu.value.slice(f);
-            elContenu.selectionStart = elContenu.selectionEnd = d + 4;
-            marquerModifie();
-        }
+    // Barre d'outils, raccourcis (Ctrl+S, Ctrl+Z…), tableaux : voir outils-editeur.js
+    window.installerOutilsEditeur({
+        zone: elContenu,
+        barre: document.getElementById('barre-outils'),
+        auChangement: () => { marquerModifie(); planifierRendu(); },
+        auEnregistrement: () => sauvegarder(true),
     });
 
     // Sauvegarde de secours en quittant la page.

@@ -67,6 +67,15 @@ $contenus = array_map(static fn($s) => $s['contenu'], $sections);
         blockquote { border-left: 3px solid #888; margin: .8em 0; padding: .2em 1em; color: #444; }
         table { border-collapse: collapse; } th, td { border: 1px solid #999; padding: .3em .6em; }
         img { max-width: 100%; }
+        .retrait-1 { margin-left: 1.5rem; } .retrait-2 { margin-left: 3rem; }
+        .retrait-3 { margin-left: 4.5rem; } .retrait-4 { margin-left: 6rem; }
+        .retrait-5 { margin-left: 7.5rem; } .retrait-6 { margin-left: 9rem; }
+        .couleur-rouge { color: #dc2626; } .couleur-orange { color: #ea580c; }
+        .couleur-jaune { color: #ca8a04; } .couleur-vert { color: #16a34a; }
+        .couleur-bleu { color: #2563eb; } .couleur-violet { color: #7c3aed; }
+        .couleur-rose { color: #db2777; } .couleur-gris { color: #6b7280; }
+        mark { background: #fef08a; }
+        * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .btn-imprimer { position: fixed; top: 1rem; right: 1rem; padding: .6rem 1rem;
                         background: #4f46e5; color: #fff; border: 0; border-radius: 8px;
                         font-size: 1rem; cursor: pointer; }

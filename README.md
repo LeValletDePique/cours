@@ -27,7 +27,15 @@ Lance **Apache** et **MySQL** depuis le panneau XAMPP/WAMP.
 Copie `config.exemple.php` en **`config.php`** et adapte si besoin
 (valeurs XAMPP par défaut : `root` / mot de passe vide).
 
-### 5. Lancer
+### 5. (Facultatif) Activer l'assistant IA
+1. Installe [Composer](https://getcomposer.org/) puis, dans le dossier du projet :
+   `composer install` (installe le SDK Anthropic dans `vendor/`).
+2. Crée une clé API sur <https://console.anthropic.com> et colle-la dans
+   `config.php` : `'anthropic_api_key' => 'sk-ant-...'`.
+3. Le bouton **🤖 Aide IA** (en bas à droite) répond alors aux questions.
+   Sans clé, le reste du site fonctionne normalement.
+
+### 6. Lancer
 Ouvre <http://localhost/cours/>.
 - **Compte de démo** : identifiant `demo` / mot de passe `demo1234`
 - Ou **Inscription** : tes UE/matières sont pré-remplies automatiquement.
@@ -36,8 +44,17 @@ Ouvre <http://localhost/cours/>.
 
 ## Fonctionnalités
 - **Comptes** sécurisés (inscription/connexion, mots de passe hachés) — chacun ne voit que ses notes.
-- **Éditeur Markdown** avec aperçu en direct, **auto-save**, horodatage.
-- **Coloration du code** (C, Python, SQL, JS…) et **formules LaTeX** (MathJax).
+- **Éditeur Markdown** avec aperçu en direct, **auto-save**, horodatage,
+  **barre d'outils** (titres, gras, couleurs, listes, tableaux, maths, code).
+- **Raccourcis** : Ctrl+S (enregistrer), Ctrl+Z / Ctrl+Y (annuler / rétablir),
+  Ctrl+B / Ctrl+I, Tab / Maj+Tab, Entrée continue une liste.
+- **Notes indentées** acceptées : le gras et les puces marchent même décalés.
+- **Texte en couleur** `[texte]{rouge}` et **surlignage** `==texte==`.
+- **Tableaux faciles** : grille de taille, Tab de case en case (alignement auto),
+  collage depuis Excel / Google Sheets.
+- **Coloration du code** (C, Python, SQL, JS…, et **pseudo-code** ```` ```pseudo ````)
+  et **formules LaTeX** (MathJax) avec palette de symboles (∀, ∃, ∈, ℝ, Σ, ∫…).
+- **Assistant IA** (Claude) pour dépanner ou expliquer un cours, avec la note jointe.
 - **Tags** transversaux, **favoris** (⭐), **corbeille** (restauration possible).
 - **Import de fichiers** (PDF, images, .txt, .docx… 20 Mo max) rattachés aux notes.
 - **Export** d'une note ou d'une matière entière en **Markdown** et **PDF**.
@@ -66,8 +83,10 @@ config.php            identifiants BDD (non versionné)
 schema.sql            structure + données de démo
 includes/             connexion PDO, auth, fonctions, gabarits (header/footer)
 api/                  points d'entrée AJAX JSON (notes, tags, structure,
-                      echeances, flashcards, upload, preferences)
-assets/css, assets/js CSS + JavaScript (app, editeur, rendu)
+                      echeances, flashcards, upload, preferences, assistant)
+assets/css, assets/js CSS + JavaScript (app, editeur, outils-editeur,
+                      rendu, assistant)
+composer.json         dépendance du SDK Anthropic (assistant IA)
 uploads/              fichiers importés (accès via telecharger.php)
 index.php             tableau de bord            recherche.php   recherche
 note.php              éditeur de note            corbeille.php   corbeille

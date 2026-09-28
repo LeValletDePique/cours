@@ -26,7 +26,7 @@ $sections = [
     ],
     [
         'titre' => 'Tableaux',
-        'intro' => 'Les « | » séparent les colonnes ; la ligne de tirets sépare l\'en-tête.',
+        'intro' => 'Les « | » séparent les colonnes ; la ligne de tirets sépare l\'en-tête. Plus simple dans l\'éditeur : bouton « ▦ Tableau ▾ » pour choisir la taille, puis Tab pour passer d\'une case à l\'autre (les colonnes s\'alignent toutes seules, une ligne est ajoutée à la fin). Tu peux aussi coller un tableau copié depuis Excel ou Google Sheets.',
         'exemples' => [
             "| Notion | Exemple |\n|--------|---------|\n| Variable | x = 5 |\n| Boucle | for/while |",
         ],
@@ -41,17 +41,70 @@ $sections = [
         ],
     ],
     [
+        'titre' => 'Couleurs et surlignage',
+        'intro' => 'Dans l\'éditeur : sélectionne le texte puis clique sur « A ▾ » dans la barre d\'outils. Couleurs : rouge, orange, jaune, vert, bleu, violet, rose, gris (ou un code #hexa).',
+        'exemples' => [
+            "Un mot [important]{rouge}, une [définition]{bleu} et un [exemple]{vert}.",
+            "Tu peux aussi ==surligner== un passage, ou [**mettre en gras et en couleur**]{violet}.",
+            "Couleur libre : [texte]{#e11d48}",
+        ],
+    ],
+    [
+        'titre' => 'Notes indentées',
+        'intro' => 'Tu peux décaler tes lignes avec Tab (4 espaces) pour structurer ta note : le gras, les puces et les couleurs restent actifs, et le décalage est conservé à l\'affichage.',
+        'exemples' => [
+            "Rappels :\n    **Définition :** une entité est un objet du besoin\n    - attribut\n    - identifiant\n        - unique pour chaque objet",
+        ],
+    ],
+    [
+        'titre' => 'Pseudo-code',
+        'intro' => 'Comme pour le C ou le SQL : ```pseudo puis ton algorithme. Les mots-clés (SI, ALORS, POUR, TANT QUE, Entier…) sont colorés. Alias acceptés : algo, algorithme, pseudocode.',
+        'exemples' => [
+            "```pseudo\nAlgorithme maximum\nVariables\n    a, b, max : Entier\n{\n    Lire(a)\n    Lire(b)\n    SI (a > b) ALORS {\n        max <- a\n    } SINON {\n        max <- b\n    }\n    Ecrire(\"Le max est \", max)\n}\n```",
+            "```pseudo\nPOUR i DE 1 À n FAIRE {\n    TANT QUE (x ≠ 0) FAIRE {\n        x <- x DIV 2   // division entière\n    }\n}\n```",
+        ],
+    ],
+    [
         'titre' => 'Mathématiques (LaTeX)',
-        'intro' => 'Entoure d\'un $ pour une formule dans le texte, de deux $$ pour une formule centrée.',
+        'intro' => 'Entoure d\'un $ pour une formule dans le texte, de deux $$ pour une formule centrée. Dans l\'éditeur, le menu « ∑ Maths ▾ » insère tous ces symboles en un clic.',
         'exemples' => [
             'La vitesse vaut $v = \frac{d}{t}$ dans le texte.',
-            'Puissances et indices : $x^2$, $a_{i}$, $x_1^2$',
+            'Puissances et indices : $x^2$, $a_{i}$, $x_1^2$, $e^{i\pi}$',
             'Racines : $\sqrt{2}$ et $\sqrt[3]{x}$',
-            'Fraction centrée :\n\n$$\frac{a + b}{2}$$',
-            'Somme :\n\n$$\sum_{i=1}^{n} i = \frac{n(n+1)}{2}$$',
-            'Intégrale :\n\n$$\int_0^1 x^2 \, dx = \frac{1}{3}$$',
-            'Lettres grecques : $\alpha, \beta, \pi, \Delta, \lambda$',
-            'Matrice :\n\n$$\begin{pmatrix} a & b \\\\ c & d \end{pmatrix}$$',
+            'Fraction centrée :' . "\n\n" . '$$\frac{a + b}{2}$$',
+            'Somme et produit :' . "\n\n" . '$$\sum_{i=1}^{n} i = \frac{n(n+1)}{2} \qquad \prod_{k=1}^{n} k = n!$$',
+            'Intégrale et limite :' . "\n\n" . '$$\int_0^1 x^2 \, dx = \frac{1}{3} \qquad \lim_{x \to +\infty} \frac{1}{x} = 0$$',
+            'Lettres grecques : $\alpha, \beta, \gamma, \delta, \varepsilon, \lambda, \pi, \sigma, \Delta, \Omega$',
+        ],
+    ],
+    [
+        'titre' => 'Maths : logique et quantificateurs',
+        'exemples' => [
+            'Quantificateurs : $\forall x \in \mathbb{R}, \exists n \in \mathbb{N}, n > x$',
+            'Unicité et négation : $\exists! x$, $\nexists x$, $\neg P$',
+            'Connecteurs : $P \land Q$, $P \lor Q$, $P \Rightarrow Q$, $P \Leftrightarrow Q$, $P \iff Q$',
+            'Définition formelle de la limite :' . "\n\n" . '$$\forall \varepsilon > 0, \exists \eta > 0, \forall x, |x - a| < \eta \implies |f(x) - \ell| < \varepsilon$$',
+        ],
+    ],
+    [
+        'titre' => 'Maths : ensembles et relations',
+        'exemples' => [
+            'Ensembles usuels : $\mathbb{N} \subset \mathbb{Z} \subset \mathbb{Q} \subset \mathbb{R} \subset \mathbb{C}$',
+            'Appartenance : $x \in A$, $x \notin B$, $A \subseteq B$, $\emptyset$',
+            'Opérations : $A \cup B$, $A \cap B$, $A \setminus B$, $\overline{A}$',
+            'En compréhension : $E = \{ x \in \mathbb{R} \mid x^2 < 4 \}$ et $[\![ 1, n ]\!]$',
+            'Relations : $a \neq b$, $a \leq b$, $a \geq b$, $a \approx b$, $a \equiv b \pmod{n}$',
+            'Opérateurs : $a \times b$, $a \cdot b$, $a \pm b$, $f \circ g$, $+\infty$',
+            'Flèches : $x \to 0$, $f : x \mapsto x^2$, $u_n \longrightarrow \ell$',
+        ],
+    ],
+    [
+        'titre' => 'Maths : structures',
+        'exemples' => [
+            'Valeur absolue, norme, vecteur : $\lvert x \rvert$, $\lVert \vec{u} \rVert$, $\lfloor x \rfloor$, $\binom{n}{k}$',
+            'Définition par cas :' . "\n\n" . '$$|x| = \begin{cases} x & \text{si } x \geq 0 \\\\ -x & \text{sinon} \end{cases}$$',
+            'Matrice :' . "\n\n" . '$$\begin{pmatrix} a & b \\\\ c & d \end{pmatrix}$$',
+            'Calcul aligné :' . "\n\n" . '$$\begin{aligned} (a+b)^2 &= (a+b)(a+b) \\\\ &= a^2 + 2ab + b^2 \end{aligned}$$',
         ],
     ],
 ];
@@ -74,6 +127,19 @@ require __DIR__ . '/includes/header.php';
 <h1>Aide — écrire en Markdown</h1>
 <p class="intro-aide">Le Markdown, c'est du texte normal avec quelques symboles pour la mise en forme.
    Pour chaque exemple : à gauche <strong>ce que tu tapes</strong>, à droite <strong>ce que ça donne</strong>.</p>
+
+<section class="bloc">
+    <h2>⌨️ Raccourcis de l'éditeur</h2>
+    <table class="tableau-raccourcis">
+        <tr><td><kbd>Ctrl</kbd> + <kbd>S</kbd></td><td>Enregistrer tout de suite (l'enregistrement auto continue aussi)</td></tr>
+        <tr><td><kbd>Ctrl</kbd> + <kbd>Z</kbd></td><td>Annuler</td></tr>
+        <tr><td><kbd>Ctrl</kbd> + <kbd>Y</kbd> ou <kbd>Ctrl</kbd> + <kbd>Maj</kbd> + <kbd>Z</kbd></td><td>Rétablir</td></tr>
+        <tr><td><kbd>Ctrl</kbd> + <kbd>B</kbd> / <kbd>Ctrl</kbd> + <kbd>I</kbd></td><td>Gras / italique</td></tr>
+        <tr><td><kbd>Tab</kbd> / <kbd>Maj</kbd> + <kbd>Tab</kbd></td><td>Décaler / recaler les lignes — dans un tableau : case suivante / précédente</td></tr>
+        <tr><td><kbd>Entrée</kbd> dans une liste</td><td>Nouvelle puce automatiquement (Entrée sur une puce vide = fin de la liste)</td></tr>
+    </table>
+    <p class="astuce-mini">Un problème ? Clique sur <strong>🤖 Aide IA</strong> en bas à droite de l'écran.</p>
+</section>
 
 <?php foreach ($sections as $sec): ?>
     <section class="bloc">
