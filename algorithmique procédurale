@@ -1,0 +1,94 @@
+CM1 - élément de base 
+
+L'algorithmique permet de décomposer un problème complexe en opération simple et précise, indépendamment du langage de programmation.
+L'algorithmique fait le lien entre le problème et la solution.
+
+Def:
+    Un algorithme est une suite finie et non ambiguë d'instructuons et d'opérations 
+    permettant de résoudre une classe de problèmes.
+
+    un algorithme est un moyen de résoudre un pronlème.
+    Il est composé d'une suite d'opération (action, tâche élémentaires).
+    Il reçoit en entrée des données (les entrées) et il retourne un ou plusisuers résutltats (les sorties).
+
+Tant qu'il y a du numérique il y a des algorithmes
+
+Un programme destiné à être exécuté par un ordinateur est, la plupart du temps la description d'un algorithme dans le bon langage.
+
+La syntaxe (pseudo-code)
+    les variables (définie par un unique nom et par un type) <- les données  (btw le nom ne contient pas d'espace et commence par une lettre).
+
+    les variables sont déclarés avant utilisation, de la manière suivante :
+        nomdelavariable : typedelavariable 
+        nom1, nom2, ... : typedelavariable
+    Elles sont déclarés dans la section VARIABLES.
+
+    les types:
+        - Entier
+        - Caractère (avec des simples quotes)
+        - Réel
+        - Booléen (FAUX ou VRAI)
+        - Chaîne (avec des guillemets)
+
+
+    Les instruction:
+        L'instruction de base est l'affectation, elle consiste à donner une valeur  à une variable. 
+        L'affectation est noté <- ou := .
+
+        Opération arithmétiques: 
+            +,-,*,/.
+            Sur les entier on utilise DIV et MOD. La fonciton racine() est utilisable.
+            Sur les booléen on utilise ET, OU, NON.
+
+        Pour accéder aux différents caractères d'une chaîne on utilise []. 
+        La fonction longueur() est admise.
+        Les indices des chaîne de caractères vont de 0 à longueur(ch)-1.
+        Pour concaténer: &;
+
+        Pour afficher et saisir des données:
+            Lire() 
+            Ecrire()
+
+        Pour les blocs d'instruction on utilise:
+        {
+            instruction1:
+            instrutction2:
+            ...
+        }
+
+    On obtient le schéma suivant:
+
+    Algorithme nomAlgo
+    Variables
+        déclaration des variables
+    {
+        Instructions
+    }
+
+    La principale structure de contrôle conditionnelle est Si(condition)ALORS{...}SINON{...}
+    Opérateur de comparaison: =,≠,<,>,≤,≥.
+    Structure du SELON:
+
+        {
+            Cas val1:
+                instruction(1)
+            Cas val2:
+                instruction(2)
+            ...
+            Défaut:
+            instruction(...)
+        }
+    
+    Une boucle avec un nombre déterminé de fois: boucle POUR.
+        {
+            POUR compteur de deb à fin [pas=valeur]{ /*par défaut le pas vaut 1 mais on peut le modifier*/
+                Instruction
+            }
+        }
+
+    Tant qu'une condition est véréfiée: boule TANT QUE.
+        {
+            TANT QUE (condition) FAIRE{
+                Instruction
+            }
+        }

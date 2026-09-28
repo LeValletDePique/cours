@@ -1,0 +1,17 @@
+# Dossier des fichiers importés.
+# Accès direct interdit : les fichiers sont servis par telecharger.php,
+# qui vérifie que l'utilisateur connecté est bien le propriétaire.
+# (PHP lit les fichiers via le disque, ce blocage ne le gêne pas.)
+
+php_flag engine off
+
+# Apache 2.4
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+
+# Apache 2.2 (ancien)
+<IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+</IfModule>

@@ -1,0 +1,24 @@
+<?php
+/**
+ * API des préférences utilisateur (pour l'instant : le thème).
+ *   ?action=theme  body { theme: 'clair' | 'sombre' }
+ */
+require_once __DIR__ . '/../includes/auth.php';
+
+if (!utilisateur_connecte()) {
+    repondre_json(['erreur' => 'Non connecté'], 401);
+}
+verifier_csrf();
+
+$uid    = utilisateur_id();
+$action = $_GET['action'] ?? '';
+$data   = corps_json();
+
+if ($action === 'theme') {
+    $theme = ($data['theme'] ?? '') === 'sombre' ? 'sombre' : 'clair';
+    $stmt = db()->prepare('UPDATE utilisateurs SET theme = ? WHERE id = ?');
+    $stmt->execute([$theme, $uid]);
+    repondre_json(['ok' => true, 'theme' => $theme]);
+}
+
+repondre_json(['erreur' => 'Action inconnue'], 400);

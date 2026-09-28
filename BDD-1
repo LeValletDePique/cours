@@ -1,0 +1,31 @@
+MCD (Modèle conceptuel de données)
+
+plusieurs solution pour le même problème en BDD. ON veux trouver l'endroit où l'information est le mieux rangé 
+
+On travail sur le modèle relationnel
+
+Dans ce modèle, tous est relié, comme les csv (cf projet info)
+
+Cycle de vie logiciel 
+    Analyse du projet pour séparer les données, représente 90% du travail 
+
+    Les étapes:
+        1 - étude préalable
+            Adapter son langage avec le client, étudier la faisabilité de la demande puis écritude du cahier des charges 
+
+        2 - étude détaillée
+            élaborer une solution 
+
+        3 - Réalisation 
+            on code et on fait les test
+
+        4 - Mise en oeuvre livraison
+            on met en production le produit, expliquer à l'utilisateur comment tout fonctionne, changement possible au niveau des solutions
+
+Modèle entité-association
+    voc à co
+        entités => identifier les objets d'un besoin
+        attributs => carctériser ces objets
+        identifiants => un id unique pour chaque personne 
+        associations => éviter la redondance d'information
+        cardinalités => lier les objets entre eux

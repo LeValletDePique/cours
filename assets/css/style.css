@@ -1,0 +1,573 @@
+/* ============================================================
+   Feuille de style principale.
+   Le thème (clair / sombre) est piloté par des variables CSS
+   redéfinies sous [data-theme="sombre"].
+   ============================================================ */
+
+/* --- Thème clair (par défaut) --- */
+:root {
+    --fond:           #f4f5f9;
+    --fond-carte:     #ffffff;
+    --fond-doux:      #eef0f6;
+    --texte:          #1e2233;
+    --texte-doux:     #5b6274;
+    --bordure:        #e2e5ee;
+    --accent:         #4f46e5;
+    --accent-clair:   #eef2ff;
+    --danger:         #dc2626;
+    --danger-fond:    #fef2f2;
+    --ombre:          0 1px 3px rgba(20, 24, 45, .08), 0 6px 20px rgba(20, 24, 45, .05);
+    --rayon:          12px;
+}
+
+/* --- Thème sombre --- */
+[data-theme="sombre"] {
+    --fond:           #14161f;
+    --fond-carte:     #1d2030;
+    --fond-doux:      #262a3d;
+    --texte:          #e7e9f2;
+    --texte-doux:     #9aa1b6;
+    --bordure:        #2d3247;
+    --accent:         #818cf8;
+    --accent-clair:   #262a4a;
+    --danger:         #f87171;
+    --danger-fond:    #3a1f24;
+    --ombre:          0 1px 3px rgba(0, 0, 0, .4), 0 6px 20px rgba(0, 0, 0, .3);
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--fond);
+    color: var(--texte);
+    line-height: 1.5;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+h1 { font-size: 1.6rem; margin: .2em 0 .8em; }
+h2 { font-size: 1.2rem; }
+
+/* ---------------- Barre de navigation ---------------- */
+.barre {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: .7rem 1.2rem;
+    background: var(--fond-carte);
+    border-bottom: 1px solid var(--bordure);
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    flex-wrap: wrap;
+}
+.marque { font-weight: 700; font-size: 1.1rem; color: var(--texte); }
+.marque:hover { text-decoration: none; }
+.nav { display: flex; gap: .3rem; flex-wrap: wrap; }
+.nav a {
+    padding: .4rem .7rem;
+    border-radius: 8px;
+    color: var(--texte-doux);
+}
+.nav a:hover { background: var(--fond-doux); text-decoration: none; color: var(--texte); }
+.barre-actions { display: flex; align-items: center; gap: .6rem; margin-left: auto; }
+.utilisateur { color: var(--texte-doux); font-size: .9rem; }
+.btn-icone {
+    border: 1px solid var(--bordure);
+    background: var(--fond-doux);
+    border-radius: 8px;
+    padding: .35rem .5rem;
+    cursor: pointer;
+    font-size: 1rem;
+}
+.btn-deco {
+    padding: .4rem .8rem;
+    border-radius: 8px;
+    background: var(--fond-doux);
+    color: var(--texte);
+    font-size: .9rem;
+}
+.btn-deco:hover { text-decoration: none; background: var(--danger-fond); color: var(--danger); }
+
+/* ---------------- Conteneur principal ---------------- */
+.conteneur { max-width: 1000px; margin: 0 auto; padding: 1.5rem 1.2rem 3rem; }
+
+/* ---------------- Statistiques ---------------- */
+.stats { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+.stat {
+    background: var(--fond-carte);
+    border: 1px solid var(--bordure);
+    border-radius: var(--rayon);
+    padding: 1rem 1.3rem;
+    box-shadow: var(--ombre);
+    color: var(--texte-doux);
+    flex: 1 1 140px;
+}
+.stat-nb { display: block; font-size: 1.8rem; font-weight: 700; color: var(--texte); }
+
+/* ---------------- Blocs ---------------- */
+.bloc {
+    background: var(--fond-carte);
+    border: 1px solid var(--bordure);
+    border-radius: var(--rayon);
+    padding: 1.2rem 1.4rem;
+    box-shadow: var(--ombre);
+    margin-bottom: 1.5rem;
+}
+.bloc h2 { margin-top: 0; }
+.vide { color: var(--texte-doux); font-style: italic; }
+
+/* Dernières notes */
+.liste-notes { list-style: none; margin: 0; padding: 0; }
+.liste-notes li {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    padding: .6rem 0;
+    border-bottom: 1px solid var(--bordure);
+    flex-wrap: wrap;
+}
+.liste-notes li:last-child { border-bottom: 0; }
+.note-titre { font-weight: 600; }
+.note-meta { color: var(--texte-doux); font-size: .85rem; }
+
+/* ---------------- Grille des UE ---------------- */
+.grille-ue {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+}
+.carte-ue {
+    border: 1px solid var(--bordure);
+    border-left: 4px solid var(--couleur-ue, var(--accent));
+    border-radius: 10px;
+    padding: 1rem;
+    background: var(--fond);
+}
+.carte-ue h3 { margin: 0 0 .6rem; font-size: 1rem; }
+.badge-ue {
+    display: inline-block;
+    background: var(--couleur-ue, var(--accent));
+    color: #fff;
+    padding: .1rem .5rem;
+    border-radius: 6px;
+    font-size: .8rem;
+    font-weight: 700;
+    margin-right: .3rem;
+}
+.liste-matieres { list-style: none; margin: 0; padding: 0; }
+.liste-matieres li {
+    display: flex;
+    justify-content: space-between;
+    gap: .5rem;
+    padding: .35rem 0;
+    border-bottom: 1px dashed var(--bordure);
+    font-size: .92rem;
+}
+.liste-matieres li:last-child { border-bottom: 0; }
+.compteur {
+    background: var(--fond-doux);
+    color: var(--texte-doux);
+    border-radius: 20px;
+    padding: 0 .55rem;
+    font-size: .8rem;
+    min-width: 1.6rem;
+    text-align: center;
+}
+
+/* ---------------- Authentification ---------------- */
+.carte-auth {
+    max-width: 400px;
+    margin: 2rem auto;
+    background: var(--fond-carte);
+    border: 1px solid var(--bordure);
+    border-radius: var(--rayon);
+    padding: 2rem;
+    box-shadow: var(--ombre);
+}
+.carte-auth h1 { margin-top: 0; text-align: center; }
+.formulaire { display: flex; flex-direction: column; gap: .9rem; }
+.formulaire label { display: flex; flex-direction: column; gap: .3rem; font-size: .9rem; color: var(--texte-doux); }
+.formulaire input {
+    padding: .6rem .7rem;
+    border: 1px solid var(--bordure);
+    border-radius: 8px;
+    background: var(--fond);
+    color: var(--texte);
+    font-size: 1rem;
+}
+.formulaire input:focus { outline: 2px solid var(--accent); border-color: var(--accent); }
+
+.btn-principal {
+    background: var(--accent);
+    color: #fff;
+    border: 0;
+    border-radius: 8px;
+    padding: .7rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.btn-principal:hover { filter: brightness(1.07); }
+
+.lien-bas { text-align: center; margin-top: 1rem; font-size: .9rem; }
+.astuce {
+    text-align: center;
+    margin-top: 1rem;
+    font-size: .8rem;
+    color: var(--texte-doux);
+    background: var(--fond-doux);
+    padding: .5rem;
+    border-radius: 8px;
+}
+.alerte {
+    background: var(--danger-fond);
+    color: var(--danger);
+    border: 1px solid currentColor;
+    border-radius: 8px;
+    padding: .6rem .8rem;
+    font-size: .9rem;
+    margin: 0 0 .6rem;
+}
+
+/* ---------------- Pied de page ---------------- */
+.pied {
+    text-align: center;
+    color: var(--texte-doux);
+    font-size: .8rem;
+    padding: 2rem 1rem;
+}
+
+/* ---------------- Fil d'Ariane / entête matière ---------------- */
+.fil { color: var(--texte-doux); font-size: .9rem; margin-bottom: .5rem; }
+.entete-matiere {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+.liste-notes.grande li { padding: .8rem 0; }
+.liste-notes.grande .note-titre { font-size: 1.05rem; }
+
+/* ---------------- Éditeur de note ---------------- */
+.editeur {
+    background: var(--fond-carte);
+    border: 1px solid var(--bordure);
+    border-radius: var(--rayon);
+    box-shadow: var(--ombre);
+    overflow: hidden;
+}
+.editeur-barre {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    padding: .6rem .8rem;
+    border-bottom: 1px solid var(--bordure);
+    background: var(--fond-doux);
+    flex-wrap: wrap;
+}
+.retour { color: var(--texte-doux); white-space: nowrap; }
+.champ-titre {
+    flex: 1 1 200px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    padding: .45rem .6rem;
+    border: 1px solid var(--bordure);
+    border-radius: 8px;
+    background: var(--fond-carte);
+    color: var(--texte);
+}
+.champ-matiere {
+    padding: .45rem .5rem;
+    border: 1px solid var(--bordure);
+    border-radius: 8px;
+    background: var(--fond-carte);
+    color: var(--texte);
+    max-width: 220px;
+}
+.statut-save { font-size: .82rem; color: var(--texte-doux); white-space: nowrap; }
+.statut-save.ok      { color: #16a34a; }
+.statut-save.modifie { color: #d97706; }
+.statut-save.erreur  { color: var(--danger); }
+
+.editeur-onglets { display: flex; border: 1px solid var(--bordure); border-radius: 8px; overflow: hidden; }
+.editeur-onglets button {
+    border: 0;
+    background: var(--fond-carte);
+    color: var(--texte-doux);
+    padding: .4rem .6rem;
+    font-size: .82rem;
+    cursor: pointer;
+}
+.editeur-onglets button.actif { background: var(--accent); color: #fff; }
+
+.btn-supprimer {
+    border: 1px solid var(--bordure);
+    background: var(--fond-carte);
+    border-radius: 8px;
+    padding: .4rem .55rem;
+    cursor: pointer;
+    font-size: 1rem;
+}
+.btn-supprimer:hover { background: var(--danger-fond); border-color: var(--danger); }
+
+/* Corps : deux volets côte à côte */
+.editeur-corps { display: grid; grid-template-columns: 1fr 1fr; min-height: 65vh; }
+.editeur-saisie {
+    border: 0;
+    border-right: 1px solid var(--bordure);
+    padding: 1rem 1.2rem;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    font-size: .95rem;
+    line-height: 1.6;
+    resize: none;
+    background: var(--fond-carte);
+    color: var(--texte);
+    outline: none;
+}
+.editeur-apercu { padding: 1rem 1.4rem; overflow-y: auto; }
+
+/* Modes d'affichage pilotés par JS */
+.editeur.vue-edition .editeur-apercu { display: none; }
+.editeur.vue-edition .editeur-corps  { grid-template-columns: 1fr; }
+.editeur.vue-apercu  .editeur-saisie { display: none; }
+.editeur.vue-apercu  .editeur-corps  { grid-template-columns: 1fr; }
+
+/* Typographie de l'aperçu Markdown */
+.markdown { line-height: 1.65; }
+.markdown h1, .markdown h2, .markdown h3 { line-height: 1.25; margin: 1.2em 0 .5em; }
+.markdown h1 { font-size: 1.5rem; border-bottom: 1px solid var(--bordure); padding-bottom: .2em; }
+.markdown h2 { font-size: 1.25rem; }
+.markdown code {
+    background: var(--fond-doux);
+    padding: .1em .35em;
+    border-radius: 5px;
+    font-size: .9em;
+}
+.markdown pre {
+    background: var(--fond-doux);
+    border: 1px solid var(--bordure);
+    border-radius: 8px;
+    padding: .9rem 1rem;
+    overflow-x: auto;
+}
+.markdown pre code { background: none; padding: 0; font-size: .88rem; }
+.markdown blockquote {
+    border-left: 3px solid var(--accent);
+    margin: .8em 0;
+    padding: .2em 1em;
+    color: var(--texte-doux);
+    background: var(--accent-clair);
+    border-radius: 0 6px 6px 0;
+}
+.markdown table { border-collapse: collapse; width: 100%; margin: .8em 0; }
+.markdown th, .markdown td { border: 1px solid var(--bordure); padding: .4em .6em; }
+.markdown img { max-width: 100%; border-radius: 6px; }
+
+/* ---------------- Responsive ---------------- */
+@media (max-width: 640px) {
+    .barre { gap: .5rem; }
+    .barre-actions .utilisateur { display: none; }
+    .nav a { padding: .35rem .5rem; font-size: .9rem; }
+
+    /* Sur mobile : un seul volet à la fois (édition par défaut). */
+    .editeur.vue-deux .editeur-corps { grid-template-columns: 1fr; }
+    .editeur.vue-deux .editeur-apercu { display: none; }
+    .champ-matiere { max-width: 150px; }
+    .grille-2 { grid-template-columns: 1fr !important; }
+    .form-echeance, .revision-controles { flex-direction: column; align-items: stretch; }
+}
+
+/* ---------------- Grille 2 colonnes ---------------- */
+.grille-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+
+/* ---------------- Messages ---------------- */
+.succes {
+    background: #dcfce7; color: #166534; border: 1px solid #16a34a;
+    border-radius: 8px; padding: .6rem .8rem; font-size: .9rem; margin: 0 0 .8rem;
+}
+[data-theme="sombre"] .succes { background: #14321f; color: #86efac; }
+.astuce-mini { color: var(--texte-doux); font-size: .82rem; margin: .4rem 0; }
+
+/* ---------------- Boutons secondaires ---------------- */
+.btn-secondaire {
+    background: var(--fond-doux); color: var(--texte); border: 1px solid var(--bordure);
+    border-radius: 8px; padding: .45rem .8rem; font-size: .9rem; cursor: pointer;
+    text-decoration: none; display: inline-block;
+}
+.btn-secondaire:hover { background: var(--accent-clair); text-decoration: none; }
+.mini {
+    border: 1px solid var(--bordure); background: var(--fond-carte); border-radius: 6px;
+    padding: .1rem .4rem; cursor: pointer; font-size: .8rem;
+}
+.mini.danger:hover { background: var(--danger-fond); border-color: var(--danger); }
+
+/* ---------------- Panneau bas de l'éditeur ---------------- */
+.editeur-pied {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem; margin-top: 1rem;
+}
+.pied-bloc {
+    background: var(--fond-carte); border: 1px solid var(--bordure);
+    border-radius: var(--rayon); padding: 1rem; box-shadow: var(--ombre);
+}
+.pied-bloc h3 { margin: 0 0 .7rem; font-size: 1rem; }
+
+/* ---------------- Tags / chips ---------------- */
+.chips { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: .6rem; }
+.chip {
+    display: inline-flex; align-items: center; gap: .3rem;
+    color: #fff; padding: .2rem .5rem; border-radius: 20px; font-size: .82rem;
+    text-decoration: none;
+}
+.chip.actif { outline: 2px solid var(--texte); }
+.chip-x, .fichier-x, .carte-suppr, .ech-suppr {
+    background: rgba(255, 255, 255, .3); border: 0; color: inherit;
+    border-radius: 50%; width: 1.1rem; height: 1.1rem; line-height: 1;
+    cursor: pointer; font-size: .7rem;
+}
+.fichier-x, .carte-suppr, .ech-suppr {
+    background: var(--fond-doux); color: var(--texte-doux); width: 1.4rem; height: 1.4rem;
+}
+.chip-annuler { color: var(--texte-doux); font-size: .82rem; align-self: center; }
+.ajout-tag, .ajout-fichier { display: flex; gap: .4rem; flex-wrap: wrap; align-items: center; }
+.ajout-tag input[type="text"], .ajout-fichier input[type="file"] {
+    flex: 1 1 120px; padding: .4rem .5rem; border: 1px solid var(--bordure);
+    border-radius: 8px; background: var(--fond); color: var(--texte);
+}
+
+/* ---------------- Fichiers joints ---------------- */
+.liste-fichiers { list-style: none; margin: 0 0 .6rem; padding: 0; }
+.liste-fichiers li {
+    display: flex; align-items: center; gap: .5rem; padding: .3rem 0;
+    border-bottom: 1px dashed var(--bordure);
+}
+.liste-fichiers .taille { color: var(--texte-doux); font-size: .78rem; margin-left: auto; }
+.boutons-export { display: flex; gap: .5rem; flex-wrap: wrap; }
+
+/* ---------------- Recherche ---------------- */
+.barre-recherche { display: flex; gap: .5rem; margin-bottom: 1rem; }
+.barre-recherche input {
+    flex: 1; padding: .7rem .9rem; border: 1px solid var(--bordure);
+    border-radius: 8px; background: var(--fond-carte); color: var(--texte); font-size: 1rem;
+}
+.filtres-tags { display: flex; gap: .4rem; flex-wrap: wrap; align-items: center; margin-bottom: 1rem; }
+.filtre-libelle { color: var(--texte-doux); font-size: .85rem; }
+.info-resultats { color: var(--texte-doux); font-size: .9rem; }
+.extrait { color: var(--texte-doux); font-size: .88rem; margin: .3rem 0 0; width: 100%; }
+
+/* ---------------- Échéances ---------------- */
+.form-echeance { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1.5rem; align-items: center; }
+.form-echeance input, .form-echeance select {
+    padding: .5rem .6rem; border: 1px solid var(--bordure); border-radius: 8px;
+    background: var(--fond-carte); color: var(--texte);
+}
+.form-echeance input[name="titre"] { flex: 1 1 220px; }
+.liste-echeances { list-style: none; margin: 0 0 1.2rem; padding: 0; }
+.liste-echeances li {
+    display: flex; align-items: center; gap: .7rem; padding: .6rem .8rem;
+    background: var(--fond-carte); border: 1px solid var(--bordure);
+    border-radius: 10px; margin-bottom: .4rem;
+}
+.liste-echeances.retard li { border-color: var(--danger); }
+.liste-echeances.terminees li { opacity: .6; }
+.ech-titre { font-weight: 600; }
+.ech-matiere, .ech-date { color: var(--texte-doux); font-size: .82rem; }
+.ech-date { margin-left: auto; }
+.ech-suppr { margin-left: .3rem; }
+.ech-type {
+    color: #fff; padding: .1rem .45rem; border-radius: 6px; font-size: .72rem;
+    font-weight: 700; text-transform: uppercase;
+}
+.type-DS { background: #dc2626; } .type-examen { background: #b91c1c; }
+.type-rendu { background: #2563eb; } .type-TD { background: #0891b2; }
+.type-autre { background: #64748b; }
+
+/* ---------------- Flashcards ---------------- */
+.revision-controles { display: flex; gap: .5rem; margin-bottom: 1rem; }
+.revision-controles select {
+    padding: .5rem; border: 1px solid var(--bordure); border-radius: 8px;
+    background: var(--fond-carte); color: var(--texte);
+}
+.carte-flash { text-align: center; }
+.carte-face {
+    min-height: 140px; display: flex; align-items: center; justify-content: center;
+    padding: 1.5rem; border: 2px solid var(--accent); border-radius: var(--rayon);
+    font-size: 1.2rem; white-space: pre-wrap; background: var(--fond);
+    cursor: default; margin-bottom: 1rem;
+}
+.carte-face.verso { border-color: #16a34a; background: var(--accent-clair); }
+.carte-actions { display: flex; gap: .5rem; justify-content: center; }
+.carte-progression { color: var(--texte-doux); font-size: .85rem; margin-top: .6rem; }
+.form-carte { display: flex; flex-direction: column; gap: .6rem; max-width: 500px; }
+.form-carte textarea {
+    padding: .6rem; border: 1px solid var(--bordure); border-radius: 8px;
+    background: var(--fond); color: var(--texte); min-height: 60px; resize: vertical;
+    font-family: inherit;
+}
+.form-carte select {
+    padding: .5rem; border: 1px solid var(--bordure); border-radius: 8px;
+    background: var(--fond-carte); color: var(--texte);
+}
+.liste-cartes { list-style: none; margin: 0; padding: 0; }
+.liste-cartes li {
+    display: grid; grid-template-columns: 1fr 1fr auto auto; gap: .6rem; align-items: center;
+    padding: .5rem 0; border-bottom: 1px solid var(--bordure); font-size: .9rem;
+}
+.carte-r { color: var(--texte-doux); }
+.carte-mat { color: var(--texte-doux); font-size: .8rem; }
+
+/* ---------------- Réglages : structure ---------------- */
+.reglage-ue {
+    border: 1px solid var(--bordure); border-radius: 10px; padding: .8rem 1rem;
+    margin-bottom: .8rem; background: var(--fond);
+}
+.reglage-ue-titre { display: flex; align-items: center; gap: .5rem; margin-bottom: .5rem; }
+.reglage-matieres { list-style: none; margin: 0; padding: 0; }
+.reglage-matieres li {
+    display: flex; align-items: center; gap: .5rem; padding: .3rem 0;
+    border-bottom: 1px dashed var(--bordure);
+}
+.reglage-matieres li span:first-child { flex: 1; }
+.ajout-inline { padding-top: .5rem !important; border-bottom: 0 !important; }
+.nouvelle-matiere {
+    flex: 1; padding: .35rem .5rem; border: 1px solid var(--bordure);
+    border-radius: 6px; background: var(--fond-carte); color: var(--texte);
+}
+.ajout-ue { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: 1rem; }
+.ajout-ue input {
+    padding: .5rem; border: 1px solid var(--bordure); border-radius: 8px;
+    background: var(--fond-carte); color: var(--texte); flex: 1 1 180px;
+}
+.actions-corbeille { display: flex; gap: .4rem; margin-left: auto; }
+
+/* ---------------- Page d'aide Markdown ---------------- */
+.intro-aide { color: var(--texte-doux); margin-bottom: 1.2rem; }
+.aide-liste { display: flex; flex-direction: column; gap: .8rem; }
+.exemple {
+    display: grid; grid-template-columns: 1fr 1fr; align-items: stretch;
+    border: 1px solid var(--bordure); border-radius: 10px; overflow: hidden;
+}
+.exemple .src {
+    margin: 0; background: var(--fond-doux); color: var(--texte);
+    padding: .8rem 1rem; white-space: pre-wrap; word-break: break-word;
+    font-family: Consolas, "Liberation Mono", monospace; font-size: .85rem;
+    border-right: 1px solid var(--bordure);
+}
+.exemple .src code { background: none; padding: 0; font-size: inherit; }
+.exemple .rendu { padding: .5rem 1rem; }
+.bac-corps {
+    display: grid; grid-template-columns: 1fr 1fr; min-height: 320px;
+    border: 1px solid var(--bordure); border-radius: 10px; overflow: hidden;
+}
+
+@media (max-width: 640px) {
+    .exemple, .bac-corps { grid-template-columns: 1fr; }
+    .exemple .src { border-right: 0; border-bottom: 1px solid var(--bordure); }
+}

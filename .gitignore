@@ -1,0 +1,10 @@
+# Secrets / config locale
+config.php
+
+# Fichiers importés par les utilisateurs (sauf la protection .htaccess)
+uploads/*
+!uploads/.htaccess
+
+# Divers
+.DS_Store
+*.log
