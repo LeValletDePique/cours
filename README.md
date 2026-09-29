@@ -1,8 +1,7 @@
 # Mes Cours — plateforme de prise de notes
 
 Plateforme web pour prendre, organiser, rechercher et exporter mes notes de
-cours (Pré-Ing 2, CY Tech Pau). Back-end **PHP + PDO**, base **MySQL/MariaDB**,
-front **HTML/CSS/JS** sans framework lourd.
+cours.
 
 Organisation : **UE → Matière → Note**, avec tags transversaux.
 
