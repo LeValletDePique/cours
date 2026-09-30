@@ -11,3 +11,6 @@ uploads/*
 
 # Dépendances Composer (installées avec « composer install »)
 /vendor/
+
+# Sauvegardes de la base (mysqldump)
+/sauvegardes/

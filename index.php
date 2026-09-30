@@ -95,6 +95,17 @@ $stmt = db()->prepare(
 $stmt->execute([$uid, $uid, $uid]);
 $stats = $stmt->fetch();
 
+// --- Cours du jour (emploi du temps importé), si la migration est appliquée ---
+require_once __DIR__ . '/includes/edt.php';
+$cours_du_jour = [];
+if (edt_installe()) {
+    $aujourdhui = edt_maintenant()->setTime(0, 0);
+    $cours_du_jour = array_filter(
+        edt_cours_entre($uid, $aujourdhui, $aujourdhui->modify('+1 day')),
+        fn($c) => !$c['journee']
+    );
+}
+
 $titre_page = 'Accueil';
 require __DIR__ . '/includes/header.php';
 ?>
@@ -109,6 +120,28 @@ require __DIR__ . '/includes/header.php';
             <small>(<?= (int) $top_matiere['c'] ?> notes)</small></div>
     <?php endif; ?>
 </section>
+
+<?php if ($cours_du_jour): ?>
+<section class="bloc">
+    <h2>🗓️ Aujourd'hui</h2>
+    <ul class="liste-notes">
+        <?php foreach ($cours_du_jour as $c): ?>
+            <li<?= $c['fin'] <= edt_maintenant()->format('Y-m-d H:i:s') ? ' class="edt-passe"' : '' ?>>
+                <span class="note-titre">
+                    <?= e(substr($c['debut'], 11, 5)) ?>–<?= e(substr($c['fin'], 11, 5)) ?> ·
+                    <?php if ($c['matiere_id']): ?>
+                        <a href="matiere.php?id=<?= (int) $c['matiere_id'] ?>"><?= e($c['intitule']) ?></a>
+                    <?php else: ?>
+                        <?= e($c['intitule']) ?>
+                    <?php endif; ?>
+                </span>
+                <span class="note-meta"><?= e($c['lieu'] ?? '') ?></span>
+            </li>
+        <?php endforeach; ?>
+    </ul>
+    <p class="lien-bas"><a href="emploi-du-temps.php">Toute la semaine →</a></p>
+</section>
+<?php endif; ?>
 
 <div class="grille-2">
     <section class="bloc">

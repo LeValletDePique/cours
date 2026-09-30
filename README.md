@@ -34,7 +34,18 @@ Copie `config.exemple.php` en **`config.php`** et adapte si besoin
 3. Le bouton **🤖 Aide IA** (en bas à droite) répond alors aux questions.
    Sans clé, le reste du site fonctionne normalement.
 
-### 6. Lancer
+### 6. Mettre la base à jour (migrations)
+À faire après chaque mise à jour du code, à la racine du projet :
+```
+php migrations/appliquer.php
+```
+Le script fait d'abord une sauvegarde (`mysqldump`) dans `sauvegardes/`, puis
+applique seulement les fichiers `migrations/NNN_*.sql` pas encore appliqués.
+Sauvegarde manuelle à tout moment : `php outils/sauvegarder.php`.
+⚠ Ne réimporte jamais `schema.sql` sur une base qui contient tes notes : il
+efface les tables.
+
+### 7. Lancer
 Ouvre <http://localhost/cours/>.
 - **Compte de démo** : identifiant `demo` / mot de passe `demo1234`
 - Ou **Inscription** : tes UE/matières sont pré-remplies automatiquement.
@@ -64,7 +75,10 @@ Ouvre <http://localhost/cours/>.
 - **Recherche** plein texte (titre + contenu) avec filtre par tag.
 - **Échéances** (DS, rendus, examens) avec rappels sur le tableau de bord.
 - **Révision** par flashcards (question/réponse, mode révision mélangée).
-- **Tableau de bord** : dernières notes, favoris, prochaines échéances, stats.
+- **Emploi du temps** : lien d'abonnement `.ics` de l'ENT (resynchronisé tout seul,
+  au plus toutes les 3 h) ou import du fichier `.ics` ; vue semaine, cours en ce
+  moment, cours du jour sur l'accueil ; matière reconnue automatiquement.
+- **Tableau de bord** : cours du jour, dernières notes, favoris, prochaines échéances, stats.
 - **Mode sombre** + **interface responsive** (PC en amphi / téléphone).
 
 ---
@@ -83,10 +97,12 @@ Ouvre <http://localhost/cours/>.
 ## Structure du projet
 ```
 config.php            identifiants BDD (non versionné)
-schema.sql            structure + données de démo
+schema.sql            structure + données de démo (installation neuve uniquement)
+migrations/           évolutions de la base (php migrations/appliquer.php)
+outils/               sauvegarde de la base (php outils/sauvegarder.php)
 includes/             connexion PDO, auth, fonctions, gabarits (header/footer)
 api/                  points d'entrée AJAX JSON (notes, tags, structure,
-                      echeances, flashcards, upload, preferences, assistant)
+                      echeances, flashcards, upload, preferences, assistant, edt)
 assets/css, assets/js CSS + JavaScript (app, editeur, outils-editeur,
                       rendu, assistant, maths-symboles, mathjax-config)
 composer.json         dépendance du SDK Anthropic (assistant IA)
@@ -94,6 +110,7 @@ uploads/              fichiers importés (accès via telecharger.php)
 index.php             tableau de bord            recherche.php   recherche
 note.php              éditeur de note            corbeille.php   corbeille
 matiere.php           notes d'une matière        echeances.php   échéances
+emploi-du-temps.php   emploi du temps (.ics)
 inscription/connexion revision.php  flashcards   reglages.php    réglages
 export.php / imprimer.php   exports Markdown / PDF
 ```

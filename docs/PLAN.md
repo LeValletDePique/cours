@@ -36,9 +36,10 @@
 
 | Fichier | Contenu |
 |---|---|
-| `001_versions_notes.sql` | `notes.version INT UNSIGNED NOT NULL DEFAULT 1` (verrou optimiste) + table `note_versions` (id, note_id, utilisateur_id, titre, contenu, date_version, origine `auto`/`conflit`), FK `ON DELETE CASCADE`. |
-| `002_emploi_du_temps.sql` | `edt_cours` (utilisateur_id, debut, fin, intitule, lieu, matiere_id NULL) + `edt_correspondances` (utilisateur_id, intitule_normalise, matiere_id) pour **apprendre** automatiquement « intitulé ENT → matière ». |
-| `003_marqueurs.sql` | `note_marqueurs` (note_id, utilisateur_id, matiere_id, type `retenir`/`question`/`todo`, texte, empreinte, resolu, date_creation). Remplie automatiquement à chaque sauvegarde. |
+| `00x_versions_notes.sql` | `notes.version INT UNSIGNED NOT NULL DEFAULT 1` (verrou optimiste) + table `note_versions` (id, note_id, utilisateur_id, titre, contenu, date_version, origine `auto`/`conflit`), FK `ON DELETE CASCADE`. |
+| `001_emploi_du_temps.sql` ✅ | **Fait** : `edt_sources` (lien d'abonnement) + `edt_cours` (debut, fin, journee, intitule, lieu, description, matiere_id reconnue). |
+| `002_…` | `edt_correspondances` (utilisateur_id, intitule_normalise, matiere_id) pour **apprendre** « intitulé ENT → matière » quand je corrige une matière. |
+| `00x_marqueurs.sql` | `note_marqueurs` (note_id, utilisateur_id, matiere_id, type `retenir`/`question`/`todo`, texte, empreinte, resolu, date_creation). Remplie automatiquement à chaque sauvegarde. |
 
 ### 1.2 Bibliothèques en local (hors ligne)
 
@@ -66,7 +67,14 @@
 - Si je change la matière dans la note, la correspondance intitulé ENT → matière est
   mémorisée (`edt_correspondances`) : la détection s'améliore toute seule, sans réglage.
 
-### 1.4 Emploi du temps (`.ics`)
+### 1.4 Emploi du temps (`.ics`) — ✅ fait (hors correspondances apprises)
+
+Réalisé : `emploi-du-temps.php` (vue semaine, « en ce moment », navigation), `api/edt.php`,
+`includes/edt.php`, encart « Aujourd'hui » sur l'accueil, `migrations/appliquer.php`,
+`outils/sauvegarder.php`. En plus du fichier, un **lien d'abonnement** peut être collé : il est
+resynchronisé automatiquement (au plus toutes les 3 h, en arrière-plan à l'ouverture de la page).
+
+Plan initial :
 
 - Page `emploi-du-temps.php` : **un seul champ fichier** + résumé (« 142 cours importés,
   du … au … ; 3 intitulés non reconnus ») et le cours du moment.

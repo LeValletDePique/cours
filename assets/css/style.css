@@ -818,3 +818,120 @@ kbd {
 .ref-code.copie { background: #dcfce7; color: #166534; }
 .ref-code.copie::after { content: "  ✓ copié"; }
 .ref-desc { color: var(--texte-doux); }
+
+/* ---------------- Emploi du temps ---------------- */
+/* Chaque cours reçoit une teinte (--teinte, 0-359) : même matière = même couleur. */
+.edt-cours, .edt-journee, .edt-encart {
+    --edt-fond:   hsl(var(--teinte, 230) 75% 93%);
+    --edt-bord:   hsl(var(--teinte, 230) 60% 45%);
+    --edt-texte:  hsl(var(--teinte, 230) 45% 22%);
+}
+[data-theme="sombre"] .edt-cours,
+[data-theme="sombre"] .edt-journee,
+[data-theme="sombre"] .edt-encart {
+    --edt-fond:  hsl(var(--teinte, 230) 35% 24%);
+    --edt-bord:  hsl(var(--teinte, 230) 60% 62%);
+    --edt-texte: hsl(var(--teinte, 230) 60% 90%);
+}
+
+.edt-maintenant { display: flex; flex-wrap: wrap; gap: .8rem; margin-bottom: 1rem; }
+.edt-encart {
+    flex: 1 1 240px; display: flex; flex-direction: column; gap: .1rem;
+    background: var(--edt-fond); color: var(--edt-texte);
+    border-left: 4px solid var(--edt-bord); border-radius: 10px; padding: .6rem .9rem;
+}
+.edt-encart-libelle { font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; opacity: .8; }
+.edt-encart-actuel { box-shadow: 0 0 0 2px var(--edt-bord); }
+
+.edt-semaines { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; margin-bottom: .8rem; }
+.edt-periode { margin-left: .5rem; color: var(--texte-doux); }
+
+.edt-grille {
+    display: grid;
+    grid-template-columns: 2.6rem repeat(var(--nb-jours), minmax(0, 1fr));
+    gap: 0 .35rem;
+    background: var(--fond-carte); border: 1px solid var(--bordure); border-radius: var(--rayon);
+    box-shadow: var(--ombre); padding: .6rem .6rem 1rem; margin-bottom: 1.5rem;
+}
+/* Colonne des heures, alignée sur le début des colonnes de cours. */
+.edt-heures {
+    position: relative; grid-row: 1; margin-top: var(--edt-entete, 2.6rem);
+    height: calc(var(--heure) * var(--nb-heures));
+}
+.edt-heures span {
+    position: absolute; right: .3rem; transform: translateY(-50%);
+    font-size: .72rem; color: var(--texte-doux);
+}
+.edt-jour { grid-row: 1; display: flex; flex-direction: column; min-width: 0; }
+.edt-jour-titre {
+    font-size: .85rem; margin: 0; height: var(--edt-entete, 2.6rem);
+    display: flex; flex-direction: column; justify-content: center; text-align: center;
+}
+.edt-jour-titre small { color: var(--texte-doux); font-weight: 400; }
+.edt-jour.aujourdhui .edt-jour-titre { color: var(--accent); }
+/* Bandeaux « toute la journée » (vacances, férié…) : en haut de la colonne, par-dessus. */
+.edt-journees { position: absolute; top: 2px; left: 2px; right: 2px; z-index: 2; display: flex; flex-direction: column; gap: 2px; }
+.edt-journee {
+    background: var(--edt-fond); color: var(--edt-texte); border-radius: 5px;
+    font-size: .72rem; padding: .1rem .4rem;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.edt-colonne {
+    position: relative; height: calc(var(--heure) * var(--nb-heures));
+    border-left: 1px solid var(--bordure);
+    /* Une ligne fine à chaque heure. */
+    background: repeating-linear-gradient(to bottom,
+        var(--bordure) 0 1px, transparent 1px var(--heure));
+}
+.edt-jour.aujourdhui .edt-colonne { background-color: var(--accent-clair); }
+.edt-jour-vide { display: none; }
+.edt-cours {
+    position: absolute; overflow: hidden; display: flex; flex-direction: column;
+    background: var(--edt-fond); color: var(--edt-texte);
+    border-left: 3px solid var(--edt-bord); border-radius: 6px;
+    padding: .15rem .35rem; font-size: .75rem; line-height: 1.25;
+    margin-left: 1px;
+}
+a.edt-cours:hover { text-decoration: none; filter: brightness(.97); box-shadow: 0 2px 8px rgba(0,0,0,.12); z-index: 3; }
+.edt-cours.fini { opacity: .55; }
+.edt-cours-heure { font-size: .68rem; opacity: .85; }
+.edt-cours-titre { font-weight: 600; overflow-wrap: break-word; hyphens: auto; }
+.edt-cours-lieu { opacity: .85; }
+/* Trois cours ou plus en même temps : colonne étroite, on garde l'essentiel. */
+.edt-cours.etroit { font-size: .66rem; padding: .1rem .2rem; }
+.edt-cours.etroit .edt-cours-heure { display: none; }
+.edt-ligne-maintenant {
+    position: absolute; left: 0; right: 0; height: 2px; background: var(--danger); z-index: 4;
+}
+.edt-ligne-maintenant::before {
+    content: ""; position: absolute; left: -4px; top: -3px;
+    width: 8px; height: 8px; border-radius: 50%; background: var(--danger);
+}
+
+.edt-source summary { cursor: pointer; font-weight: 600; }
+.edt-source-choix { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.2rem; margin-top: 1rem; }
+.edt-form h3 { margin: 0 0 .3rem; font-size: 1rem; }
+.edt-form input[type="url"] {
+    width: 100%; padding: .55rem .7rem; border: 1px solid var(--bordure); border-radius: 8px;
+    background: var(--fond); color: var(--texte); font-size: .95rem;
+}
+.edt-form-boutons { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .6rem; }
+.edt-form .btn-principal { padding: .5rem 1rem; font-size: .9rem; }
+.edt-message { min-height: 1.2em; margin: .8rem 0 0; font-size: .9rem; color: var(--texte-doux); }
+.edt-message.ok { color: #16a34a; }
+.edt-message.erreur { color: var(--danger); }
+
+/* Téléphone : une liste par jour au lieu de la grille. */
+@media (max-width: 640px) {
+    .edt-grille { display: block; padding: .6rem; }
+    .edt-heures, .edt-ligne-maintenant { display: none; }
+    .edt-journees { position: static; }
+    .edt-jour { margin-bottom: .8rem; }
+    .edt-jour-titre { height: auto; flex-direction: row; gap: .4rem; justify-content: flex-start; text-align: left; padding: .2rem 0; }
+    .edt-colonne { height: auto !important; background: none !important; border: 0; display: flex; flex-direction: column; gap: 4px; }
+    .edt-cours.etroit .edt-cours-heure { display: inline; }
+    .edt-cours { position: static; width: auto !important; height: auto !important; padding: .4rem .6rem; font-size: .85rem; }
+    .edt-jour-vide { display: block; margin: 0; font-size: .85rem; color: var(--texte-doux); font-style: italic; }
+}
+@media print { .edt-source, .edt-semaines .btn-secondaire { display: none; } }
+.liste-notes li.edt-passe { opacity: .5; }

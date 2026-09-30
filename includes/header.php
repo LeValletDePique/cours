@@ -39,6 +39,7 @@ $titre  = isset($titre_page) ? $titre_page . ' · ' . $config['nom_app'] : $conf
         <nav class="nav">
             <a href="index.php">Accueil</a>
             <a href="recherche.php">Recherche</a>
+            <a href="emploi-du-temps.php">Emploi du temps</a>
             <a href="echeances.php">Échéances</a>
             <a href="revision.php">Révision</a>
             <a href="aide.php">Aide</a>
