@@ -62,90 +62,103 @@ $tags = $stmt->fetchAll();
 $titre_page = 'Réglages';
 require __DIR__ . '/includes/header.php';
 ?>
-<h1>Réglages</h1>
+<header class="mc-hello"><h1 class="mc-title">Réglages</h1></header>
 
-<?php if ($message): ?><p class="succes"><?= e($message) ?></p><?php endif; ?>
-<?php if ($erreur): ?><p class="alerte"><?= e($erreur) ?></p><?php endif; ?>
+<?php if ($message): ?><p class="mc-message mc-message--ok mc-page" role="status"><?= icone('coche', 'mc-ico-sm') ?><?= e($message) ?></p><?php endif; ?>
+<?php if ($erreur): ?><p class="mc-message mc-message--erreur mc-page" role="alert"><?= icone('alerte', 'mc-ico-sm') ?><?= e($erreur) ?></p><?php endif; ?>
 
-<!-- Apparence -->
-<section class="bloc">
-    <h2>Apparence</h2>
-    <label>Thème :
-        <select id="choix-theme">
-            <option value="clair"  <?= $user['theme'] === 'clair'  ? 'selected' : '' ?>>Clair</option>
-            <option value="sombre" <?= $user['theme'] === 'sombre' ? 'selected' : '' ?>>Sombre</option>
-        </select>
-    </label>
-</section>
+<div class="mc-grid mc-page-large">
+    <!-- Apparence -->
+    <section class="mc-card mc-col-5" aria-labelledby="titre-apparence">
+        <div class="mc-card__head"><h2 class="mc-h" id="titre-apparence">Apparence</h2></div>
+        <label class="mc-label">Thème
+            <select class="mc-select" id="choix-theme">
+                <option value="clair"  <?= $user['theme'] === 'clair'  ? 'selected' : '' ?>>Clair</option>
+                <option value="sombre" <?= $user['theme'] === 'sombre' ? 'selected' : '' ?>>Sombre</option>
+            </select>
+        </label>
+        <p class="mc-meta">Le bouton lune, en bas de la barre latérale, bascule aussi.</p>
+    </section>
 
-<!-- Mot de passe -->
-<section class="bloc">
-    <h2>Mot de passe</h2>
-    <form method="post" class="formulaire" style="max-width:400px">
-        <?= champ_csrf() ?>
-        <input type="hidden" name="form" value="mdp">
-        <label>Mot de passe actuel <input type="password" name="actuel" required></label>
-        <label>Nouveau mot de passe <input type="password" name="nouveau" required minlength="8"></label>
-        <label>Confirmer <input type="password" name="confirm" required minlength="8"></label>
-        <button type="submit" class="btn-principal">Changer</button>
-    </form>
-</section>
+    <!-- Mot de passe -->
+    <section class="mc-card mc-col-7" aria-labelledby="titre-mdp">
+        <div class="mc-card__head"><h2 class="mc-h" id="titre-mdp">Mot de passe</h2></div>
+        <form method="post" class="mc-form">
+            <?= champ_csrf() ?>
+            <input type="hidden" name="form" value="mdp">
+            <label class="mc-label">Mot de passe actuel <input class="mc-input" type="password" name="actuel" required autocomplete="current-password"></label>
+            <label class="mc-label">Nouveau mot de passe (8 caractères min.) <input class="mc-input" type="password" name="nouveau" required minlength="8" autocomplete="new-password"></label>
+            <label class="mc-label">Confirmer <input class="mc-input" type="password" name="confirm" required minlength="8" autocomplete="new-password"></label>
+            <div><button type="submit" class="mc-btn">Changer le mot de passe</button></div>
+        </form>
+    </section>
 
-<!-- Structure UE / matières -->
-<section class="bloc">
-    <h2>Mes UE et matières</h2>
-    <p class="astuce-mini">Ajoute, renomme ou supprime tes UE et matières. Supprimer une UE
-       supprime aussi ses matières et leurs notes.</p>
+    <!-- Structure UE / matières -->
+    <section class="mc-card mc-col-12" aria-labelledby="titre-structure" id="structure-ancre">
+        <div class="mc-card__head"><h2 class="mc-h" id="titre-structure">Mes UE et matières</h2></div>
+        <p class="mc-meta mc-reglages__aide">Ajoute, renomme ou supprime tes UE et matières. Supprimer une UE
+           supprime aussi ses matières et leurs notes. La couleur d'une UE suit son ordre (UE1 à UE4, puis « autre »).</p>
 
-    <div id="structure">
-        <?php foreach ($ues as $ueId => $ue): ?>
-            <div class="reglage-ue" data-ue-id="<?= (int) $ueId ?>" data-code="<?= e($ue['code']) ?>">
-                <div class="reglage-ue-titre">
-                    <span class="badge-ue" style="background: <?= e($ue['couleur']) ?>"><?= e($ue['code']) ?></span>
-                    <strong><?= e($ue['nom']) ?></strong>
-                    <button type="button" class="mini" data-act="ue-renommer">✎</button>
-                    <button type="button" class="mini danger" data-act="ue-supprimer">🗑</button>
-                </div>
-                <ul class="reglage-matieres">
-                    <?php foreach ($ue['matieres'] as $m): ?>
-                        <li data-matiere-id="<?= (int) $m['id'] ?>">
-                            <span><?= e($m['nom']) ?></span>
-                            <button type="button" class="mini" data-act="matiere-renommer">✎</button>
-                            <button type="button" class="mini danger" data-act="matiere-supprimer">🗑</button>
+        <div id="structure" class="mc-reglages-ue">
+            <?php foreach ($ues as $ueId => $ue): ?>
+                <div class="reglage-ue mc-ue-block <?= e(classe_ue($uid, (int) $ueId)) ?>" data-ue-id="<?= (int) $ueId ?>" data-code="<?= e($ue['code']) ?>">
+                    <div class="mc-ue-block__head">
+                        <span class="mc-ue"><?= e($ue['code']) ?></span>
+                        <strong class="mc-ue-block__name"><?= e($ue['nom']) ?></strong>
+                        <span class="mc-actions mc-reglages__boutons">
+                            <button type="button" class="mc-btn mc-btn--ghost mc-btn--sm" data-act="ue-renommer"
+                                    title="Renommer l'UE" aria-label="Renommer l'UE <?= e($ue['code']) ?>"><?= icone('modifier', 'mc-ico-sm') ?></button>
+                            <button type="button" class="mc-btn mc-btn--ghost mc-btn--sm" data-act="ue-supprimer"
+                                    title="Supprimer l'UE" aria-label="Supprimer l'UE <?= e($ue['code']) ?>"><?= icone('corbeille', 'mc-ico-sm') ?></button>
+                        </span>
+                    </div>
+                    <ul class="mc-lignes">
+                        <?php foreach ($ue['matieres'] as $m): ?>
+                            <li class="mc-ligne" data-matiere-id="<?= (int) $m['id'] ?>">
+                                <span class="mc-ligne__corps"><?= e($m['nom']) ?></span>
+                                <span class="mc-actions mc-reglages__boutons">
+                                    <button type="button" class="mc-btn mc-btn--ghost mc-btn--sm" data-act="matiere-renommer"
+                                            title="Renommer" aria-label="Renommer <?= e($m['nom']) ?>"><?= icone('modifier', 'mc-ico-sm') ?></button>
+                                    <button type="button" class="mc-btn mc-btn--ghost mc-btn--sm" data-act="matiere-supprimer"
+                                            title="Supprimer" aria-label="Supprimer <?= e($m['nom']) ?>"><?= icone('corbeille', 'mc-ico-sm') ?></button>
+                                </span>
+                            </li>
+                        <?php endforeach; ?>
+                        <li class="mc-ligne mc-form-ligne">
+                            <input type="text" class="mc-input nouvelle-matiere" placeholder="Nouvelle matière…" aria-label="Nouvelle matière dans <?= e($ue['code']) ?>">
+                            <button type="button" class="mc-btn mc-btn--sm" data-act="matiere-creer"><?= icone('plus', 'mc-ico-sm') ?>Ajouter</button>
                         </li>
-                    <?php endforeach; ?>
-                    <li class="ajout-inline">
-                        <input type="text" class="nouvelle-matiere" placeholder="Nouvelle matière…">
-                        <button type="button" class="btn-secondaire" data-act="matiere-creer">Ajouter</button>
-                    </li>
-                </ul>
-            </div>
-        <?php endforeach; ?>
-    </div>
+                    </ul>
+                </div>
+            <?php endforeach; ?>
+        </div>
 
-    <div class="ajout-ue">
-        <input type="text" id="nouvelle-ue-code" placeholder="Code (UE5)" style="max-width:110px">
-        <input type="text" id="nouvelle-ue-nom" placeholder="Nom de la nouvelle UE">
-        <button type="button" class="btn-secondaire" id="btn-ajouter-ue">Ajouter une UE</button>
-    </div>
-</section>
+        <div class="mc-form-ligne mc-reglages__ajout-ue">
+            <input class="mc-input mc-input--court" type="text" id="nouvelle-ue-code" placeholder="Code (UE5)" aria-label="Code de la nouvelle UE">
+            <input class="mc-input" type="text" id="nouvelle-ue-nom" placeholder="Nom de la nouvelle UE" aria-label="Nom de la nouvelle UE">
+            <button type="button" class="mc-btn" id="btn-ajouter-ue"><?= icone('plus', 'mc-ico-sm') ?>Ajouter une UE</button>
+        </div>
+    </section>
 
-<!-- Tags -->
-<section class="bloc">
-    <h2>Mes tags</h2>
-    <div class="chips" id="liste-tags-reglages">
-        <?php foreach ($tags as $t): ?>
-            <span class="chip" data-tag-id="<?= (int) $t['id'] ?>" style="background: <?= e($t['couleur']) ?>">
-                <?= e($t['nom']) ?> <button type="button" class="chip-x" title="Supprimer">✕</button>
-            </span>
-        <?php endforeach; ?>
-    </div>
-    <div class="ajout-tag">
-        <input type="text" id="nouveau-tag" placeholder="Nouveau tag…" maxlength="50">
-        <input type="color" id="couleur-tag" value="#64748b" title="Couleur">
-        <button type="button" class="btn-secondaire" id="btn-ajouter-tag">Ajouter</button>
-    </div>
-</section>
+    <!-- Tags -->
+    <section class="mc-card mc-col-12" aria-labelledby="titre-tags">
+        <div class="mc-card__head"><h2 class="mc-h" id="titre-tags">Mes tags</h2></div>
+        <div class="mc-chips" id="liste-tags-reglages">
+            <?php foreach ($tags as $t): ?>
+                <span class="mc-chip" data-tag-id="<?= (int) $t['id'] ?>" style="--tag: <?= e($t['couleur']) ?>">
+                    <span class="mc-chip__dot"></span><?= e($t['nom']) ?>
+                    <button type="button" class="mc-chip__x chip-x" title="Supprimer" aria-label="Supprimer le tag <?= e($t['nom']) ?>"><?= icone('fermer', 'mc-ico-sm') ?></button>
+                </span>
+            <?php endforeach; ?>
+            <?php if (!$tags): ?><span class="mc-meta">Pas encore de tag.</span><?php endif; ?>
+        </div>
+        <div class="mc-form-ligne">
+            <input class="mc-input" type="text" id="nouveau-tag" placeholder="Nouveau tag…" maxlength="50" aria-label="Nom du nouveau tag">
+            <input class="mc-input" type="color" id="couleur-tag" value="#64748b" title="Couleur du tag" aria-label="Couleur du tag">
+            <button type="button" class="mc-btn" id="btn-ajouter-tag"><?= icone('plus', 'mc-ico-sm') ?>Ajouter</button>
+        </div>
+    </section>
+</div>
 
 <script>
 (function () {
@@ -183,7 +196,7 @@ require __DIR__ . '/includes/header.php';
                 { ue_id: ueId, nom: input.value.trim() }); location.reload(); }
         } else if (act === 'matiere-renommer') {
             const li = btn.closest('li');
-            const nom = prompt('Nouveau nom de la matière :', li.querySelector('span').textContent);
+            const nom = prompt('Nouveau nom de la matière :', li.querySelector('span').textContent.trim());
             if (nom) { await api('structure', 'matiere_renommer',
                 { id: parseInt(li.dataset.matiereId, 10), nom }); location.reload(); }
         } else if (act === 'matiere-supprimer') {
@@ -203,8 +216,8 @@ require __DIR__ . '/includes/header.php';
 
     // ---- Tags ----
     document.getElementById('liste-tags-reglages').addEventListener('click', async (e) => {
-        if (!e.target.classList.contains('chip-x')) return;
-        const chip = e.target.closest('.chip');
+        if (!e.target.closest('.chip-x')) return;
+        const chip = e.target.closest('.mc-chip');
         if (confirm('Supprimer ce tag partout ?')) {
             await api('tags', 'supprimer', { tag_id: parseInt(chip.dataset.tagId, 10) });
             chip.remove();

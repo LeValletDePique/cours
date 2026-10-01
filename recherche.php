@@ -29,46 +29,41 @@ function extrait(string $contenu, int $max = 180): string
 $titre_page = 'Recherche';
 require __DIR__ . '/includes/header.php';
 ?>
-<h1>Recherche</h1>
+<header class="mc-hello">
+    <p class="mc-eyebrow"><?= $q !== '' || $tag ? pluriel(count($resultats), 'résultat') : 'Dernières notes' ?></p>
+    <h1 class="mc-title">Recherche</h1>
+</header>
 
-<form method="get" action="recherche.php" class="barre-recherche">
-    <input type="search" name="q" value="<?= e($q) ?>"
-           placeholder="Rechercher dans mes notes…" autofocus>
+<form method="get" action="recherche.php" class="mc-form-ligne mc-page" role="search">
+    <label class="mc-quickadd mc-recherche"><?= icone('recherche', 'mc-ico-sm') ?><span class="mc-sr">Mots à chercher</span>
+        <input type="search" name="q" value="<?= e($q) ?>" placeholder="Rechercher dans mes notes…" <?= $q === '' ? 'autofocus' : '' ?>></label>
     <?php if ($tag): ?><input type="hidden" name="tag" value="<?= $tag ?>"><?php endif; ?>
-    <button type="submit" class="btn-principal">Chercher</button>
+    <button type="submit" class="mc-btn">Chercher</button>
 </form>
 
 <?php if ($tags): ?>
-    <div class="filtres-tags">
-        <span class="filtre-libelle">Filtrer :</span>
+    <div class="mc-chips mc-page" aria-label="Filtrer par tag">
+        <span class="mc-eyebrow">Filtrer</span>
         <?php foreach ($tags as $t): ?>
-            <a class="chip <?= $tag === (int) $t['id'] ? 'actif' : '' ?>"
-               style="background: <?= e($t['couleur']) ?>"
-               href="recherche.php?q=<?= urlencode($q) ?>&tag=<?= (int) $t['id'] ?>">
-                <?= e($t['nom']) ?>
-            </a>
+            <a class="mc-chip" style="--tag: <?= e($t['couleur']) ?>" <?= $tag === (int) $t['id'] ? 'aria-current="true"' : '' ?>
+               href="recherche.php?q=<?= urlencode($q) ?>&tag=<?= (int) $t['id'] ?>"><span class="mc-chip__dot"></span><?= e($t['nom']) ?></a>
         <?php endforeach; ?>
         <?php if ($tag): ?>
-            <a class="chip-annuler" href="recherche.php?q=<?= urlencode($q) ?>">✕ retirer le filtre</a>
+            <a class="mc-btn mc-btn--ghost mc-btn--sm" href="recherche.php?q=<?= urlencode($q) ?>"><?= icone('fermer', 'mc-ico-sm') ?>Retirer le filtre</a>
         <?php endif; ?>
     </div>
 <?php endif; ?>
 
-<?php if ($q !== '' || $tag): ?>
-    <p class="info-resultats"><?= count($resultats) ?> résultat(s)</p>
-    <ul class="liste-notes grande">
-        <?php foreach ($resultats as $r): ?>
-            <li>
-                <a class="note-titre" href="note.php?id=<?= (int) $r['id'] ?>"><?= e($r['titre']) ?></a>
-                <span class="note-meta"><?= e($r['matiere'] ?? 'Non classée') ?></span>
-                <p class="extrait"><?= e(extrait($r['contenu'])) ?></p>
-            </li>
-        <?php endforeach; ?>
-    </ul>
+<section class="mc-card mc-page" aria-label="Résultats">
+    <?php foreach ($resultats as $r): ?>
+        <?= html_note_row($r, $uid, null, ($q !== '' && trim((string) $r['contenu']) !== '')
+            ? '<span class="mc-note__extrait">' . e(extrait($r['contenu'])) . '</span>' : '') ?>
+    <?php endforeach; ?>
     <?php if (!$resultats): ?>
-        <p class="vide">Aucune note ne correspond.</p>
+        <?= $q !== '' || $tag
+            ? html_vide('Aucune note ne correspond. Essaie un mot plus court ou retire le filtre : la recherche accepte le début des mots.')
+            : html_vide('Tes notes apparaîtront ici. Crée la première, tu pourras ensuite la retrouver par n\'importe quel mot.',
+                '<button type="button" class="mc-btn mc-btn--sm" data-action="nouvelle-note">' . icone('plus', 'mc-ico-sm') . 'Nouvelle note</button>') ?>
     <?php endif; ?>
-<?php else: ?>
-    <p class="vide">Tape un mot-clé pour chercher dans tes notes.</p>
-<?php endif; ?>
+</section>
 <?php require __DIR__ . '/includes/footer.php'; ?>

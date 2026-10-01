@@ -70,32 +70,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $titre_page = 'Inscription';
 require __DIR__ . '/includes/header.php';
 ?>
-<div class="carte-auth">
-    <h1>Créer un compte</h1>
+<section class="mc-card" aria-labelledby="titre-inscription">
+    <h1 class="mc-title" id="titre-inscription">Créer un compte</h1>
+    <p class="mc-meta">Tes UE et matières du semestre sont créées tout de suite.</p>
 
     <?php foreach ($erreurs as $err): ?>
-        <p class="alerte"><?= e($err) ?></p>
+        <p class="mc-message mc-message--erreur" role="alert"><?= icone('alerte', 'mc-ico-sm') ?><?= e($err) ?></p>
     <?php endforeach; ?>
 
-    <form method="post" action="inscription.php" class="formulaire">
+    <form method="post" action="inscription.php" class="mc-form">
         <?= champ_csrf() ?>
-        <label>Identifiant
-            <input type="text" name="nom_utilisateur" required
+        <label class="mc-label">Identifiant
+            <input class="mc-input" type="text" name="nom_utilisateur" required autocomplete="username"
                    value="<?= e($valeurs['nom_utilisateur']) ?>" autofocus>
         </label>
-        <label>E-mail
-            <input type="email" name="email" required
+        <label class="mc-label">E-mail
+            <input class="mc-input" type="email" name="email" required autocomplete="email"
                    value="<?= e($valeurs['email']) ?>">
         </label>
-        <label>Mot de passe (8 caractères min.)
-            <input type="password" name="mot_de_passe" required minlength="8">
+        <label class="mc-label">Mot de passe (8 caractères min.)
+            <input class="mc-input" type="password" name="mot_de_passe" required minlength="8" autocomplete="new-password">
         </label>
-        <label>Confirmer le mot de passe
-            <input type="password" name="mot_de_passe_confirm" required minlength="8">
+        <label class="mc-label">Confirmer le mot de passe
+            <input class="mc-input" type="password" name="mot_de_passe_confirm" required minlength="8" autocomplete="new-password">
         </label>
-        <button type="submit" class="btn-principal">S'inscrire</button>
+        <button type="submit" class="mc-btn mc-btn--primary mc-btn--lg mc-btn--plein"><?= icone('personne', 'mc-ico-sm') ?>Créer mon compte</button>
     </form>
 
-    <p class="lien-bas">Déjà un compte ? <a href="connexion.php">Se connecter</a></p>
-</div>
+    <p class="mc-meta">Déjà un compte ? <a class="mc-link" href="connexion.php">Me connecter</a></p>
+</section>
 <?php require __DIR__ . '/includes/footer.php'; ?>

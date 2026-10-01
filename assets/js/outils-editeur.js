@@ -621,8 +621,8 @@
             fond.innerHTML = `
                 <div class="modale tab-editeur" role="dialog" aria-label="Éditeur de tableau">
                     <div class="modale-entete">
-                        <h3>▦ ${existant ? 'Modifier le tableau' : 'Nouveau tableau'}</h3>
-                        <button type="button" class="modale-x" title="Fermer (Échap)">✕</button>
+                        <h3 class="mc-h">${icone('tableau', 'mc-ico-sm')} ${existant ? 'Modifier le tableau' : 'Nouveau tableau'}</h3>
+                        <button type="button" class="modale-x mc-btn mc-btn--ghost mc-btn--sm" title="Fermer (Échap)" aria-label="Fermer">${icone('fermer', 'mc-ico-sm')}</button>
                     </div>
                     <div class="tab-actions">
                         <button type="button" data-t="ligne">+ Ligne</button>
@@ -641,8 +641,8 @@
                         colle un tableau Excel / Sheets dans une case pour tout remplir.
                         La 1<sup>re</sup> ligne est l'en-tête. Gras, couleurs et $maths$ acceptés.</p>
                     <div class="modale-pied">
-                        <button type="button" class="btn-secondaire" data-t="annuler">Annuler</button>
-                        <button type="button" class="btn-primaire" data-t="inserer">
+                        <button type="button" class="mc-btn mc-btn--ghost" data-t="annuler">Annuler</button>
+                        <button type="button" class="mc-btn mc-btn--primary" data-t="inserer">
                             ${existant ? 'Mettre à jour' : 'Insérer dans la note'}</button>
                     </div>
                 </div>`;

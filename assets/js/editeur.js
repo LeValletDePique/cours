@@ -98,13 +98,16 @@
         });
     });
 
+    // Lien « Classer » (note non classée) : ouvre la note sur le choix de matière.
+    if (location.hash === '#classer') elMatiere.focus();
+
     // ---------- Favori (épingle) ----------
     const btnEpingle = document.getElementById('btn-epingler');
     btnEpingle.addEventListener('click', async () => {
         const rep = await api('epingler', { id: noteId });
         if (rep.ok) {
             btnEpingle.dataset.epingle = rep.epingle;
-            btnEpingle.textContent = rep.epingle ? '⭐' : '☆';
+            btnEpingle.setAttribute('aria-pressed', rep.epingle ? 'true' : 'false');
         }
     });
 
@@ -130,12 +133,12 @@
             // Évite le doublon d'affichage.
             if (!listeTags.querySelector('[data-tag-id="' + rep.tag_id + '"]')) {
                 const chip = document.createElement('span');
-                chip.className = 'chip';
+                chip.className = 'mc-chip chip';
                 chip.dataset.tagId = rep.tag_id;
-                chip.style.background = rep.couleur;
-                chip.innerHTML = rep.nom.replace(/[&<>]/g, (c) =>
-                    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]))
-                    + ' <button type="button" class="chip-x" title="Retirer">✕</button>';
+                chip.style.setProperty('--tag', rep.couleur);
+                chip.innerHTML = '<span class="mc-chip__dot"></span>' + echapper(rep.nom)
+                    + ' <button type="button" class="mc-chip__x chip-x" title="Retirer" aria-label="Retirer le tag">'
+                    + icone('fermer', 'mc-ico-sm') + '</button>';
                 listeTags.appendChild(chip);
             }
             inputTag.value = '';
@@ -148,7 +151,7 @@
         if (e.key === 'Enter') { e.preventDefault(); ajouterTag(); }
     });
     listeTags.addEventListener('click', async (e) => {
-        if (!e.target.classList.contains('chip-x')) return;
+        if (!e.target.closest('.chip-x')) return;
         const chip = e.target.closest('.chip');
         const rep = await api('detacher',
             { note_id: noteId, tag_id: parseInt(chip.dataset.tagId, 10) }, 'tags');
@@ -186,9 +189,10 @@
             li.innerHTML = (image ? '<img class="miniature" src="' + lien + '" alt="" title="Agrandir">' : '')
                 + '<a href="' + lien + '" target="_blank">' + echapper(rep.nom) + '</a>'
                 + ' <span class="taille">' + Math.round(rep.taille / 1024) + ' Ko</span>'
-                + (image ? ' <button type="button" class="fichier-inserer btn-secondaire"'
+                + (image ? ' <button type="button" class="fichier-inserer mc-btn mc-btn--sm"'
                     + ' title="Afficher l\'image dans la note, à l\'endroit du curseur">Insérer</button>' : '')
-                + ' <button type="button" class="fichier-x" title="Supprimer">✕</button>';
+                + ' <button type="button" class="fichier-x mc-btn mc-btn--ghost mc-btn--sm" title="Supprimer"'
+                + ' aria-label="Supprimer le fichier">' + icone('fermer', 'mc-ico-sm') + '</button>';
             listeFichiers.appendChild(li);
             statutFichier.textContent = '';
             if (image && insererImage) insererImageNote(rep.id, rep.nom);
@@ -238,9 +242,9 @@
         if (!li) return;
         if (e.target.classList.contains('miniature')) {
             ouvrirVisionneuse(e.target.src);
-        } else if (e.target.classList.contains('fichier-inserer')) {
+        } else if (e.target.closest('.fichier-inserer')) {
             insererImageNote(li.dataset.fichierId, li.dataset.nom || '');
-        } else if (e.target.classList.contains('fichier-x')) {
+        } else if (e.target.closest('.fichier-x')) {
             if (!confirm('Supprimer ce fichier ?')) return;
             const rep = await api('supprimer',
                 { id: parseInt(li.dataset.fichierId, 10) }, 'upload');
@@ -253,7 +257,8 @@
     function ouvrirVisionneuse(src) {
         const fond = document.createElement('div');
         fond.className = 'visionneuse';
-        fond.innerHTML = '<button type="button" class="visionneuse-x" title="Fermer (Échap)">✕</button>';
+        fond.innerHTML = '<button type="button" class="visionneuse-x mc-btn mc-btn--sm" title="Fermer (Échap)"'
+            + ' aria-label="Fermer">' + icone('fermer', 'mc-ico-sm') + '</button>';
         const img = document.createElement('img');
         img.src = src;
         img.alt = '';
