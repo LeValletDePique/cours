@@ -1,49 +1,26 @@
 /* ============================================================
    Feuille de style principale.
-   Le thème (clair / sombre) est piloté par des variables CSS
-   redéfinies sous [data-theme="sombre"].
+   Le thème (clair / sombre) est piloté par les tokens
+   (data-theme="light" / "dark" sur <html>).
    ============================================================ */
 
-/* --- Thème clair (par défaut) --- */
+/* --- Anciennes variables, branchées sur les tokens du design system
+       (assets/css/tokens.css) le temps de la migration --- */
 :root {
-    --fond:           #f4f5f9;
-    --fond-carte:     #ffffff;
-    --fond-doux:      #eef0f6;
-    --texte:          #1e2233;
-    --texte-doux:     #5b6274;
-    --bordure:        #e2e5ee;
-    --accent:         #4f46e5;
-    --accent-clair:   #eef2ff;
-    --danger:         #dc2626;
-    --danger-fond:    #fef2f2;
-    --ombre:          0 1px 3px rgba(20, 24, 45, .08), 0 6px 20px rgba(20, 24, 45, .05);
-    --rayon:          12px;
-}
-
-/* --- Thème sombre --- */
-[data-theme="sombre"] {
-    --fond:           #14161f;
-    --fond-carte:     #1d2030;
-    --fond-doux:      #262a3d;
-    --texte:          #e7e9f2;
-    --texte-doux:     #9aa1b6;
-    --bordure:        #2d3247;
-    --accent:         #818cf8;
-    --accent-clair:   #262a4a;
-    --danger:         #f87171;
-    --danger-fond:    #3a1f24;
-    --ombre:          0 1px 3px rgba(0, 0, 0, .4), 0 6px 20px rgba(0, 0, 0, .3);
+    --fond:           var(--paper);
+    --fond-carte:     var(--surface);
+    --fond-doux:      var(--surface-sunk);
+    --texte:          var(--ink);
+    --texte-doux:     var(--ink-muted);
+    --bordure:        var(--line);
+    --accent-clair:   var(--accent-soft);
+    --danger:         var(--accent);
+    --danger-fond:    var(--accent-soft);
+    --ombre:          var(--shadow-card);
+    --rayon:          var(--radius-lg);
 }
 
 * { box-sizing: border-box; }
-
-body {
-    margin: 0;
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    background: var(--fond);
-    color: var(--texte);
-    line-height: 1.5;
-}
 
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
@@ -375,7 +352,7 @@ h2 { font-size: 1.2rem; }
 .markdown img { max-width: 100%; border-radius: 6px; }
 .editeur-apercu img { cursor: zoom-in; }
 /* Les PNG de draw.io ont souvent un fond transparent : lisible en mode sombre. */
-[data-theme="sombre"] .markdown img { background: #fff; }
+[data-theme="dark"] .markdown img { background: #fff; }
 
 /* Retraits des notes indentées (voir normaliserRetraits dans rendu.js) */
 .markdown .retrait-1 { margin-left: 1.5rem; }
@@ -397,16 +374,16 @@ h2 { font-size: 1.2rem; }
 .couleur-violet { color: #7c3aed; }
 .couleur-rose   { color: #db2777; }
 .couleur-gris   { color: #6b7280; }
-[data-theme="sombre"] .couleur-rouge  { color: #f87171; }
-[data-theme="sombre"] .couleur-orange { color: #fb923c; }
-[data-theme="sombre"] .couleur-jaune  { color: #facc15; }
-[data-theme="sombre"] .couleur-vert   { color: #4ade80; }
-[data-theme="sombre"] .couleur-bleu   { color: #60a5fa; }
-[data-theme="sombre"] .couleur-violet { color: #a78bfa; }
-[data-theme="sombre"] .couleur-rose   { color: #f472b6; }
-[data-theme="sombre"] .couleur-gris   { color: #9ca3af; }
+[data-theme="dark"] .couleur-rouge  { color: #f87171; }
+[data-theme="dark"] .couleur-orange { color: #fb923c; }
+[data-theme="dark"] .couleur-jaune  { color: #facc15; }
+[data-theme="dark"] .couleur-vert   { color: #4ade80; }
+[data-theme="dark"] .couleur-bleu   { color: #60a5fa; }
+[data-theme="dark"] .couleur-violet { color: #a78bfa; }
+[data-theme="dark"] .couleur-rose   { color: #f472b6; }
+[data-theme="dark"] .couleur-gris   { color: #9ca3af; }
 .markdown mark { background: #fef08a; color: inherit; padding: 0 .15em; border-radius: 3px; }
-[data-theme="sombre"] .markdown mark { background: #854d0e; }
+[data-theme="dark"] .markdown mark { background: #854d0e; }
 
 /* ---------------- Responsive ---------------- */
 @media (max-width: 640px) {
@@ -430,7 +407,7 @@ h2 { font-size: 1.2rem; }
     background: #dcfce7; color: #166534; border: 1px solid #16a34a;
     border-radius: 8px; padding: .6rem .8rem; font-size: .9rem; margin: 0 0 .8rem;
 }
-[data-theme="sombre"] .succes { background: #14321f; color: #86efac; }
+[data-theme="dark"] .succes { background: #14321f; color: #86efac; }
 .astuce-mini { color: var(--texte-doux); font-size: .82rem; margin: .4rem 0; }
 
 /* ---------------- Boutons secondaires ---------------- */

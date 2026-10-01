@@ -1,6 +1,6 @@
 /* ============================================================
    Script commun à toutes les pages.
-   - Bascule du thème clair / sombre (mémorisée dans le navigateur)
+   - Bascule du thème clair / sombre (mémorisée dans le navigateur et en base)
    - Petit utilitaire pour envoyer des requêtes AJAX avec le jeton CSRF
    ============================================================ */
 
@@ -26,21 +26,18 @@ async function apiJson(url, methode = 'GET', donnees = null) {
     return rep.json();
 }
 
-// --- Bascule du thème ---
-(function () {
-    const bouton = document.getElementById('btn-theme');
-    if (!bouton) return;
-
-    bouton.addEventListener('click', () => {
-        const actuel = document.documentElement.getAttribute('data-theme') === 'sombre'
-            ? 'sombre' : 'clair';
-        const nouveau = actuel === 'sombre' ? 'clair' : 'sombre';
-
-        document.documentElement.setAttribute('data-theme', nouveau);
-        try { localStorage.setItem('theme', nouveau); } catch (e) {}
-
-        // Mémorise aussi côté serveur (ignore l'erreur si non connecté).
-        apiJson('api/preferences.php?action=theme', 'POST', { theme: nouveau })
-            .catch(() => {});
-    });
-})();
+// --- Thème clair / sombre ---
+// Sur la page : data-theme="light" | "dark" ; en base : « clair » | « sombre ».
+function appliquerTheme(theme) {
+    const t = theme === 'dark' || theme === 'sombre' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', t);
+    try { localStorage.setItem('theme', t); } catch (e) {}
+    // Mémorise aussi côté serveur (ignore l'erreur si non connecté).
+    apiJson('api/preferences.php?action=theme', 'POST', { theme: t === 'dark' ? 'sombre' : 'clair' })
+        .catch(() => {});
+    return t;
+}
+function basculerTheme() {
+    return appliquerTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+}
+document.querySelectorAll('[data-action="theme"]').forEach((b) => b.addEventListener('click', basculerTheme));

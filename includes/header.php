@@ -8,7 +8,8 @@ require_once __DIR__ . '/auth.php';
 
 $config = require __DIR__ . '/../config.php';
 $user   = utilisateur_connecte();
-$theme  = $user['theme'] ?? 'clair';
+// En base : « clair » / « sombre » ; sur la page : data-theme="light" / "dark".
+$theme  = ($user['theme'] ?? 'clair') === 'sombre' ? 'dark' : 'light';
 $titre  = isset($titre_page) ? $titre_page . ' · ' . $config['nom_app'] : $config['nom_app'];
 ?>
 <!DOCTYPE html>
@@ -24,10 +25,18 @@ $titre  = isset($titre_page) ? $titre_page . ' · ' . $config['nom_app'] : $conf
         (function () {
             try {
                 var t = localStorage.getItem('theme');
-                if (t) document.documentElement.setAttribute('data-theme', t);
+                // Anciennes valeurs (« clair » / « sombre ») encore acceptées.
+                if (t === 'sombre') t = 'dark';
+                if (t === 'clair') t = 'light';
+                if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
             } catch (e) {}
         })();
     </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+    <link rel="stylesheet" href="assets/css/tokens.css">
+    <link rel="stylesheet" href="assets/css/mes-cours.css">
     <link rel="stylesheet" href="assets/css/style.css">
     <script defer src="assets/js/app.js"></script>
 </head>
@@ -47,14 +56,14 @@ $titre  = isset($titre_page) ? $titre_page . ' · ' . $config['nom_app'] : $conf
             <a href="reglages.php">Réglages</a>
         </nav>
         <div class="barre-actions">
-            <button type="button" id="btn-theme" class="btn-icone"
+            <button type="button" id="btn-theme" data-action="theme" class="btn-icone"
                     title="Changer de thème" aria-label="Changer de thème">🌓</button>
             <span class="utilisateur"><?= e($user['nom_utilisateur']) ?></span>
             <a class="btn-deco" href="deconnexion.php">Déconnexion</a>
         </div>
     <?php else: ?>
         <div class="barre-actions">
-            <button type="button" id="btn-theme" class="btn-icone"
+            <button type="button" id="btn-theme" data-action="theme" class="btn-icone"
                     title="Changer de thème" aria-label="Changer de thème">🌓</button>
         </div>
     <?php endif; ?>

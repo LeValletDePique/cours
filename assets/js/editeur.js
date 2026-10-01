@@ -285,7 +285,7 @@
 
     // ---------- Thème de coloration du code ----------
     function majThemeCode() {
-        const sombre = document.documentElement.getAttribute('data-theme') === 'sombre';
+        const sombre = document.documentElement.getAttribute('data-theme') === 'dark';
         const clair = document.getElementById('hljs-clair');
         const noir  = document.getElementById('hljs-sombre');
         if (clair) clair.disabled = sombre;

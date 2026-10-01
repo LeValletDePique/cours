@@ -1,0 +1,80 @@
+/* Mes Cours — tokens (générés depuis le design system). Thème : <html data-theme="light|dark"> */
+
+:root,
+[data-theme="light"] {
+  --paper: #f5f2eb;
+  --surface: #fffdf9;
+  --surface-sunk: #ede9df;
+  --line: #e0dace;
+  --line-strong: #c9c1b1;
+  --ink: #1d1b18;
+  --ink-muted: #625c52;
+  --ink-faint: #8a8374;
+  --accent: #b8380f;
+  --accent-hover: #9c2f0c;
+  --accent-soft: #fae3d9;
+  --on-accent: #ffffff;
+  --success: #2b7349;
+  --success-soft: #dcefe2;
+  --warning: #9a5800;
+  --warning-soft: #f8e9cc;
+  --ue-1: #3550a3;
+  --ue-1-soft: #e2e8f7;
+  --ue-2: #0f7069;
+  --ue-2-soft: #d9efec;
+  --ue-3: #84357f;
+  --ue-3-soft: #f2e1ef;
+  --ue-4: #5a6812;
+  --ue-4-soft: #e9edd3;
+  --ue-autre: var(--ink-muted);
+  --ue-autre-soft: var(--surface-sunk);
+  --focus-ring: var(--accent);
+  --shadow-card: 0 1px 2px rgba(29,27,24,0.05), 0 2px 8px rgba(29,27,24,0.04);
+  --shadow-pop: 0 12px 32px rgba(29,27,24,0.14);
+}
+
+[data-theme="dark"] {
+  --paper: #151412;
+  --surface: #1d1b18;
+  --surface-sunk: #272521;
+  --line: #34312c;
+  --line-strong: #4b473f;
+  --ink: #f2eee6;
+  --ink-muted: #aaa397;
+  --ink-faint: #7f796e;
+  --accent: #ff8557;
+  --accent-hover: #ff9c75;
+  --accent-soft: #3b1d12;
+  --on-accent: #1d1208;
+  --success: #6fcf94;
+  --success-soft: #15301f;
+  --warning: #f0b452;
+  --warning-soft: #33260d;
+  --ue-1: #93a9f2;
+  --ue-1-soft: #1c2440;
+  --ue-2: #5ccdc2;
+  --ue-2-soft: #0f2c29;
+  --ue-3: #da92d4;
+  --ue-3-soft: #33192f;
+  --ue-4: #bccb5e;
+  --ue-4-soft: #262b10;
+  --shadow-card: 0 1px 2px rgba(0,0,0,0.5);
+  --shadow-pop: 0 12px 32px rgba(0,0,0,0.6);
+}
+
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+  --font-display: Fraunces, Georgia, serif;
+  --font-sans: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}

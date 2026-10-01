@@ -160,10 +160,7 @@ require __DIR__ . '/includes/header.php';
 
     // ---- Thème ----
     document.getElementById('choix-theme').addEventListener('change', async (e) => {
-        const theme = e.target.value;
-        document.documentElement.setAttribute('data-theme', theme);
-        try { localStorage.setItem('theme', theme); } catch (x) {}
-        await api('preferences', 'theme', { theme });
+        appliquerTheme(e.target.value);   // assets/js/app.js
     });
 
     // ---- Structure ----

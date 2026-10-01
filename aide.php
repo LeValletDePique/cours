@@ -249,7 +249,7 @@ require __DIR__ . '/includes/header.php';
 <script>
     // Coloration : suit le thème clair / sombre du site.
     function majThemeCodeAide() {
-        const sombre = document.documentElement.getAttribute('data-theme') === 'sombre';
+        const sombre = document.documentElement.getAttribute('data-theme') === 'dark';
         const c = document.getElementById('hljs-clair'), n = document.getElementById('hljs-sombre');
         if (c) c.disabled = sombre;
         if (n) n.disabled = !sombre;

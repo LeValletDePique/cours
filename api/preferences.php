@@ -1,7 +1,7 @@
 <?php
 /**
  * API des préférences utilisateur (pour l'instant : le thème).
- *   ?action=theme  body { theme: 'clair' | 'sombre' }
+ *   ?action=theme  body { theme: 'clair' | 'sombre' }  ('light' / 'dark' acceptés)
  */
 require_once __DIR__ . '/../includes/auth.php';
 
@@ -15,7 +15,7 @@ $action = $_GET['action'] ?? '';
 $data   = corps_json();
 
 if ($action === 'theme') {
-    $theme = ($data['theme'] ?? '') === 'sombre' ? 'sombre' : 'clair';
+    $theme = in_array($data['theme'] ?? '', ['sombre', 'dark'], true) ? 'sombre' : 'clair';
     $stmt = db()->prepare('UPDATE utilisateurs SET theme = ? WHERE id = ?');
     $stmt->execute([$theme, $uid]);
     repondre_json(['ok' => true, 'theme' => $theme]);
