@@ -38,26 +38,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $titre_page = 'Connexion';
 require __DIR__ . '/includes/header.php';
 ?>
-<div class="carte-auth">
-    <h1>Connexion</h1>
-
+<section class="mc-card" aria-labelledby="titre-connexion">
+    <h1 class="mc-title" id="titre-connexion">Connexion</h1>
     <?php if ($erreur): ?>
-        <p class="alerte"><?= e($erreur) ?></p>
+        <p class="mc-message mc-message--erreur" role="alert"><?= icone('alerte', 'mc-ico-sm') ?><?= e($erreur) ?></p>
     <?php endif; ?>
-
-    <form method="post" action="connexion.php" class="formulaire">
+    <form method="post" action="connexion.php" class="mc-form">
         <?= champ_csrf() ?>
-        <label>Identifiant ou e-mail
-            <input type="text" name="identifiant" required autofocus
+        <label class="mc-label">Identifiant ou e-mail
+            <input class="mc-input" type="text" name="identifiant" required autofocus autocomplete="username"
                    value="<?= e($identifiant) ?>">
         </label>
-        <label>Mot de passe
-            <input type="password" name="mot_de_passe" required>
+        <label class="mc-label">Mot de passe
+            <input class="mc-input" type="password" name="mot_de_passe" required autocomplete="current-password">
         </label>
-        <button type="submit" class="btn-principal">Se connecter</button>
+        <button type="submit" class="mc-btn mc-btn--primary mc-btn--lg mc-btn--plein"><?= icone('connexion', 'mc-ico-sm') ?>Me connecter</button>
     </form>
-
-    <p class="lien-bas">Pas encore de compte ? <a href="inscription.php">Créer un compte</a></p>
-    <p class="astuce">Démo : identifiant <strong>demo</strong> / mot de passe <strong>demo1234</strong></p>
-</div>
+    <p class="mc-meta">Pas encore de compte ? <a class="mc-link" href="inscription.php">Créer un compte</a></p>
+    <p class="mc-message mc-message--info">Démo : identifiant <b>demo</b>, mot de passe <b>demo1234</b>.</p>
+</section>
 <?php require __DIR__ . '/includes/footer.php'; ?>

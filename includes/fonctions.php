@@ -155,3 +155,49 @@ function requete_fulltext(string $saisie): string
     }
     return implode(' ', $termes);
 }
+
+/**
+ * Recherche plein texte (titre + contenu) dans les notes de l'utilisateur,
+ * avec filtre facultatif par tag. Sans mot ni tag : les notes les plus récentes.
+ * Renvoie id, titre, contenu, matiere_id, epingle, date_modification, matiere.
+ */
+function rechercher_notes(int $uid, string $q, int $tag = 0, int $limite = 50): array
+{
+    // Construction dynamique de la requête (valeurs toujours en paramètres liés).
+    $where  = ['n.utilisateur_id = ?', 'n.supprime = 0'];
+    $params = [$uid];
+    $tri    = 'n.date_modification DESC';
+    $select_score = '';
+    $params_score = [];
+
+    if ($q !== '') {
+        $bool = requete_fulltext($q);
+        if ($bool !== '') {
+            // Recherche plein texte (rapide, avec score de pertinence).
+            $where[] = 'MATCH(n.titre, n.contenu) AGAINST(? IN BOOLEAN MODE)';
+            $params[] = $bool;
+            $tri = 'pertinence DESC, n.date_modification DESC';
+            $select_score = ', MATCH(n.titre, n.contenu) AGAINST(? IN BOOLEAN MODE) AS pertinence';
+            $params_score = [$bool];
+        } else {
+            // Mots trop courts : on retombe sur une recherche simple LIKE.
+            $where[] = '(n.titre LIKE ? OR n.contenu LIKE ?)';
+            $params[] = '%' . $q . '%';
+            $params[] = '%' . $q . '%';
+        }
+    }
+    if ($tag) {
+        $where[] = 'n.id IN (SELECT note_id FROM note_tags WHERE tag_id = ?)';
+        $params[] = $tag;
+    }
+
+    $sql = 'SELECT n.id, n.titre, n.contenu, n.matiere_id, n.epingle, n.date_modification, m.nom AS matiere'
+         . $select_score
+         . ' FROM notes n LEFT JOIN matieres m ON m.id = n.matiere_id'
+         . ' WHERE ' . implode(' AND ', $where)
+         . ' ORDER BY ' . $tri . ' LIMIT ' . max(1, $limite);
+    // L'éventuel score se place en tête des paramètres (SELECT avant WHERE).
+    $stmt = db()->prepare($sql);
+    $stmt->execute(array_merge($params_score, $params));
+    return $stmt->fetchAll();
+}

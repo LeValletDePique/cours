@@ -21,8 +21,10 @@
 
     const HAUTEUR_HEURE = 48;   // px par heure dans la vue semaine
     const TYPES = { cours: 'Cours', reunion: 'Réunion', tache: 'Tâche', perso: 'Perso', autre: 'Autre' };
-    // Comme sur Celcat : CM en rouge, TD en bleu (les autres cours gardent la couleur de l'UE).
-    const COULEURS_CATEGORIE = { CM: '#dc2626', TD: '#2563eb' };
+    // Type de cours affiché en étiquette (mc-tag) ; la couleur est celle de l'UE.
+    const CATEGORIES = { CM: 'CM (cours magistral)', TD: 'TD (travaux dirigés)', TP: 'TP (travaux pratiques)' };
+    const etiquette = (cat) => CATEGORIES[cat]
+        ? '<span class="mc-tag' + (cat === 'CM' ? ' mc-tag--cm' : '') + '">' + cat + '</span>' : '';
 
     // ---------- Outils dates ----------
     const deux = (n) => String(n).padStart(2, '0');
@@ -101,19 +103,18 @@
             debut: lire(e.debut), fin: lire(e.fin) || lire(e.debut),
             journee: e.journee, fait: e.fait, lieu: e.lieu, matiere: e.matiere,
             categorie: e.categorie, intervenant: e.intervenant,
-            couleur: e.type === 'cours'
-                ? (COULEURS_CATEGORIE[e.categorie] || e.couleur || '#0891b2') : null,
+            ue: e.type === 'cours' ? (e.ue_classe || 'mc-ue-autre') : 'mc-ue-autre',
         }));
         donnees.echeances.forEach((e) => liste.push({
             genre: 'ech', brut: e, id: e.id, type: 'echeance',
             titre: e.categorie.toUpperCase() + ' · ' + e.titre,
             debut: lire(e.debut), fin: lire(e.debut), journee: false,
-            fait: e.fait, lieu: '', matiere: e.matiere, couleur: null,
+            fait: e.fait, lieu: '', matiere: e.matiere, ue: 'mc-ue-autre',
         }));
         return liste.sort((a, b) => a.debut - b.debut);
     }
     // « M. Dupont · CM » (seulement les infos présentes).
-    const profType = (x) => [x.intervenant, COULEURS_CATEGORIE[x.categorie] ? x.categorie : '']
+    const profType = (x) => [x.intervenant, CATEGORIES[x.categorie] ? x.categorie : '']
         .filter(Boolean).join(' · ');
     // Infobulle : matière · prof · CM/TD · salle
     const resume = (x) => [x.titre, profType(x), x.lieu].filter(Boolean).join(' · ');
@@ -133,13 +134,16 @@
         return { debut: x.debut < d ? d : x.debut, fin: x.fin > f ? f : x.fin };
     }
 
+    // Puce (vue mois, liste, ligne « journée ») : point d'UE, ou icône pour les tâches / échéances.
     function puce(x, avecHeure = true) {
         const heure = !x.journee && avecHeure ? '<span class="evt-heure">' + hm(x.debut) + '</span> ' : '';
-        const coche = x.type === 'tache' || x.genre === 'ech' ? (x.fait ? '☑ ' : '☐ ') : '';
-        return '<button type="button" class="evt-puce type-' + x.type + (x.fait ? ' fait' : '') + '"'
-            + (x.couleur ? ' style="--c:' + echapper(x.couleur) + '"' : '')
+        const signe = x.type === 'tache' ? icone(x.fait ? 'case-cochee' : 'case', 'mc-ico-sm')
+            : x.genre === 'ech' ? icone('echeances', 'mc-ico-sm') : '<span class="mc-dot"></span>';
+        const genre = x.type === 'cours' ? '' : x.genre === 'ech' ? ' evt-puce--echeance' : ' evt-puce--perso';
+        return '<button type="button" class="evt-puce ' + x.ue + genre + (x.fait ? ' fait' : '') + '"'
             + ' data-genre="' + x.genre + '" data-id="' + x.id + '" title="' + echapper(resume(x)) + '">'
-            + coche + heure + echapper(x.titre) + '</button>';
+            + signe + '<span class="evt-puce__texte">' + heure + echapper(x.titre) + '</span>'
+            + (x.type === 'cours' ? etiquette(x.categorie) : '') + '</button>';
     }
 
     // ---------- Affichage ----------
@@ -203,15 +207,21 @@
                 const haut = ((m.debut - jour0(j)) / 3.6e6 - hMin) * HAUTEUR_HEURE;
                 const hauteur = Math.max(18, (m.fin - m.debut) / 3.6e6 * HAUTEUR_HEURE - 2);
                 const x = m.x;
-                html += '<button type="button" class="evt-bloc type-' + x.type + (x.fait ? ' fait' : '') + '"'
+                // AgendaEvent : fond de l'UE, passé atténué, en cours cerclé, perso en pointillé.
+                const etat = x.fin <= aujourdhui ? ' mc-event--past'
+                    : x.debut <= aujourdhui ? ' mc-event--now' : '';
+                const pied = x.type === 'cours'
+                    ? etiquette(x.categorie) + (x.lieu ? '<span>' + echapper(x.lieu) + '</span>' : '')
+                    : echapper((TYPES[x.type] || '').toLowerCase()) + (x.lieu ? ' · ' + echapper(x.lieu) : '');
+                html += '<button type="button" class="evt-bloc mc-event ' + x.ue + etat
+                    + (x.type === 'cours' ? '' : ' mc-event--perso') + (x.fait ? ' fait' : '') + '"'
                     + ' data-genre="' + x.genre + '" data-id="' + x.id + '"'
                     + ' style="top:' + haut + 'px;height:' + hauteur + 'px;left:calc(' + m.gauche + '% + 2px);'
-                    + 'width:calc(' + m.largeur + '% - 4px);' + (x.couleur ? '--c:' + echapper(x.couleur) : '') + '"'
+                    + 'width:calc(' + m.largeur + '% - 4px);"'
                     + ' title="' + echapper(hm(x.debut) + '–' + hm(x.fin) + ' ' + resume(x)) + '">'
-                    + '<span class="evt-heure">' + hm(m.debut) + '–' + hm(m.fin) + '</span>'
-                    + '<span class="evt-titre">' + echapper(x.titre) + '</span>'
-                    + (profType(x) ? '<span class="evt-lieu">' + echapper(profType(x)) + '</span>' : '')
-                    + (x.lieu ? '<span class="evt-lieu">' + echapper(x.lieu) + '</span>' : '')
+                    + '<span class="mc-event__time">' + hm(m.debut) + '–' + hm(m.fin) + '</span>'
+                    + '<span class="mc-event__name">' + echapper(x.titre) + '</span>'
+                    + (pied ? '<span class="mc-event__foot">' + pied + '</span>' : '')
                     + '</button>';
             });
             if (memeJour(j, aujourdhui)) {
@@ -301,31 +311,39 @@
             });
             html += '</ul>';
         }
-        if (vide) html += '<p class="vide">Rien de prévu sur ces deux semaines.</p>';
+        if (vide) html += '<div class="mc-empty"><p>Rien de prévu sur ces deux semaines.'
+            + (LECTURE_SEULE ? '' : ' Clique sur « Ajouter » pour noter un rendez-vous ou une réunion.') + '</p></div>';
         elVue.innerHTML = html + '</div>';
     }
 
     function afficherTaches() {
         const maintenant = new Date();
         if (!donnees.taches.length) {
-            elTaches.innerHTML = '<li class="vide">Aucune tâche.'
-                + (LECTURE_SEULE ? '' : ' Ajoute-en une ci-dessus.') + '</li>';
+            elTaches.innerHTML = '<li class="mc-meta">Rien à faire pour l\'instant.'
+                + (LECTURE_SEULE ? '' : ' Note ici ce qu\'il te reste à finir.') + '</li>';
             return;
         }
+        // TaskList : case, texte, puis matière · quand (« demain » en couleur d'alerte).
         elTaches.innerHTML = donnees.taches.map((t) => {
             const d = lire(t.debut);
-            let quand = '', retard = false;
+            let quand = '', bientot = false;
             if (d) {
-                retard = !t.fait && (t.journee ? plusJours(d, 1) : d) < maintenant;
-                quand = memeJour(d, maintenant) ? 'Aujourd\'hui'
-                    : memeJour(d, plusJours(maintenant, 1)) ? 'Demain' : fJourMois.format(d);
-                if (!t.journee) quand += ' ' + hm(d);
+                const retard = !t.fait && (t.journee ? plusJours(d, 1) : d) < maintenant;
+                const auj = memeJour(d, maintenant), demain = memeJour(d, plusJours(maintenant, 1));
+                quand = retard ? 'en retard' : auj ? 'aujourd\'hui' : demain ? 'demain' : fJourMois.format(d);
+                if (!t.journee && !retard) quand += ' ' + hm(d);
+                bientot = retard || auj || demain;
             }
-            return '<li class="' + (t.fait ? 'fait' : '') + (retard ? ' retard' : '') + '" data-id="' + t.id + '">'
-                + '<input type="checkbox" class="tache-fait"' + (t.fait ? ' checked' : '')
-                + (LECTURE_SEULE ? ' disabled title="Coche-la dans l\'Agenda"' : ' title="Fait"') + '>'
-                + '<button type="button" class="tache-titre">' + echapper(t.titre) + '</button>'
-                + (quand ? '<span class="tache-date">' + quand + '</span>' : '')
+            const fait = lire(t.date_fait);
+            const meta = t.fait ? (fait ? 'Fait à ' + hm(fait) : 'Fait')
+                : (t.matiere ? '<span class="mc-dot"></span><span class="mc-task__matiere">' + echapper(t.matiere) + '</span>' : '')
+                + (t.matiere && quand ? '<span aria-hidden="true">·</span>' : '')
+                + (quand ? '<span class="mc-when' + (bientot ? ' mc-when--soon' : '') + '">' + quand + '</span>' : '');
+            return '<li class="mc-task ' + (t.ue_classe || 'mc-ue-autre') + (t.fait ? ' mc-task--done' : '') + '" data-id="' + t.id + '">'
+                + '<input type="checkbox" class="mc-check tache-fait"' + (t.fait ? ' checked' : '')
+                + ' aria-label="' + (t.fait ? 'Rouvrir' : 'Terminer') + ' « ' + echapper(t.titre) + ' »">'
+                + '<div><button type="button" class="mc-task__text tache-titre">' + echapper(t.titre) + '</button>'
+                + (meta ? '<div class="mc-task__meta">' + meta + '</div>' : '') + '</div>'
                 + '</li>';
         }).join('');
     }
@@ -336,7 +354,8 @@
         fond.className = 'modale-fond';
         fond.innerHTML = '<div class="modale petite" role="dialog" aria-label="' + echapper(titre) + '">'
             + '<div class="modale-entete"><h3>' + echapper(titre) + '</h3>'
-            + '<button type="button" class="modale-x" title="Fermer (Échap)">✕</button></div>'
+            + '<button type="button" class="modale-x mc-btn mc-btn--ghost mc-btn--sm" title="Fermer (Échap)" aria-label="Fermer">'
+            + icone('fermer', 'mc-ico-sm') + '</button></div>'
             + '<div class="modale-corps"></div><div class="modale-pied"></div></div>';
         fond.querySelector('.modale-corps').append(corps);
         const pied = fond.querySelector('.modale-pied');
@@ -348,13 +367,15 @@
         fond.querySelector('.modale-x').addEventListener('click', fermer);
         document.addEventListener('keydown', clavier);
         document.body.append(fond);
-        return fermer;
+        const retour = document.activeElement;
+        const fermerEtRendre = fermer;
+        return () => { fermerEtRendre(); if (retour && retour.focus) retour.focus(); };
     }
-    function bouton(texte, classe, action) {
+    function bouton(texte, classe, action, nomIcone) {
         const b = document.createElement('button');
         b.type = 'button';
         b.className = classe;
-        b.textContent = texte;
+        b.innerHTML = (nomIcone ? icone(nomIcone, 'mc-ico-sm') : '') + echapper(texte);
         b.addEventListener('click', action);
         return b;
     }
@@ -426,13 +447,13 @@
 
         const boutons = [];
         if (existant) {
-            boutons.push(bouton('Supprimer', 'btn-secondaire danger', async () => {
+            boutons.push(bouton('Supprimer', 'mc-btn mc-btn--ghost mc-btn--fin', async () => {
                 if (!confirm('Supprimer « ' + ev.titre + ' » ?')) return;
                 if ((await api('supprimer', { id: ev.id })).ok) { fermer(); charger(); }
-            }));
+            }, 'corbeille'));
         }
-        boutons.push(bouton('Annuler', 'btn-secondaire', () => fermer()));
-        boutons.push(bouton('Enregistrer', 'btn-primaire', enregistrer));
+        boutons.push(bouton('Annuler', 'mc-btn mc-btn--ghost', () => fermer()));
+        boutons.push(bouton('Enregistrer', 'mc-btn mc-btn--primary', enregistrer));
         fermer = ouvrirModale(existant ? 'Modifier' : 'Nouvel événement', form, boutons);
         form.titre.focus();
     }
@@ -443,17 +464,17 @@
         const horaire = majuscule(fJourLong.format(d))
             + (ev.journee ? '' : ', ' + hm(d) + ' – ' + hm(f));
         const corps = elementHtml(
-            '<p class="detail-ligne">🕒 ' + echapper(horaire) + '</p>'
-            + (ev.intervenant ? '<p class="detail-ligne">👤 ' + echapper(ev.intervenant) + '</p>' : '')
-            + (COULEURS_CATEGORIE[ev.categorie] ? '<p class="detail-ligne">🎓 '
-                + (ev.categorie === 'CM' ? 'CM (cours magistral)' : 'TD (travaux dirigés)') + '</p>' : '')
-            + (ev.lieu ? '<p class="detail-ligne">📍 ' + echapper(ev.lieu) + '</p>' : '')
-            + (ev.type !== 'cours' ? '' : '<p class="detail-ligne">📚 ' + (ev.matiere
-                ? '<a href="matiere.php?id=' + ev.matiere_id + '">' + echapper(ev.matiere) + '</a>'
-                : '<em>Aucune matière reconnue</em> — ajoute un mot-clé dans « 🔗 Emploi du temps ».') + '</p>')
+            '<p class="detail-ligne">' + icone('horloge', 'mc-ico-sm') + echapper(horaire) + '</p>'
+            + (ev.intervenant ? '<p class="detail-ligne">' + icone('personne', 'mc-ico-sm') + echapper(ev.intervenant) + '</p>' : '')
+            + (CATEGORIES[ev.categorie] ? '<p class="detail-ligne">' + icone('chapeau', 'mc-ico-sm')
+                + CATEGORIES[ev.categorie] + '</p>' : '')
+            + (ev.lieu ? '<p class="detail-ligne">' + icone('lieu', 'mc-ico-sm') + echapper(ev.lieu) + '</p>' : '')
+            + (ev.type !== 'cours' ? '' : '<p class="detail-ligne ' + (ev.ue_classe || 'mc-ue-autre') + '">'
+                + (ev.matiere ? '<span class="mc-dot"></span><a class="mc-link" href="matiere.php?id=' + ev.matiere_id + '">' + echapper(ev.matiere) + '</a>'
+                : icone('matieres', 'mc-ico-sm') + '<span>Aucune matière reconnue. Ajoute un mot-clé dans « Emploi du temps ».</span>') + '</p>')
             + (ev.description ? '<p class="detail-desc">' + echapper(ev.description) + '</p>' : '')
-            + '<p class="astuce-mini">Importé de « ' + echapper(ev.source) + ' » : modifie-le dans ton emploi du temps d\'origine.</p>'
-            + '<div class="notes-seance" hidden><h4>Notes de cette séance</h4><ul></ul></div>');
+            + '<p class="mc-meta">Importé de « ' + echapper(ev.source) + ' » : modifie-le dans ton emploi du temps d\'origine.</p>'
+            + '<div class="notes-seance" hidden><h4 class="mc-eyebrow">Notes de cette séance</h4><ul></ul></div>');
 
         if (ev.matiere_id) {
             lireApi('notes_seance', { matiere_id: ev.matiere_id, date: ymd(d) }).then((rep) => {
@@ -461,26 +482,22 @@
                 const bloc = corps.querySelector('.notes-seance');
                 bloc.hidden = false;
                 bloc.querySelector('ul').innerHTML = rep.notes.map((n) =>
-                    '<li><a href="note.php?id=' + n.id + '">' + echapper(n.titre) + '</a></li>').join('');
+                    '<li><a class="mc-link" href="note.php?id=' + n.id + '">' + echapper(n.titre) + '</a></li>').join('');
             });
         }
         ouvrirModale(ev.titre, corps, ev.type !== 'cours' ? [] : [
-            bouton('📝 Prendre des notes', 'btn-primaire', async () => {
-                const rep = await api('nouvelle_note', { id: ev.id });
-                if (rep.ok) location.href = 'note.php?id=' + rep.id;
-                else alert(rep.erreur || 'Erreur');
-            }),
+            bouton('Prendre des notes', 'mc-btn mc-btn--primary', () => nouvelleNote(ev.id), 'crayon'),
         ]);
     }
 
     function ouvrirEcheance(e) {
         const corps = elementHtml(
-            '<p class="detail-ligne">🕒 ' + echapper(majuscule(fJourLong.format(lire(e.debut))) + ', ' + hm(lire(e.debut))) + '</p>'
-            + (e.matiere ? '<p class="detail-ligne">📚 ' + echapper(e.matiere) + '</p>' : '')
+            '<p class="detail-ligne">' + icone('horloge', 'mc-ico-sm') + echapper(majuscule(fJourLong.format(lire(e.debut))) + ', ' + hm(lire(e.debut))) + '</p>'
+            + (e.matiere ? '<p class="detail-ligne">' + icone('matieres', 'mc-ico-sm') + echapper(e.matiere) + '</p>' : '')
             + (e.description ? '<p class="detail-desc">' + echapper(e.description) + '</p>' : '')
-            + '<p>' + (e.fait ? '✅ Terminée' : '⏳ À faire') + '</p>');
+            + '<p class="detail-ligne">' + (e.fait ? '<span class="mc-ok">' + icone('coche', 'mc-ico-sm') + 'Terminée</span>' : icone('echeances', 'mc-ico-sm') + 'À rendre') + '</p>');
         const lien = document.createElement('a');
-        lien.className = 'btn-secondaire';
+        lien.className = 'mc-btn';
         lien.href = 'echeances.php';
         lien.textContent = 'Gérer les échéances';
         ouvrirModale(e.categorie.toUpperCase() + ' · ' + e.titre, corps, [lien]);
@@ -505,17 +522,17 @@
         let quand = d ? majuscule(fJourLong.format(d)) : 'Sans date';
         if (d && !ev.journee) quand += ', ' + hm(d) + (f > d ? ' – ' + hm(f) : '');
         const corps = elementHtml(
-            '<p class="detail-ligne">🏷️ ' + echapper(TYPES[ev.type] || ev.type)
-                + (ev.type === 'tache' ? (ev.fait ? ' · ✅ faite' : ' · ⏳ à faire') : '') + '</p>'
-            + '<p class="detail-ligne">🕒 ' + echapper(quand) + '</p>'
-            + (ev.lieu ? '<p class="detail-ligne">📍 ' + echapper(ev.lieu) + '</p>' : '')
-            + (ev.matiere ? '<p class="detail-ligne">📚 <a href="matiere.php?id=' + ev.matiere_id + '">'
+            '<p class="detail-ligne">' + icone('tag', 'mc-ico-sm') + echapper(TYPES[ev.type] || ev.type)
+                + (ev.type === 'tache' ? (ev.fait ? ' · faite' : ' · à faire') : '') + '</p>'
+            + '<p class="detail-ligne">' + icone('horloge', 'mc-ico-sm') + echapper(quand) + '</p>'
+            + (ev.lieu ? '<p class="detail-ligne">' + icone('lieu', 'mc-ico-sm') + echapper(ev.lieu) + '</p>' : '')
+            + (ev.matiere ? '<p class="detail-ligne">' + icone('matieres', 'mc-ico-sm') + '<a class="mc-link" href="matiere.php?id=' + ev.matiere_id + '">'
                 + echapper(ev.matiere) + '</a></p>' : '')
             + (ev.description ? '<p class="detail-desc">' + echapper(ev.description) + '</p>' : ''));
         const lien = document.createElement('a');
-        lien.className = 'btn-secondaire';
+        lien.className = 'mc-btn';
         lien.href = 'agenda.php';
-        lien.textContent = '✏️ Modifier dans l\'Agenda';
+        lien.innerHTML = icone('modifier', 'mc-ico-sm') + 'Modifier dans l\'Agenda';
         ouvrirModale(ev.titre, corps, [lien]);
     }
 
@@ -542,29 +559,30 @@
         corps.className = 'sources';
 
         const listeSources = rep.sources.length ? rep.sources.map((s) =>
-            '<li data-id="' + s.id + '"><span class="pastille" style="background:' + echapper(s.couleur) + '"></span>'
+            '<li data-id="' + s.id + '">' + icone('agenda', 'mc-ico-sm')
             + '<div class="source-info"><b>' + echapper(s.nom) + '</b>'
             + '<small>' + s.nb + ' cours' + (s.synchro ? ' · synchronisé le ' + s.synchro : '')
             + (s.url ? '' : ' · fichier importé') + '</small>'
-            + (s.message ? '<small class="erreur">⚠️ ' + echapper(s.message) + '</small>' : '') + '</div>'
-            + (s.url ? '<button type="button" class="btn-secondaire" data-synchro>↻ Synchroniser</button>' : '')
-            + '<button type="button" class="btn-secondaire danger" data-supprimer title="Supprimer cette source et ses cours">✕</button>'
-            + '</li>').join('') : '<li class="vide">Aucun emploi du temps connecté.</li>';
+            + (s.message ? '<small class="erreur">' + icone('alerte', 'mc-ico-sm') + echapper(s.message) + '</small>' : '') + '</div>'
+            + (s.url ? '<button type="button" class="mc-btn mc-btn--sm" data-synchro>' + icone('synchro', 'mc-ico-sm') + 'Synchroniser</button>' : '')
+            + '<button type="button" class="mc-btn mc-btn--ghost mc-btn--sm" data-supprimer title="Supprimer cette source et ses cours"'
+            + ' aria-label="Supprimer cette source et ses cours">' + icone('corbeille', 'mc-ico-sm') + '</button>'
+            + '</li>').join('') : '<li class="mc-meta">Aucun emploi du temps connecté. Colle son lien iCal ci-dessous.</li>';
 
         const lignesMatieres = rep.matieres.map((m) =>
             '<tr><td>' + echapper(m.ue + ' · ' + m.nom) + '</td>'
-            + '<td><input data-matiere="' + m.id + '" value="' + echapper(m.mots_cles)
-            + '" placeholder="ex. BDD, SGBD"></td>'
+            + '<td><input class="mc-input" data-matiere="' + m.id + '" value="' + echapper(m.mots_cles)
+            + '" placeholder="ex. BDD, SGBD" aria-label="Mots-clés de ' + echapper(m.nom) + '"></td>'
             + '<td class="nb">' + m.nb_cours + '</td></tr>').join('');
 
         corps.innerHTML =
             '<h4>Tes emplois du temps</h4><ul class="liste-sources">' + listeSources + '</ul>'
             + '<h4>Connecter avec un lien iCal</h4>'
-            + '<form class="form-source">'
-            + '<input name="nom" placeholder="Nom (ex. EDT ING1)" maxlength="100">'
-            + '<input name="url" type="url" placeholder="https://… ou webcal://… (.ics)" required>'
-            + '<input name="couleur" type="color" value="#0891b2" title="Couleur des cours sans matière">'
-            + '<button type="submit" class="btn-primaire">Connecter</button></form>'
+            + '<form class="form-source mc-form-ligne">'
+            + '<input class="mc-input" name="nom" placeholder="Nom (ex. EDT ING1)" maxlength="100" aria-label="Nom">'
+            + '<input class="mc-input" name="url" type="url" placeholder="https://… ou webcal://… (.ics)" required aria-label="Lien iCal">'
+            + '<input type="hidden" name="couleur" value="#0891b2">'
+            + '<button type="submit" class="mc-btn">' + icone('lien', 'mc-ico-sm') + 'Connecter</button></form>'
             + '<details class="aide-ical"><summary>Où trouver ce lien ?</summary>'
             + '<ul><li>Dans ton emploi du temps en ligne (Celcat, HyperPlanning, ADE…), cherche un bouton '
             + '« S\'abonner », « Exporter », « iCal », « ICS » ou « Synchroniser avec mon agenda ».</li>'
@@ -574,8 +592,8 @@
             + '<li>Si le site demande de se connecter pour voir le calendrier, le lien ne marchera pas : '
             + 'télécharge le fichier .ics et importe-le ci-dessous.</li></ul></details>'
             + '<h4>… ou importer un fichier .ics</h4>'
-            + '<form class="form-fichier"><input type="file" name="fichier" accept=".ics,text/calendar" required>'
-            + '<button type="submit" class="btn-secondaire">Importer</button></form>'
+            + '<form class="form-fichier mc-form-ligne"><input class="mc-input" type="file" name="fichier" accept=".ics,text/calendar" required aria-label="Fichier .ics">'
+            + '<button type="submit" class="mc-btn">' + icone('importer', 'mc-ico-sm') + 'Importer</button></form>'
             + '<h4>Relier les cours à tes matières</h4>'
             + '<p class="astuce-mini">Un cours est rattaché à une matière quand son intitulé contient le nom de la matière '
             + 'ou un de ses mots-clés (séparés par des virgules, sans tenir compte des accents ni des majuscules). '
@@ -585,7 +603,7 @@
                     + '(une suggestion est pré-remplie quand le code y ressemble), puis « Enregistrer ».</p>'
                     + '<table class="table-mots-cles table-codes"><tbody>'
                     + rep.non_reconnus.map((n) => '<tr><td><code>' + echapper(n.titre) + '</code> <small>('
-                        + n.nb + ' cours)</small></td><td><select data-code="' + echapper(n.titre) + '">'
+                        + n.nb + ' cours)</small></td><td><select class="mc-select" data-code="' + echapper(n.titre) + '" aria-label="Matière du code ' + echapper(n.titre) + '">'
                         + '<option value="">— Choisir la matière —</option>'
                         + rep.matieres.map((m) => '<option value="' + m.id + '"' + (m.id === n.suggestion ? ' selected' : '')
                             + '>' + echapper(m.ue + ' · ' + m.nom) + '</option>').join('')
@@ -594,7 +612,7 @@
                 : '')
             + '<table class="table-mots-cles"><thead><tr><th>Matière</th><th>Mots-clés</th><th>Cours</th></tr></thead>'
             + '<tbody>' + lignesMatieres + '</tbody></table>'
-            + '<p class="statut-sources astuce-mini"></p>';
+            + '<p class="statut-sources mc-meta" role="status"></p>';
 
         const statut = corps.querySelector('.statut-sources');
         const occupe = (texte) => { statut.textContent = texte; };
@@ -608,7 +626,7 @@
             if (e.target.closest('[data-synchro]')) {
                 occupe('Synchronisation…');
                 const r = await api('synchroniser', { id });
-                if (r.ok) rafraichir(); else occupe('⚠️ ' + (r.erreur || 'Erreur'));
+                if (r.ok) rafraichir(); else occupe('Erreur : ' + (r.erreur || 'inconnue'));
             } else if (e.target.closest('[data-supprimer]')) {
                 if (!confirm('Supprimer cet emploi du temps et tous ses cours de l\'agenda ?')) return;
                 if ((await api('source_supprimer', { id })).ok) rafraichir();
@@ -619,7 +637,7 @@
             const f = e.target;
             occupe('Connexion et import en cours…');
             const r = await api('source_ajouter', { nom: f.nom.value, url: f.url.value, couleur: f.couleur.value });
-            if (r.ok) { alert(r.nb + ' créneaux importés.'); rafraichir(); } else occupe('⚠️ ' + (r.erreur || 'Erreur'));
+            if (r.ok) { alert(r.nb + ' créneaux importés.'); rafraichir(); } else occupe('Erreur : ' + (r.erreur || 'inconnue'));
         });
         corps.querySelector('.form-fichier').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -628,9 +646,9 @@
             occupe('Import en cours…');
             try {
                 const r = await (await fetch('api/agenda.php?action=importer', { method: 'POST', body: envoi })).json();
-                if (r.ok) { alert(r.nb + ' créneaux importés.'); rafraichir(); } else occupe('⚠️ ' + (r.erreur || 'Erreur'));
+                if (r.ok) { alert(r.nb + ' créneaux importés.'); rafraichir(); } else occupe('Erreur : ' + (r.erreur || 'inconnue'));
             } catch (err) {
-                occupe('⚠️ Échec de l\'envoi.');
+                occupe('Échec de l\'envoi. Vérifie ta connexion et réessaie.');
             }
         });
 
@@ -646,11 +664,11 @@
             corps.querySelectorAll('[data-matiere]').forEach((i) => { mots[i.dataset.matiere] = i.value; });
             occupe('Enregistrement…');
             if ((await api('mots_cles', { mots_cles: mots })).ok) rafraichir();
-            else occupe('⚠️ Erreur');
+            else occupe('Erreur : mots-clés non enregistrés.');
         };
-        fermer = ouvrirModale('🔗 Emploi du temps', corps, [
-            bouton('Fermer', 'btn-secondaire', () => fermer()),
-            bouton('Enregistrer les mots-clés', 'btn-primaire', enregistrerMots),
+        fermer = ouvrirModale('Emploi du temps', corps, [
+            bouton('Fermer', 'mc-btn mc-btn--ghost', () => fermer()),
+            bouton('Enregistrer les mots-clés', 'mc-btn mc-btn--primary', enregistrerMots),
         ]);
         return rep;
     }
@@ -667,7 +685,7 @@
             const r = await api('synchroniser', { id: s.id }).catch(() => ({ erreur: 'réseau' }));
             if (!r.ok) erreurs.push(s.nom + ' : ' + (r.erreur || 'erreur'));
         }
-        if (erreurs.length) info('⚠️ ' + erreurs.join(' — '), true); else info('');
+        if (erreurs.length) info('Synchronisation impossible : ' + erreurs.join(' — '), true); else info('');
         charger();
     }
 
@@ -724,8 +742,11 @@
     document.getElementById('form-tache')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const f = e.target;
-        const rep = await api('creer', { titre: f.titre.value, type: 'tache', date: f.date.value, journee: true });
-        if (rep.ok) { f.reset(); charger(); } else alert(rep.erreur || 'Erreur');
+        // « … pour vendredi » / nom de matière : comme sur l'accueil (analyserTache, app.js).
+        const t = analyserTache(f.titre.value, MATIERES.map((m) => ({ id: m.id, nom: m.nom, motifs: m.motifs })));
+        const rep = await api('creer', { titre: t.titre, type: 'tache', date: f.date.value || t.date, journee: true,
+            matiere_id: t.matiere ? t.matiere.id : 0 });
+        if (rep.ok) { f.reset(); charger(); f.titre.focus(); } else alert(rep.erreur || 'Erreur');
     });
     elTaches.addEventListener('click', async (e) => {
         const li = e.target.closest('li[data-id]');
@@ -735,21 +756,21 @@
             if (LECTURE_SEULE) return;
             await api('basculer', { id });
             charger();
-        } else if (e.target.classList.contains('tache-titre')) {
+        } else if (e.target.closest('.tache-titre')) {
             ouvrirElement('evt', id);
         }
     });
 
-    // Raccourcis clavier : ← → (période), T (aujourd'hui).
-    // (pas sur l'accueil : les flèches y font défiler la page)
+    // Raccourcis clavier : ← → (période). (T = ajouter une tâche, géré par app.js.)
     document.addEventListener('keydown', (e) => {
         if (LECTURE_SEULE) return;
         if (document.querySelector('.modale-fond') || e.ctrlKey || e.metaKey || e.altKey) return;
         if (/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || '')) return;
         if (e.key === 'ArrowLeft') naviguer(-1);
         else if (e.key === 'ArrowRight') naviguer(1);
-        else if (e.key === 't' || e.key === 'T') naviguer(0);
     });
 
     charger().then(synchroAuto);
+    // Lien « Connecter l'emploi du temps » (accueil, page d'une matière).
+    if (location.hash === '#emploi-du-temps' && !LECTURE_SEULE) ouvrirSources();
 })();

@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="mes-cours.css">
+<meta charset="utf-8">
+<title>Accueil</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>body{margin:0}</style>
+</head>
+<body>
+<div class="mc-app">
+<nav class="mc-rail" aria-label="Navigation">
+  <div class="mc-brand"><span class="mc-brand__mark">M</span>Mes Cours</div>
+  <a class="mc-nav" href="#" aria-current="page"><svg class="lucide " aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="4" /><path d="M12 2v2" /><path d="M12 20v2" /><path d="m4.93 4.93 1.41 1.41" /><path d="m17.66 17.66 1.41 1.41" /><path d="M2 12h2" /><path d="M20 12h2" /><path d="m6.34 17.66-1.41 1.41" /><path d="m19.07 4.93-1.41 1.41" /></svg>Aujourd'hui</a>
+  <a class="mc-nav" href="#"><svg class="lucide " aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 7v14" /><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" /></svg>Matières<span class="mc-nav__count">19</span></a>
+  <a class="mc-nav" href="#"><svg class="lucide " aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M8 2v4" /><path d="M16 2v4" /><rect width="18" height="18" x="3" y="4" rx="2" /><path d="M3 10h18" /></svg>Agenda</a>
+  <a class="mc-nav" href="#"><svg class="lucide " aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z" /><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65" /><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65" /></svg>Révision<span class="mc-nav__count">6</span></a>
+  <a class="mc-nav" href="#"><svg class="lucide " aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" /><line x1="4" x2="4" y1="22" y2="15" /></svg>Échéances</a>
+  <div class="mc-rail__sep"></div>
+  <a class="mc-nav" href="#"><svg class="lucide " aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" /></svg>Favoris</a>
+  <div class="mc-rail__foot">
+    <a class="mc-nav" href="#"><svg class="lucide " aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /><line x1="10" x2="10" y1="11" y2="17" /><line x1="14" x2="14" y1="11" y2="17" /></svg>Corbeille</a>
+    <a class="mc-nav" href="#"><svg class="lucide " aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" /><circle cx="12" cy="12" r="3" /></svg>Réglages</a>
+    <a class="mc-nav" href="#"><svg class="lucide " aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /><path d="M12 17h.01" /></svg>Aide</a>
+    <div class="mc-user"><span class="mc-avatar">A</span>Antonin<button class="mc-btn mc-btn--ghost mc-btn--sm" style="margin-left:auto" aria-label="Changer de thème"><svg class="lucide mc-ico-sm" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" /></svg></button></div>
+  </div>
+</nav>
+<main class="mc-main">
+<div class="mc-topbar">
+  <div class="mc-search"><svg class="lucide mc-ico-sm" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>Rechercher une note, une matière…<span class="mc-kbd">Ctrl K</span></div>
+  <button class="mc-btn mc-btn--primary"><svg class="lucide mc-ico-sm" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M5 12h14" /><path d="M12 5v14" /></svg>Nouvelle note<span class="mc-kbd">N</span></button>
+</div>
+<header class="mc-hello">
+  <p class="mc-eyebrow">Mercredi 30 septembre · semaine 40</p>
+  <h1 class="mc-display">Bonjour Antonin.</h1>
+  <p>4 cours aujourd'hui, 2 tâches ouvertes. Un cours sans notes ce matin, rattrape-le en 2 minutes.</p>
+</header>
+<div class="mc-grid">
+  <div class="mc-col-8"><section class="mc-card mc-now mc-ue-2" aria-label="Cours en cours">
+  <div class="mc-now__head">
+    <span class="mc-live">En cours · fin dans 1 h 18</span>
+    <span class="mc-now__badges"><span class="mc-ue">UE2</span><span class="mc-tag">TD</span></span>
+  </div>
+  <div style="display:grid;gap:8px">
+    <h2 class="mc-title">Base de données</h2>
+    <div class="mc-now__meta"><span><svg class="lucide mc-ico-sm" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>11:30 – 13:00</span><span><svg class="lucide mc-ico-sm" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" /><circle cx="12" cy="10" r="3" /></svg>E102</span><span><svg class="lucide mc-ico-sm" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" /><path d="M14 2v4a2 2 0 0 0 2 2h4" /><path d="M10 9H8" /><path d="M16 13H8" /><path d="M16 17H8" /></svg>1 note</span></div>
+  </div>
+  <div class="mc-progress" role="progressbar" aria-valuenow="13" aria-valuemin="0" aria-valuemax="100" aria-label="Avancement du cours"><span style="width:13%"></span></div>
+  <div class="mc-now__actions">
+    <button class="mc-btn mc-btn--primary mc-btn--lg"><svg class="lucide mc-ico-sm" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 20h9" /><path d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z" /></svg>Prendre des notes<span class="mc-kbd">N</span></button>
+    <button class="mc-btn mc-btn--lg"><svg class="lucide mc-ico-sm" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" /><path d="M14 2v4a2 2 0 0 0 2 2h4" /><path d="M10 9H8" /><path d="M16 13H8" /><path d="M16 17H8" /></svg>Reprendre TD1</button>
+  </div>
+  <p class="mc-now__hint" style="margin:0">Crée « Base de données (TD) – 30/09/2026 », déjà rangée dans UE2.</p>
+  <div class="mc-next mc-ue-2"><span class="mc-eyebrow">Ensuite</span><span class="mc-mono mc-muted">14:15</span><span class="mc-dot"></span><b style="font-weight:500">Data exploration</b><span class="mc-tag">TD</span><span class="mc-muted mc-mono" style="font-size:12px">E105</span></div>
+</section></div>
+  <div class="mc-col-4"><section class="mc-card mc-streak" aria-label="Ta semaine">
+  <p class="mc-eyebrow">Ta semaine</p>
+  <div><div class="mc-numeral">3 jours</div><div class="mc-muted" style="font-size:14px">de suite avec des notes</div></div>
+  <div class="mc-week">
+    <div class="mc-day mc-day--done"><b class="mc-day__cell"></b>L</div>
+    <div class="mc-day mc-day--done"><b class="mc-day__cell"></b>M</div>
+    <div class="mc-day mc-day--done mc-day--today"><b class="mc-day__cell"></b>M</div>
+    <div class="mc-day"><b class="mc-day__cell"></b>J</div>
+    <div class="mc-day"><b class="mc-day__cell"></b>V</div>
+    <div class="mc-day"><b class="mc-day__cell"></b>S</div>
+    <div class="mc-day"><b class="mc-day__cell"></b>D</div>
+  </div>
+  <div class="mc-goal">
+    <div class="mc-goal__row"><span>Cours notés aujourd'hui</span><b>1 / 4</b></div>
+    <div class="mc-progress"><span style="width:25%"></span></div>
+  </div>
+</section></div>
+  <div class="mc-col-7"><section class="mc-card" aria-label="Aujourd'hui">
+  <div class="mc-card__head"><h3 class="mc-h">Aujourd'hui</h3><a class="mc-link" href="#">Voir la semaine</a></div>
+  <ul class="mc-tl">
+    <li class="mc-tl__item mc-tl__item--past mc-ue-2"><span class="mc-tl__time">08:00–09:30</span><span class="mc-tl__body"><span class="mc-dot"></span><span class="mc-tl__name">Modèles probabilistes</span><span class="mc-tag">TD</span><span class="mc-tl__room">E102</span></span><span class="mc-ok"><svg class="lucide mc-ico-sm" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M20 6 9 17l-5-5" /></svg>1 note</span></li>
+    <li class="mc-tl__item mc-tl__item--past mc-ue-3"><span class="mc-tl__time">09:45–11:15</span><span class="mc-tl__body"><span class="mc-dot"></span><span class="mc-tl__name">Gestion de l'entreprise I</span><span class="mc-tag">TD</span><span class="mc-tl__room">E102</span></span><button class="mc-btn mc-btn--sm"><svg class="lucide mc-ico-sm" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M5 12h14" /><path d="M12 5v14" /></svg>Notes</button></li>
+    <li class="mc-tl__item mc-tl__item--now mc-ue-2"><span class="mc-tl__time">11:30–13:00</span><span class="mc-tl__body"><span class="mc-dot"></span><span class="mc-tl__name">Base de données</span><span class="mc-tag">TD</span><span class="mc-tl__room">E102</span></span><span class="mc-live" style="font-size:11px">Maintenant</span></li>
+    <li class="mc-tl__item mc-ue-2"><span class="mc-tl__time">14:15–17:30</span><span class="mc-tl__body"><span class="mc-dot"></span><span class="mc-tl__name">Data exploration</span><span class="mc-tag">TD</span><span class="mc-tl__room">E105</span></span><span class="mc-meta">dans 2 h 33</span></li>
+    <li class="mc-tl__item mc-tl__item--perso mc-ue-autre"><span class="mc-tl__time">18:30</span><span class="mc-tl__body"><span class="mc-dot"></span><span class="mc-tl__name">Réunion asso</span></span><span class="mc-meta">perso</span></li>
+  </ul>
+</section></div>
+  <div class="mc-col-5 mc-stack"><section class="mc-card" aria-label="À faire">
+  <div class="mc-card__head"><h3 class="mc-h">À faire</h3><span class="mc-meta">2 ouvertes</span></div>
+  <label class="mc-quickadd"><svg class="lucide mc-ico-sm" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M5 12h14" /><path d="M12 5v14" /></svg><input placeholder="Ajouter une tâche…"><span class="mc-kbd">T</span></label>
+  <ul class="mc-tasks">
+    <li class="mc-task mc-ue-2"><input type="checkbox" class="mc-check" aria-label="Terminer"><div><div class="mc-task__text">Finir TD1 – entités / associations</div><div class="mc-task__meta"><span class="mc-dot"></span>Base de données · <span class="mc-when mc-when--soon">demain</span></div></div></li>
+    <li class="mc-task mc-ue-2"><input type="checkbox" class="mc-check" aria-label="Terminer"><div><div class="mc-task__text">Relire TP2 – Les entrées / sorties</div><div class="mc-task__meta"><span class="mc-dot"></span>Unix et Architecture · <span class="mc-when">ven. 2</span></div></div></li>
+    <li class="mc-task mc-task--done mc-ue-autre"><input type="checkbox" class="mc-check" checked aria-label="Rouvrir"><div><div class="mc-task__text">Classer la note DIDANG1D</div><div class="mc-task__meta">Fait à 09:12</div></div></li>
+  </ul>
+</section>
+<section class="mc-card" aria-label="Échéances">
+  <div class="mc-card__head"><h3 class="mc-h">Échéances</h3></div>
+  <div class="mc-empty"><p>Rien à rendre cette semaine. Ajoute un partiel ou un rendu dès qu'il est annoncé, il apparaîtra ici 7 jours avant.</p><button class="mc-btn mc-btn--sm"><svg class="lucide mc-ico-sm" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M5 12h14" /><path d="M12 5v14" /></svg>Ajouter une échéance</button></div>
+</section></div>
+  <div class="mc-col-8"><section class="mc-card" aria-label="Mes matières">
+  <div class="mc-card__head"><h3 class="mc-h">Mes matières</h3><span class="mc-meta">13 notes · 19 matières</span></div>
+  <div class="mc-two">
+    <div><div class="mc-ue-block mc-ue-2"><div class="mc-ue-block__head"><span class="mc-ue">UE2</span><span class="mc-ue-block__name">Langage et données</span></div>
+<a class="mc-subj mc-ue-2" href="#"><span class="mc-dot"></span><span class="mc-subj__name">Commande Unix et Architecture des Ordinateurs</span><span class="mc-subj__count">4</span></a>
+<a class="mc-subj mc-ue-2" href="#"><span class="mc-dot"></span><span class="mc-subj__name">Base de données</span><span class="mc-subj__count">1</span></a>
+<a class="mc-subj mc-ue-2 mc-subj--empty" href="#"><span class="mc-dot"></span><span class="mc-subj__name">Optimisation linéaire</span><span class="mc-subj__count">0</span></a>
+<a class="mc-subj mc-ue-2" href="#"><span class="mc-dot"></span><span class="mc-subj__name">Modèles probabilistes</span><span class="mc-subj__count">1</span></a>
+<a class="mc-subj mc-ue-2" href="#"><span class="mc-dot"></span><span class="mc-subj__name">Data exploration</span><span class="mc-subj__count">1</span></a></div>
+<div class="mc-ue-block mc-ue-1"><div class="mc-ue-block__head"><span class="mc-ue">UE1</span><span class="mc-ue-block__name">Mise à niveau Maths Info</span></div>
+<a class="mc-subj mc-ue-1" href="#"><span class="mc-dot"></span><span class="mc-subj__name">Algorithmique procédurale (MAN 1)</span><span class="mc-subj__count">2</span></a>
+<a class="mc-subj mc-ue-1 mc-subj--empty" href="#"><span class="mc-dot"></span><span class="mc-subj__name">Programmation procédurale (MAN 1)</span><span class="mc-subj__count">0</span></a>
+<a class="mc-subj mc-ue-1 mc-subj--empty" href="#"><span class="mc-dot"></span><span class="mc-subj__name">Développement web côté client (MAN 1)</span><span class="mc-subj__count">0</span></a></div></div>
+    <div><div class="mc-ue-block mc-ue-3"><div class="mc-ue-block__head"><span class="mc-ue">UE3</span><span class="mc-ue-block__name">Culture de l'ingénieur</span></div>
+<a class="mc-subj mc-ue-3 mc-subj--empty" href="#"><span class="mc-dot"></span><span class="mc-subj__name">TOEIC</span><span class="mc-subj__count">0</span></a>
+<a class="mc-subj mc-ue-3 mc-subj--empty" href="#"><span class="mc-dot"></span><span class="mc-subj__name">Communication et expression III</span><span class="mc-subj__count">0</span></a>
+<a class="mc-subj mc-ue-3" href="#"><span class="mc-dot"></span><span class="mc-subj__name">Gestion de l'entreprise I</span><span class="mc-subj__count">1</span></a>
+<a class="mc-subj mc-ue-3" href="#"><span class="mc-dot"></span><span class="mc-subj__name">Éthique sciences et technique</span><span class="mc-subj__count">2</span></a>
+<a class="mc-subj mc-ue-3 mc-subj--empty" href="#"><span class="mc-dot"></span><span class="mc-subj__name">Introduction à l'histoire du Design</span><span class="mc-subj__count">0</span></a></div>
+<div class="mc-ue-block mc-ue-4"><div class="mc-ue-block__head"><span class="mc-ue">UE4</span><span class="mc-ue-block__name">Engagement et professionnalisation</span></div>
+<a class="mc-subj mc-ue-4 mc-subj--empty" href="#"><span class="mc-dot"></span><span class="mc-subj__name">Engagement étudiant</span><span class="mc-subj__count">0</span></a>
+<a class="mc-subj mc-ue-4 mc-subj--empty" href="#"><span class="mc-dot"></span><span class="mc-subj__name">Projet Personnel et Professionnel</span><span class="mc-subj__count">0</span></a></div>
+<div class="mc-ue-block mc-ue-autre"><div class="mc-ue-block__head"><span class="mc-ue">Autre</span><span class="mc-ue-block__name">Réunions</span></div>
+<a class="mc-subj mc-ue-autre mc-subj--empty" href="#"><span class="mc-dot"></span><span class="mc-subj__name">Réunion lapause</span><span class="mc-subj__count">0</span></a>
+<a class="mc-subj mc-ue-autre mc-subj--empty" href="#"><span class="mc-dot"></span><span class="mc-subj__name">Réunion prodigieuse</span><span class="mc-subj__count">0</span></a>
+<a class="mc-subj mc-ue-autre mc-subj--empty" href="#"><span class="mc-dot"></span><span class="mc-subj__name">Réunion liste</span><span class="mc-subj__count">0</span></a>
+<a class="mc-subj mc-ue-autre mc-subj--empty" href="#"><span class="mc-dot"></span><span class="mc-subj__name">Réunion asso</span><span class="mc-subj__count">0</span></a></div></div>
+  </div>
+</section></div>
+  <div class="mc-col-4"><section class="mc-card" aria-label="Dernières notes">
+  <div class="mc-card__head"><h3 class="mc-h">Reprendre</h3><a class="mc-link" href="#">Toutes</a></div>
+  <a class="mc-note mc-ue-2" href="#"><span class="mc-note__title">Commande Unix et Architecture (TD) – 29/09</span><span class="mc-note__time">2 h</span><span class="mc-note__sub"><span class="mc-dot"></span>Commande Unix et Architecture</span></a>
+  <a class="mc-note mc-ue-autre" href="#"><span class="mc-note__title">DIDANG1D (TD) – 28/09</span><span class="mc-note__time">hier</span><span class="mc-note__sub"><span class="mc-dot"></span>Non classée · <span class='mc-link' style='font-size:13px'>Classer</span></span></a>
+  <a class="mc-note mc-ue-2" href="#"><span class="mc-note__title">TD1 - les entités - associations</span><span class="mc-note__time">hier</span><span class="mc-note__sub"><span class="mc-dot"></span>Base de données</span></a>
+  <a class="mc-note mc-ue-1" href="#"><span class="mc-note__title">TD1 - Élément de base</span><span class="mc-note__time">hier</span><span class="mc-note__sub"><span class="mc-dot"></span>Algorithmique procédurale</span></a>
+  <a class="mc-note mc-ue-2" href="#"><span class="mc-note__title">TP1 - Introduction au langage R</span><span class="mc-note__time">30/09</span><span class="mc-note__sub"><span class="mc-dot"></span>Data exploration</span></a>
+</section></div>
+</div>
+</main>
+</div>
+</body>
+</html>

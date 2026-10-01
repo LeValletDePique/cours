@@ -20,7 +20,7 @@ $matieres = $stmt->fetchAll();
 // Toutes les échéances.
 $stmt = db()->prepare(
     'SELECT e.id, e.titre, e.description, e.type, e.date_echeance, e.termine,
-            m.nom AS matiere
+            e.matiere_id, m.nom AS matiere
        FROM echeances e LEFT JOIN matieres m ON m.id = e.matiere_id
       WHERE e.utilisateur_id = ?
       ORDER BY e.date_echeance ASC'
@@ -40,55 +40,76 @@ foreach ($toutes as $ec) {
     }
 }
 
-/** Affiche un groupe d'échéances. */
-function afficher_groupe(string $titre, array $liste, string $classe = ''): void
+/** Affiche un groupe d'échéances (composant Deadline). */
+function afficher_groupe(string $titre, array $liste, int $uid, string $classe = ''): void
 {
     if (!$liste) return;
-    echo '<h2>' . e($titre) . '</h2><ul class="liste-echeances ' . e($classe) . '">';
+    $matieres = infos_matieres($uid);
+    $types = ['DS' => 'DS', 'TD' => 'TD', 'rendu' => 'Rendu', 'examen' => 'Examen', 'autre' => 'Autre'];
+    echo '<section class="mc-card mc-page" aria-label="' . e($titre) . '"><div class="mc-card__head"><h2 class="mc-h">'
+       . e($titre) . '</h2><span class="mc-meta">' . count($liste) . '</span></div>'
+       . '<ul class="mc-deadlines liste-echeances ' . e($classe) . '">';
     foreach ($liste as $ec) {
-        $date = date('d/m/Y à H:i', strtotime($ec['date_echeance']));
-        echo '<li data-id="' . (int) $ec['id'] . '">'
-           . '<input type="checkbox" class="ech-fait" ' . ($ec['termine'] ? 'checked' : '') . '>'
-           . '<span class="ech-type type-' . e($ec['type']) . '">' . e($ec['type']) . '</span>'
-           . '<span class="ech-titre">' . e($ec['titre']) . '</span>'
-           . '<span class="ech-matiere">' . e($ec['matiere'] ?? '') . '</span>'
-           . '<span class="ech-date">' . e($date) . '</span>'
-           . '<button type="button" class="ech-suppr" title="Supprimer">✕</button>'
+        $ts = strtotime($ec['date_echeance']);
+        $m = $ec['matiere_id'] ? ($matieres[(int) $ec['matiere_id']] ?? null) : null;
+        $delai = $ec['termine'] ? 'terminée' : delai_texte($ts, true);
+        $bientot = !$ec['termine'] && ($delai === 'en retard' || ecart_jours($ts) <= 3);
+        echo '<li class="mc-deadline' . ($bientot ? ' mc-deadline--soon' : '') . ($ec['termine'] ? ' mc-deadline--fait' : '')
+           . ' ' . ($m ? e($m['classe']) : 'mc-ue-autre') . '" data-id="' . (int) $ec['id'] . '">'
+           . '<input type="checkbox" class="mc-check ech-fait" ' . ($ec['termine'] ? 'checked aria-label="Rouvrir « ' . e($ec['titre']) . ' »"' : 'aria-label="Marquer « ' . e($ec['titre']) . ' » comme faite"') . '>'
+           . '<div class="mc-deadline__date"><span class="mc-deadline__day">' . (int) date('j', $ts) . '</span>'
+           . '<span class="mc-deadline__month">' . MOIS_COURTS[(int) date('n', $ts) - 1] . '</span></div>'
+           . '<div class="mc-deadline__body"><span class="mc-deadline__title">' . e($ec['titre']) . '</span>'
+           . '<span class="mc-meta">' . ($m ? '<span class="mc-dot"></span> ' . e($m['court']) . ' · ' : '')
+           . '<span class="mc-tag">' . e($types[$ec['type']] ?? $ec['type']) . '</span> · '
+           . e(date('H:i', $ts)) . ' · <span class="mc-when' . ($bientot ? ' mc-when--soon' : '') . '">' . e($delai) . '</span></span></div>'
+           . '<button type="button" class="mc-btn mc-btn--ghost mc-btn--sm ech-suppr" title="Supprimer" aria-label="Supprimer « ' . e($ec['titre']) . ' »">'
+           . icone('corbeille', 'mc-ico-sm') . '</button>'
            . '</li>';
     }
-    echo '</ul>';
+    echo '</ul></section>';
 }
 
 $titre_page = 'Échéances';
 require __DIR__ . '/includes/header.php';
 ?>
-<h1>Échéances</h1>
+<header class="mc-hello">
+    <p class="mc-eyebrow"><?= count($a_venir) ? pluriel(count($a_venir), 'à venir', 'à venir') : 'Rien à venir' ?><?= $en_retard ? ' · ' . count($en_retard) . ' en retard' : '' ?></p>
+    <h1 class="mc-title">Échéances</h1>
+</header>
 
-<form id="form-echeance" class="form-echeance">
-    <input type="text" name="titre" placeholder="Intitulé (ex. DS d'optimisation)" required>
-    <select name="type">
-        <option value="DS">DS</option>
-        <option value="TD">TD</option>
-        <option value="rendu">Rendu</option>
-        <option value="examen">Examen</option>
-        <option value="autre" selected>Autre</option>
-    </select>
-    <select name="matiere_id">
-        <option value="">— Matière —</option>
-        <?php foreach ($matieres as $m): ?>
-            <option value="<?= (int) $m['id'] ?>"><?= e($m['ue_code'] . ' · ' . $m['nom']) ?></option>
-        <?php endforeach; ?>
-    </select>
-    <input type="datetime-local" name="date_echeance" required>
-    <button type="submit" class="btn-principal">Ajouter</button>
-</form>
+<section class="mc-card mc-page" aria-labelledby="titre-ajout" id="ajout">
+    <div class="mc-card__head"><h2 class="mc-h" id="titre-ajout">Ajouter une échéance</h2></div>
+    <form id="form-echeance" class="mc-form-ligne">
+        <label class="mc-sr" for="ech-titre">Intitulé</label>
+        <input class="mc-input mc-input--large" id="ech-titre" type="text" name="titre" placeholder="Intitulé (ex. DS d'optimisation)" required>
+        <label class="mc-sr" for="ech-type">Type</label>
+        <select class="mc-select" id="ech-type" name="type">
+            <option value="DS">DS</option>
+            <option value="TD">TD</option>
+            <option value="rendu">Rendu</option>
+            <option value="examen">Examen</option>
+            <option value="autre" selected>Autre</option>
+        </select>
+        <label class="mc-sr" for="ech-matiere">Matière</label>
+        <select class="mc-select" id="ech-matiere" name="matiere_id">
+            <option value="">Sans matière</option>
+            <?php foreach ($matieres as $m): ?>
+                <option value="<?= (int) $m['id'] ?>"><?= e($m['ue_code'] . ' · ' . $m['nom']) ?></option>
+            <?php endforeach; ?>
+        </select>
+        <label class="mc-sr" for="ech-date">Date et heure</label>
+        <input class="mc-input" id="ech-date" type="datetime-local" name="date_echeance" required>
+        <button type="submit" class="mc-btn"><?= icone('plus', 'mc-ico-sm') ?>Ajouter l'échéance</button>
+    </form>
+</section>
 
-<div class="groupes-echeances">
+<div class="groupes-echeances mc-stack">
     <?php
-    afficher_groupe('⚠️ En retard', $en_retard, 'retard');
-    afficher_groupe('📅 À venir', $a_venir);
-    afficher_groupe('✅ Terminées', $terminees, 'terminees');
-    if (!$toutes) echo '<p class="vide">Aucune échéance. Ajoute ton prochain DS ou rendu ci-dessus.</p>';
+    afficher_groupe('En retard', $en_retard, $uid, 'retard');
+    afficher_groupe('À venir', $a_venir, $uid);
+    afficher_groupe('Terminées', $terminees, $uid, 'terminees');
+    if (!$toutes) echo '<div class="mc-page">' . html_vide('Rien à rendre pour l\'instant. Ajoute un partiel ou un rendu dès qu\'il est annoncé : il s\'affichera sur l\'accueil 7 jours avant.') . '</div>';
     ?>
 </div>
 
@@ -126,7 +147,7 @@ require __DIR__ . '/includes/header.php';
         if (e.target.classList.contains('ech-fait')) {
             await api('basculer', { id });
             location.reload();
-        } else if (e.target.classList.contains('ech-suppr')) {
+        } else if (e.target.closest('.ech-suppr')) {
             if (!confirm('Supprimer cette échéance ?')) return;
             if ((await api('supprimer', { id })).ok) li.remove();
         }

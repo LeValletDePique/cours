@@ -88,7 +88,7 @@ $contenus = array_map(static fn($s) => $s['contenu'], $sections);
     </style>
 </head>
 <body>
-    <button class="btn-imprimer" onclick="window.print()">🖨️ Imprimer / PDF</button>
+    <button class="btn-imprimer" onclick="window.print()">Imprimer / PDF</button>
     <h1 class="doc-titre"><?= e($titre_global) ?></h1>
 
     <?php foreach ($sections as $i => $s): ?>

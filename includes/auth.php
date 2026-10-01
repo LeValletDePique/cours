@@ -6,6 +6,9 @@
 
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/fonctions.php';
+require_once __DIR__ . '/ui.php';
+require_once __DIR__ . '/icones.php';
+require_once __DIR__ . '/composants.php';
 
 // Fuseau horaire des dates affichées (agenda, échéances…).
 date_default_timezone_set(config_app()['fuseau'] ?? 'Europe/Paris');

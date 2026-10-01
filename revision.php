@@ -30,62 +30,74 @@ $cartes = $stmt->fetchAll();
 $titre_page = 'Révision';
 require __DIR__ . '/includes/header.php';
 ?>
-<h1>Révision — Flashcards</h1>
+<header class="mc-hello">
+    <p class="mc-eyebrow"><?= pluriel(count($cartes), 'fiche') ?></p>
+    <h1 class="mc-title">Révision</h1>
+</header>
 
-<!-- Zone de révision -->
-<section class="bloc">
-    <h2>Réviser</h2>
-    <div class="revision-controles">
-        <select id="filtre-matiere">
-            <option value="">Toutes les matières</option>
-            <?php foreach ($matieres as $m): ?>
-                <option value="<?= (int) $m['id'] ?>"><?= e($m['ue_code'] . ' · ' . $m['nom']) ?></option>
-            <?php endforeach; ?>
-        </select>
-        <button type="button" id="btn-reviser" class="btn-principal">Commencer</button>
-    </div>
-
-    <div id="zone-carte" class="carte-flash" hidden>
-        <div class="carte-face" id="carte-contenu"></div>
-        <div class="carte-actions">
-            <button type="button" id="btn-retourner" class="btn-secondaire">Retourner</button>
-            <button type="button" id="btn-suivante" class="btn-principal">Suivante →</button>
+<div class="mc-grid">
+    <!-- Zone de révision -->
+    <section class="mc-card mc-col-7" aria-labelledby="titre-reviser">
+        <div class="mc-card__head"><h2 class="mc-h" id="titre-reviser">Réviser</h2></div>
+        <div class="mc-form-ligne">
+            <label class="mc-sr" for="filtre-matiere">Matière à réviser</label>
+            <select class="mc-select" id="filtre-matiere">
+                <option value="">Toutes les matières</option>
+                <?php foreach ($matieres as $m): ?>
+                    <option value="<?= (int) $m['id'] ?>"><?= e($m['ue_code'] . ' · ' . $m['nom']) ?></option>
+                <?php endforeach; ?>
+            </select>
+            <button type="button" id="btn-reviser" class="mc-btn"><?= icone('lecture', 'mc-ico-sm') ?>Commencer</button>
         </div>
-        <p class="carte-progression" id="carte-progression"></p>
-    </div>
-</section>
+        <div id="zone-carte" class="mc-fiche" hidden>
+            <div class="mc-fiche__face" id="carte-contenu" aria-live="polite"></div>
+            <div class="mc-actions mc-fiche__actions">
+                <button type="button" id="btn-retourner" class="mc-btn"><?= icone('retourner', 'mc-ico-sm') ?>Retourner</button>
+                <button type="button" id="btn-suivante" class="mc-btn"><?= icone('suivant', 'mc-ico-sm') ?>Suivante</button>
+            </div>
+            <p class="mc-meta" id="carte-progression"></p>
+        </div>
+    </section>
 
-<!-- Création d'une carte -->
-<section class="bloc">
-    <h2>Nouvelle carte</h2>
-    <form id="form-carte" class="form-carte">
-        <textarea name="question" placeholder="Question (recto)" required></textarea>
-        <textarea name="reponse" placeholder="Réponse (verso)" required></textarea>
-        <select name="matiere_id">
-            <option value="">— Matière (facultatif) —</option>
-            <?php foreach ($matieres as $m): ?>
-                <option value="<?= (int) $m['id'] ?>"><?= e($m['ue_code'] . ' · ' . $m['nom']) ?></option>
+    <!-- Création d'une carte -->
+    <section class="mc-card mc-col-5" aria-labelledby="titre-nouvelle-carte">
+        <div class="mc-card__head"><h2 class="mc-h" id="titre-nouvelle-carte">Nouvelle fiche</h2></div>
+        <form id="form-carte" class="mc-form">
+            <label class="mc-label">Question (recto)
+                <textarea class="mc-textarea" name="question" required></textarea></label>
+            <label class="mc-label">Réponse (verso)
+                <textarea class="mc-textarea" name="reponse" required></textarea></label>
+            <label class="mc-label">Matière
+                <select class="mc-select" name="matiere_id">
+                    <option value="">Sans matière</option>
+                    <?php foreach ($matieres as $m): ?>
+                        <option value="<?= (int) $m['id'] ?>"><?= e($m['ue_code'] . ' · ' . $m['nom']) ?></option>
+                    <?php endforeach; ?>
+                </select></label>
+            <div><button type="submit" class="mc-btn"><?= icone('plus', 'mc-ico-sm') ?>Ajouter la fiche</button></div>
+        </form>
+    </section>
+
+    <!-- Liste des cartes -->
+    <section class="mc-card mc-col-12" aria-labelledby="titre-cartes">
+        <div class="mc-card__head"><h2 class="mc-h" id="titre-cartes">Mes fiches</h2><span class="mc-meta"><?= count($cartes) ?></span></div>
+        <ul class="mc-fiches liste-cartes" id="liste-cartes">
+            <?php $infos = infos_matieres($uid); foreach ($cartes as $c):
+                $m = $c['matiere_id'] ? ($infos[(int) $c['matiere_id']] ?? null) : null; ?>
+                <li class="<?= $m ? e($m['classe']) : 'mc-ue-autre' ?>" data-id="<?= (int) $c['id'] ?>">
+                    <span class="mc-fiches__q"><?= e($c['question']) ?></span>
+                    <span class="mc-fiches__r"><?= e($c['reponse']) ?></span>
+                    <span class="mc-meta mc-fiches__m"><?php if ($m): ?><span class="mc-dot"></span> <?= e($m['court']) ?><?php endif; ?></span>
+                    <button type="button" class="mc-btn mc-btn--ghost mc-btn--sm carte-suppr" title="Supprimer"
+                            aria-label="Supprimer la fiche"><?= icone('corbeille', 'mc-ico-sm') ?></button>
+                </li>
             <?php endforeach; ?>
-        </select>
-        <button type="submit" class="btn-principal">Ajouter la carte</button>
-    </form>
-</section>
-
-<!-- Liste des cartes -->
-<section class="bloc">
-    <h2>Mes cartes (<?= count($cartes) ?>)</h2>
-    <ul class="liste-cartes" id="liste-cartes">
-        <?php foreach ($cartes as $c): ?>
-            <li data-id="<?= (int) $c['id'] ?>">
-                <span class="carte-q"><?= e($c['question']) ?></span>
-                <span class="carte-r"><?= e($c['reponse']) ?></span>
-                <span class="carte-mat"><?= e($c['matiere'] ?? '') ?></span>
-                <button type="button" class="carte-suppr" title="Supprimer">✕</button>
-            </li>
-        <?php endforeach; ?>
-    </ul>
-    <?php if (!$cartes): ?><p class="vide">Aucune carte pour l'instant.</p><?php endif; ?>
-</section>
+        </ul>
+        <?php if (!$cartes): ?>
+            <?= html_vide('Pas encore de fiche. Écris une question et sa réponse à côté : tu pourras les réviser mélangées avant un partiel.') ?>
+        <?php endif; ?>
+    </section>
+</div>
 
 <script>
 (function () {
@@ -119,7 +131,7 @@ require __DIR__ . '/includes/header.php';
 
     // ---- Suppression ----
     document.getElementById('liste-cartes').addEventListener('click', async (e) => {
-        if (!e.target.classList.contains('carte-suppr')) return;
+        if (!e.target.closest('.carte-suppr')) return;
         const li = e.target.closest('li');
         if ((await api('supprimer', { id: parseInt(li.dataset.id, 10) })).ok) li.remove();
     });
@@ -138,13 +150,13 @@ require __DIR__ . '/includes/header.php';
         recto = true;
         contenu.textContent = carte.q;
         contenu.classList.remove('verso');
-        progression.textContent = 'Carte ' + (index + 1) + ' / ' + paquet.length;
+        progression.textContent = 'Fiche ' + (index + 1) + ' / ' + paquet.length;
     }
 
     document.getElementById('btn-reviser').addEventListener('click', () => {
         const filtre = document.getElementById('filtre-matiere').value;
         paquet = filtre ? CARTES.filter(c => c.m === parseInt(filtre, 10)) : CARTES.slice();
-        if (!paquet.length) { alert('Aucune carte pour cette sélection.'); return; }
+        if (!paquet.length) { alert('Pas de fiche pour cette matière. Ajoute-en une à côté.'); return; }
         melanger(paquet); index = 0; zone.hidden = false; afficher();
     });
     document.getElementById('btn-retourner').addEventListener('click', () => {

@@ -44,7 +44,7 @@ $sections = [
     ],
     [
         'titre' => 'Couleurs et surlignage',
-        'intro' => 'Dans l\'éditeur : sélectionne le texte puis clique sur « A ▾ » dans la barre d\'outils. Couleurs : rouge, orange, jaune, vert, bleu, violet, rose, gris (ou un code #hexa).',
+        'intro' => 'Dans l\'éditeur : sélectionne le texte puis clique sur « A » dans la barre d\'outils. Couleurs : rouge, orange, jaune, vert, bleu, violet, rose, gris (ou un code #hexa).',
         'exemples' => [
             "Un mot [important]{rouge}, une [définition]{bleu} et un [exemple]{vert}.",
             "Tu peux aussi ==surligner== un passage, ou [**mettre en gras et en couleur**]{violet}.",
@@ -69,7 +69,7 @@ $sections = [
     ],
     [
         'titre' => 'Images (ex. MCD draw.io)',
-        'intro' => 'Exporte ton schéma en PNG, puis dans la note : « 📎 Fichiers joints » → Importer (ou colle-le avec Ctrl+V / glisse-le dans la zone de texte). L\'image est insérée à l\'endroit du curseur ; clique dessus dans l\'aperçu pour l\'agrandir.',
+        'intro' => 'Exporte ton schéma en PNG, puis dans la note : « Fichiers joints » → Importer (ou colle-le avec Ctrl+V / glisse-le dans la zone de texte). L\'image est insérée à l\'endroit du curseur ; clique dessus dans l\'aperçu pour l\'agrandir.',
         'exemples' => [],
     ],
     [
@@ -138,7 +138,7 @@ $exemple_bac = "# Ma première note\n\n"
     . "## Un algorithme\n\n"
     . "```python\nfor i in range(3):\n    print(i)\n```\n\n"
     . "## Une formule\n\n"
-    . "L'aire du disque est $A = \\pi r^2$.\n";
+    . "L'aire du disque est \$A = \\pi r^2$.\n";
 
 $titre_page = 'Aide Markdown';
 require __DIR__ . '/includes/header.php';
@@ -148,12 +148,27 @@ require __DIR__ . '/includes/header.php';
 <link rel="stylesheet" id="hljs-sombre" disabled
       href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
 
-<h1>Aide — écrire en Markdown</h1>
-<p class="intro-aide">Le Markdown, c'est du texte normal avec quelques symboles pour la mise en forme.
-   Pour chaque exemple : à gauche <strong>ce que tu tapes</strong>, à droite <strong>ce que ça donne</strong>.</p>
+<header class="mc-hello">
+    <p class="mc-eyebrow">Aide</p>
+    <h1 class="mc-title">Écrire en Markdown</h1>
+    <p>Du texte normal avec quelques symboles pour la mise en forme.
+       Pour chaque exemple : à gauche <strong>ce que tu tapes</strong>, à droite <strong>ce que ça donne</strong>.</p>
+</header>
 
-<section class="bloc">
-    <h2>⌨️ Raccourcis de l'éditeur</h2>
+<section class="mc-card mc-aide">
+    <div class="mc-card__head"><h2 class="mc-h"><?= icone('clavier', 'mc-ico-sm') ?>Raccourcis du site</h2></div>
+    <table class="tableau-raccourcis">
+        <tr><td><kbd>N</kbd></td><td>Nouvelle note (pré-remplie et rangée si un cours est en cours)</td></tr>
+        <tr><td><kbd>T</kbd></td><td>Ajouter une tâche (« pour vendredi » fixe la date, un nom de matière la range)</td></tr>
+        <tr><td><kbd>Ctrl</kbd> + <kbd>K</kbd> ou <kbd>/</kbd></td><td>Chercher une note, une matière ou une action</td></tr>
+        <tr><td><kbd>Échap</kbd></td><td>Fermer la recherche ou une fenêtre</td></tr>
+        <tr><td><kbd>←</kbd> / <kbd>→</kbd></td><td>Agenda : période précédente / suivante</td></tr>
+    </table>
+    <p class="mc-meta">Ces touches ne font rien quand tu écris dans un champ.</p>
+</section>
+
+<section class="mc-card mc-aide">
+    <div class="mc-card__head"><h2 class="mc-h"><?= icone('crayon', 'mc-ico-sm') ?>Raccourcis de l'éditeur</h2></div>
     <table class="tableau-raccourcis">
         <tr><td><kbd>Ctrl</kbd> + <kbd>S</kbd></td><td>Enregistrer tout de suite (l'enregistrement auto continue aussi)</td></tr>
         <tr><td><kbd>Ctrl</kbd> + <kbd>Z</kbd></td><td>Annuler</td></tr>
@@ -168,8 +183,8 @@ require __DIR__ . '/includes/header.php';
     </table>
 </section>
 
-<section class="bloc">
-    <h2>▦ Créer un tableau en 5 secondes</h2>
+<section class="mc-card mc-aide">
+    <div class="mc-card__head"><h2 class="mc-h"><?= icone('tableau', 'mc-ico-sm') ?>Créer un tableau en 5 secondes</h2></div>
     <ol class="guide">
         <li><strong>Le plus rapide :</strong> tape les titres des colonnes séparés par <code>|</code>
             puis <kbd>Entrée</kbd> :
@@ -177,7 +192,7 @@ require __DIR__ . '/includes/header.php';
             → le tableau est créé et le curseur est dans la première case.
             <kbd>Tab</kbd> = case suivante, <kbd>Entrée</kbd> = nouvelle ligne,
             <kbd>Entrée</kbd> sur une ligne vide = fin du tableau. Les colonnes s'alignent toutes seules.</li>
-        <li><strong>Comme dans un tableur :</strong> bouton <strong>▦ Tableau</strong> de la barre d'outils.
+        <li><strong>Comme dans un tableur :</strong> bouton <strong>Tableau</strong> de la barre d'outils.
             Tu remplis une grille (Tab / Entrée pour avancer), tu ajoutes lignes et colonnes,
             tu choisis l'alignement, puis « Insérer ». Curseur dans un tableau existant = le même bouton le <strong>modifie</strong>.</li>
         <li><strong>Depuis Excel / Google Sheets / LibreOffice :</strong> copie les cellules et colle-les
@@ -185,10 +200,10 @@ require __DIR__ . '/includes/header.php';
     </ol>
 </section>
 
-<section class="bloc">
-    <h2>∑ Écrire des maths vite</h2>
+<section class="mc-card mc-aide">
+    <div class="mc-card__head"><h2 class="mc-h"><?= icone('maths', 'mc-ico-sm') ?>Écrire des maths vite</h2></div>
     <ul class="guide">
-        <li><kbd>Ctrl</kbd>+<kbd>M</kbd> (ou le menu <strong>∑ Maths ▾</strong>) ouvre une formule <code>$…$</code>.</li>
+        <li><kbd>Ctrl</kbd>+<kbd>M</kbd> (ou le menu <strong>Maths</strong>) ouvre une formule <code>$…$</code>.</li>
         <li>Dans une formule, tape <code>\</code> puis le début du nom <strong>ou du mot français</strong> :
             <code>\pour</code> → <code>\forall</code>, <code>\appart</code> → <code>\in</code>,
             <code>\integ</code> → intégrale, <code>\lam</code> → λ. <kbd>Entrée</kbd> valide.</li>
@@ -196,7 +211,7 @@ require __DIR__ . '/includes/header.php';
             <kbd>Tab</kbd> passe à la suivante.</li>
         <li>Une <strong>bulle d'aperçu</strong> affiche la formule rendue sous le curseur pendant que tu tapes
             (les erreurs apparaissent en rouge).</li>
-        <li>Le menu <strong>∑ Maths ▾</strong> a une barre de recherche (« intégrale », « matrice », « appartient »…)
+        <li>Le menu <strong>Maths</strong> a une barre de recherche (« intégrale », « matrice », « appartient »…)
             et un générateur de matrice n × p.</li>
         <li>Raccourcis propres au site : <code>\R \N \Z \Q \C</code>, <code>\abs{x}</code>, <code>\norm{u}</code>,
             <code>\ens{…}</code>, <code>\pgcd</code>, <code>\dx</code>, <code>\eps</code>.</li>
@@ -205,10 +220,10 @@ require __DIR__ . '/includes/header.php';
 </section>
 
 <?php foreach ($sections as $sec): ?>
-    <section class="bloc">
-        <h2><?= e($sec['titre']) ?></h2>
+    <section class="mc-card mc-aide">
+        <div class="mc-card__head"><h2 class="mc-h"><?= e($sec['titre']) ?></h2></div>
         <?php if (!empty($sec['intro'])): ?>
-            <p class="astuce-mini"><?= e($sec['intro']) ?></p>
+            <p class="mc-meta"><?= e($sec['intro']) ?></p>
         <?php endif; ?>
         <div class="aide-liste">
             <?php foreach ($sec['exemples'] as $ex): ?>
@@ -221,17 +236,17 @@ require __DIR__ . '/includes/header.php';
     </section>
 <?php endforeach; ?>
 
-<section class="bloc" id="reference-maths">
-    <h2>📖 Référence complète des maths</h2>
-    <p class="astuce-mini">Clique sur un code pour le copier. Dans l'éditeur, le menu ∑ Maths et la touche <kbd>\</kbd> insèrent ces codes directement.</p>
-    <input type="search" id="ref-recherche" class="maths-recherche"
+<section class="mc-card mc-aide" id="reference-maths">
+    <div class="mc-card__head"><h2 class="mc-h"><?= icone('livre', 'mc-ico-sm') ?>Référence complète des maths</h2></div>
+    <p class="mc-meta">Clique sur un code pour le copier. Dans l'éditeur, le menu Maths et la touche <kbd>\</kbd> insèrent ces codes directement.</p>
+    <input type="search" id="ref-recherche" class="mc-input maths-recherche"
            placeholder="Chercher un symbole : pour tout, appartient, intégrale, matrice, variance…">
     <div id="ref-maths" class="ref-maths"></div>
 </section>
 
-<section class="bloc">
-    <h2>🧪 À toi d'essayer</h2>
-    <p class="astuce-mini">Écris à gauche, le rendu apparaît à droite. (Rien n'est enregistré ici.)</p>
+<section class="mc-card mc-aide">
+    <div class="mc-card__head"><h2 class="mc-h"><?= icone('essai', 'mc-ico-sm') ?>À toi d'essayer</h2></div>
+    <p class="mc-meta">Écris à gauche, le rendu apparaît à droite. (Rien n'est enregistré ici.)</p>
     <div class="bac-corps">
         <textarea id="bac-saisie" class="editeur-saisie" spellcheck="false"><?= e($exemple_bac) ?></textarea>
         <div id="bac-apercu" class="editeur-apercu markdown"></div>
@@ -249,7 +264,7 @@ require __DIR__ . '/includes/header.php';
 <script>
     // Coloration : suit le thème clair / sombre du site.
     function majThemeCodeAide() {
-        const sombre = document.documentElement.getAttribute('data-theme') === 'sombre';
+        const sombre = document.documentElement.getAttribute('data-theme') === 'dark';
         const c = document.getElementById('hljs-clair'), n = document.getElementById('hljs-sombre');
         if (c) c.disabled = sombre;
         if (n) n.disabled = !sombre;

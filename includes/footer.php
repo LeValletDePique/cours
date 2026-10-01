@@ -1,6 +1,10 @@
+<?php if (utilisateur_connecte()): ?>
 </main>
-<footer class="pied">
-    <p>Plateforme de notes de cours · Ing 1· CY Tech Pau</p>
-</footer>
+</div>
+<?php else: ?>
+    <button type="button" class="mc-btn mc-btn--ghost mc-btn--sm mc-auth__theme" data-action="theme"
+            aria-label="Changer de thème"><?= icone('lune', 'mc-ico-sm') ?>Thème</button>
+</main>
+<?php endif; ?>
 </body>
 </html>

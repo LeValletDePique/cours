@@ -9,7 +9,7 @@ exiger_connexion();
 $uid = utilisateur_id();
 
 $stmt = db()->prepare(
-    'SELECT n.id, n.titre, n.date_suppression, m.nom AS matiere
+    'SELECT n.id, n.titre, n.matiere_id, n.date_suppression, m.nom AS matiere
        FROM notes n LEFT JOIN matieres m ON m.id = n.matiere_id
       WHERE n.utilisateur_id = ? AND n.supprime = 1
       ORDER BY n.date_suppression DESC'
@@ -20,32 +20,38 @@ $notes = $stmt->fetchAll();
 $titre_page = 'Corbeille';
 require __DIR__ . '/includes/header.php';
 ?>
-<div class="entete-matiere">
-    <h1>Corbeille</h1>
-    <?php if ($notes): ?>
-        <button type="button" id="btn-vider" class="btn-supprimer">Vider la corbeille</button>
-    <?php endif; ?>
-</div>
+<header class="mc-hello mc-page">
+    <p class="mc-eyebrow"><?= $notes ? pluriel(count($notes), 'note') : 'Vide' ?></p>
+    <div class="mc-entete">
+        <h1 class="mc-title">Corbeille</h1>
+        <?php if ($notes): ?>
+            <button type="button" id="btn-vider" class="mc-btn mc-btn--sm"><?= icone('corbeille', 'mc-ico-sm') ?>Vider la corbeille</button>
+        <?php endif; ?>
+    </div>
+</header>
 
-<?php if ($notes): ?>
-    <ul class="liste-notes grande" id="liste-corbeille">
-        <?php foreach ($notes as $note): ?>
-            <li data-id="<?= (int) $note['id'] ?>">
-                <span class="note-titre"><?= e($note['titre']) ?></span>
-                <span class="note-meta">
-                    <?= e($note['matiere'] ?? 'Non classée') ?> ·
-                    supprimée le <?= e(date('d/m/Y H:i', strtotime($note['date_suppression']))) ?>
-                </span>
-                <span class="actions-corbeille">
-                    <button type="button" class="btn-secondaire" data-action="restaurer">Restaurer</button>
-                    <button type="button" class="btn-supprimer" data-action="definitif">Supprimer</button>
-                </span>
-            </li>
-        <?php endforeach; ?>
-    </ul>
-<?php else: ?>
-    <p class="vide">La corbeille est vide.</p>
-<?php endif; ?>
+<section class="mc-card mc-page" aria-label="Notes supprimées">
+    <?php if ($notes): $infos = infos_matieres($uid); ?>
+        <ul class="mc-lignes" id="liste-corbeille">
+            <?php foreach ($notes as $note):
+                $m = $note['matiere_id'] ? ($infos[(int) $note['matiere_id']] ?? null) : null; ?>
+                <li class="mc-ligne <?= $m ? e($m['classe']) : 'mc-ue-autre' ?>" data-id="<?= (int) $note['id'] ?>">
+                    <div class="mc-ligne__corps">
+                        <span class="mc-note__title"><?= e($note['titre']) ?></span>
+                        <span class="mc-note__sub"><span class="mc-dot"></span><?= e($m ? $m['court'] : 'Non classée') ?> ·
+                            supprimée le <?= e(date('d/m/Y à H:i', strtotime($note['date_suppression']))) ?></span>
+                    </div>
+                    <div class="mc-actions">
+                        <button type="button" class="mc-btn mc-btn--sm" data-corbeille="restaurer"><?= icone('restaurer', 'mc-ico-sm') ?>Restaurer</button>
+                        <button type="button" class="mc-btn mc-btn--ghost mc-btn--sm" data-corbeille="definitif"><?= icone('fermer', 'mc-ico-sm') ?>Supprimer</button>
+                    </div>
+                </li>
+            <?php endforeach; ?>
+        </ul>
+    <?php else: ?>
+        <?= html_vide('La corbeille est vide. Une note supprimée reste ici jusqu\'à ce que tu la vides : tu peux toujours la restaurer.') ?>
+    <?php endif; ?>
+</section>
 
 <script>
 (function () {
@@ -60,15 +66,15 @@ require __DIR__ . '/includes/header.php';
 
     const liste = document.getElementById('liste-corbeille');
     if (liste) liste.addEventListener('click', async (e) => {
-        const btn = e.target.closest('button[data-action]');
+        const btn = e.target.closest('button[data-corbeille]');
         if (!btn) return;
         const li = btn.closest('li');
         const id = parseInt(li.dataset.id, 10);
 
-        if (btn.dataset.action === 'restaurer') {
+        if (btn.dataset.corbeille === 'restaurer') {
             if ((await api('restaurer', { id })).ok) li.remove();
         } else {
-            if (!confirm('Supprimer définitivement cette note ? (irréversible)')) return;
+            if (!confirm('Supprimer définitivement cette note ? Tu ne pourras plus la récupérer.')) return;
             if ((await api('supprimer_definitif', { id })).ok) li.remove();
         }
     });
