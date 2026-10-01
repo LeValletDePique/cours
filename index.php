@@ -334,6 +334,8 @@ require __DIR__ . '/includes/header.php';
                             data-evenement="<?= $non_notes[0]['id'] ?>"><?= icone('crayon', 'mc-ico-sm') ?>Rattraper <?= e($non_notes[0]['titre']) ?></button>
                 <?php elseif ($nb_fiches): ?>
                     <a class="mc-btn mc-btn--primary mc-btn--lg" href="revision.php"><?= icone('revision', 'mc-ico-sm') ?>Réviser <?= pluriel($nb_fiches, 'fiche') ?></a>
+                <?php else: ?>
+                    <button type="button" class="mc-btn mc-btn--primary mc-btn--lg" data-action="nouvelle-note"><?= icone('crayon', 'mc-ico-sm') ?>Prendre une note<span class="mc-kbd">N</span></button>
                 <?php endif; ?>
             </div>
             <?php if ($suivant): ?>

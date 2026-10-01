@@ -138,7 +138,7 @@ $exemple_bac = "# Ma première note\n\n"
     . "## Un algorithme\n\n"
     . "```python\nfor i in range(3):\n    print(i)\n```\n\n"
     . "## Une formule\n\n"
-    . "L'aire du disque est $A = \\pi r^2$.\n";
+    . "L'aire du disque est \$A = \\pi r^2$.\n";
 
 $titre_page = 'Aide Markdown';
 require __DIR__ . '/includes/header.php';

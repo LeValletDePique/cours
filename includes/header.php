@@ -8,7 +8,6 @@
  *   $nav_actif      entrée de la barre latérale à mettre en avant
  *                   (déduite du nom du fichier sinon)
  *   $matiere_page   id de la matière affichée : « Nouvelle note » la range dedans
- *   $page_large     page qui occupe toute la largeur (agenda, éditeur)
  */
 require_once __DIR__ . '/auth.php';
 
@@ -76,7 +75,7 @@ if ($user) {
 <body data-cours="<?= $cours_actuel ? (int) $cours_actuel['id'] : '' ?>"
       data-cours-matiere="<?= $cours_actuel ? (int) $cours_actuel['matiere_id'] : '' ?>"
       data-matiere="<?= !empty($matiere_page) ? (int) $matiere_page : '' ?>">
-<div class="mc-app<?= !empty($page_large) ? ' mc-app--large' : '' ?>">
+<div class="mc-app">
 <nav class="mc-rail" id="rail" aria-label="Navigation">
     <a class="mc-brand" href="index.php"><span class="mc-brand__mark">M</span><?= e($config['nom_app']) ?></a>
     <?= $lien_nav('aujourdhui', 'index.php', 'Aujourd\'hui') ?>

@@ -1,6 +1,7 @@
 <?php
 /**
- * Page d'une matière : liste de ses notes, avec création d'une nouvelle note.
+ * Page d'une matière : ses notes et ses prochains cours.
+ * « Nouvelle note » (barre du haut, touche N) crée la note dans cette matière.
  */
 require_once __DIR__ . '/includes/auth.php';
 exiger_connexion();
@@ -25,18 +26,6 @@ if (!$matiere) {
     echo html_vide('Cette matière n\'existe pas ou ne t\'appartient plus. Retrouve tes matières dans la liste.',
         '<a class="mc-btn mc-btn--sm" href="matieres.php">' . icone('matieres', 'mc-ico-sm') . 'Voir mes matières</a>');
     require __DIR__ . '/includes/footer.php';
-    exit;
-}
-
-// --- Création d'une nouvelle note (POST) puis redirection vers l'éditeur ---
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    verifier_csrf();
-    $stmt = db()->prepare(
-        'INSERT INTO notes (matiere_id, utilisateur_id, titre, contenu)
-         VALUES (?, ?, "Sans titre", "")'
-    );
-    $stmt->execute([$matiere_id, $uid]);
-    header('Location: note.php?id=' . (int) db()->lastInsertId());
     exit;
 }
 

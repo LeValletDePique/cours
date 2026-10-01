@@ -61,7 +61,6 @@ $stmt->execute([$id, $uid]);
 $fichiers = $stmt->fetchAll();
 
 $titre_page = $note['titre'];
-$page_large = true;
 $matiere_page = $note['matiere_id'];   // « Nouvelle note » depuis l'éditeur : même matière
 require __DIR__ . '/includes/header.php';
 ?>

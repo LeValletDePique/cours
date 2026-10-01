@@ -21,7 +21,6 @@ $stmt->execute([$uid]);
 $matieres = $stmt->fetchAll();
 
 $titre_page = 'Agenda';
-$page_large = true;
 require __DIR__ . '/includes/header.php';
 ?>
 <div class="agenda" id="agenda">
