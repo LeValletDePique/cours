@@ -2,6 +2,8 @@
    Agenda : vues semaine / mois / liste, tâches, fenêtres d'ajout
    et de réglage de l'emploi du temps (lien iCal).
    Données : api/agenda.php
+   Avec data-lecture-seule="1" (page d'accueil) : consultation
+   seulement ; ajouts et modifications se font dans agenda.php.
    ============================================================ */
 
 (function () {
@@ -9,7 +11,9 @@
     if (!racine) return;
 
     const JETON = document.querySelector('meta[name="csrf-token"]')?.content || '';
-    const MATIERES = JSON.parse(document.getElementById('agenda-matieres').textContent || '[]');
+    const LECTURE_SEULE = racine.dataset.lectureSeule === '1';
+    const MATIERES = JSON.parse(document.getElementById('agenda-matieres')?.textContent || '[]');
+    const CLE_VUE = LECTURE_SEULE ? 'accueil-agenda-vue' : 'agenda-vue';
     const elVue = document.getElementById('agenda-vue');
     const elPeriode = document.getElementById('agenda-periode');
     const elInfo = document.getElementById('agenda-info');
@@ -55,7 +59,7 @@
 
     // ---------- État ----------
     let vue = 'semaine';
-    try { vue = localStorage.getItem('agenda-vue') || (innerWidth < 700 ? 'liste' : 'semaine'); } catch (e) {}
+    try { vue = localStorage.getItem(CLE_VUE) || (innerWidth < 700 ? 'liste' : 'semaine'); } catch (e) {}
     let reference = new Date();
     let donnees = { evenements: [], echeances: [], taches: [] };
 
@@ -304,7 +308,8 @@
     function afficherTaches() {
         const maintenant = new Date();
         if (!donnees.taches.length) {
-            elTaches.innerHTML = '<li class="vide">Aucune tâche. Ajoute-en une ci-dessus.</li>';
+            elTaches.innerHTML = '<li class="vide">Aucune tâche.'
+                + (LECTURE_SEULE ? '' : ' Ajoute-en une ci-dessus.') + '</li>';
             return;
         }
         elTaches.innerHTML = donnees.taches.map((t) => {
@@ -317,7 +322,8 @@
                 if (!t.journee) quand += ' ' + hm(d);
             }
             return '<li class="' + (t.fait ? 'fait' : '') + (retard ? ' retard' : '') + '" data-id="' + t.id + '">'
-                + '<input type="checkbox" class="tache-fait"' + (t.fait ? ' checked' : '') + ' title="Fait">'
+                + '<input type="checkbox" class="tache-fait"' + (t.fait ? ' checked' : '')
+                + (LECTURE_SEULE ? ' disabled title="Coche-la dans l\'Agenda"' : ' title="Fait"') + '>'
                 + '<button type="button" class="tache-titre">' + echapper(t.titre) + '</button>'
                 + (quand ? '<span class="tache-date">' + quand + '</span>' : '')
                 + '</li>';
@@ -488,7 +494,29 @@
         }
         const ev = donnees.evenements.find((x) => x.id === id) || donnees.taches.find((x) => x.id === id);
         if (!ev) return;
-        if (ev.source) ouvrirCours(ev); else ouvrirFormulaire(ev);
+        if (ev.source) ouvrirCours(ev);
+        else if (LECTURE_SEULE) ouvrirDetails(ev);
+        else ouvrirFormulaire(ev);
+    }
+
+    // Consultation d'un événement perso (page d'accueil).
+    function ouvrirDetails(ev) {
+        const d = lire(ev.debut), f = lire(ev.fin);
+        let quand = d ? majuscule(fJourLong.format(d)) : 'Sans date';
+        if (d && !ev.journee) quand += ', ' + hm(d) + (f > d ? ' – ' + hm(f) : '');
+        const corps = elementHtml(
+            '<p class="detail-ligne">🏷️ ' + echapper(TYPES[ev.type] || ev.type)
+                + (ev.type === 'tache' ? (ev.fait ? ' · ✅ faite' : ' · ⏳ à faire') : '') + '</p>'
+            + '<p class="detail-ligne">🕒 ' + echapper(quand) + '</p>'
+            + (ev.lieu ? '<p class="detail-ligne">📍 ' + echapper(ev.lieu) + '</p>' : '')
+            + (ev.matiere ? '<p class="detail-ligne">📚 <a href="matiere.php?id=' + ev.matiere_id + '">'
+                + echapper(ev.matiere) + '</a></p>' : '')
+            + (ev.description ? '<p class="detail-desc">' + echapper(ev.description) + '</p>' : ''));
+        const lien = document.createElement('a');
+        lien.className = 'btn-secondaire';
+        lien.href = 'agenda.php';
+        lien.textContent = '✏️ Modifier dans l\'Agenda';
+        ouvrirModale(ev.titre, corps, [lien]);
     }
 
     // Nouvel événement à une date/heure donnée.
@@ -552,8 +580,18 @@
             + '<p class="astuce-mini">Un cours est rattaché à une matière quand son intitulé contient le nom de la matière '
             + 'ou un de ses mots-clés (séparés par des virgules, sans tenir compte des accents ni des majuscules). '
             + 'Tu peux alors ouvrir la matière ou prendre des notes depuis le cours.</p>'
-            + (rep.non_reconnus.length ? '<p class="non-reconnus">Intitulés non reconnus : '
-                + rep.non_reconnus.map((n) => '<code>' + echapper(n.titre) + '</code> (' + n.nb + ')').join(', ') + '</p>' : '')
+            + (rep.non_reconnus.length
+                ? '<p class="non-reconnus"><b>Cours sans matière</b> : choisis la matière de chaque code '
+                    + '(une suggestion est pré-remplie quand le code y ressemble), puis « Enregistrer ».</p>'
+                    + '<table class="table-mots-cles table-codes"><tbody>'
+                    + rep.non_reconnus.map((n) => '<tr><td><code>' + echapper(n.titre) + '</code> <small>('
+                        + n.nb + ' cours)</small></td><td><select data-code="' + echapper(n.titre) + '">'
+                        + '<option value="">— Choisir la matière —</option>'
+                        + rep.matieres.map((m) => '<option value="' + m.id + '"' + (m.id === n.suggestion ? ' selected' : '')
+                            + '>' + echapper(m.ue + ' · ' + m.nom) + '</option>').join('')
+                        + '</select></td></tr>').join('')
+                    + '</tbody></table>'
+                : '')
             + '<table class="table-mots-cles"><thead><tr><th>Matière</th><th>Mots-clés</th><th>Cours</th></tr></thead>'
             + '<tbody>' + lignesMatieres + '</tbody></table>'
             + '<p class="statut-sources astuce-mini"></p>';
@@ -597,6 +635,13 @@
         });
 
         const enregistrerMots = async () => {
+            // Code choisi pour une matière = ajouté à ses mots-clés.
+            corps.querySelectorAll('select[data-code]').forEach((sel) => {
+                const champ = sel.value && corps.querySelector('[data-matiere="' + sel.value + '"]');
+                if (!champ) return;
+                const actuels = champ.value.split(',').map((x) => x.trim()).filter(Boolean);
+                if (!actuels.includes(sel.dataset.code)) champ.value = [...actuels, sel.dataset.code].join(', ');
+            });
             const mots = {};
             corps.querySelectorAll('[data-matiere]').forEach((i) => { mots[i.dataset.matiere] = i.value; });
             occupe('Enregistrement…');
@@ -642,15 +687,15 @@
         const b = e.target.closest('[data-vue]');
         if (!b) return;
         vue = b.dataset.vue;
-        try { localStorage.setItem('agenda-vue', vue); } catch (err) {}
+        try { localStorage.setItem(CLE_VUE, vue); } catch (err) {}
         charger();
     });
-    document.getElementById('btn-ajouter').addEventListener('click', () => {
+    document.getElementById('btn-ajouter')?.addEventListener('click', () => {
         const auj = new Date();
         const { debut, fin } = periode();
         nouveau(auj >= debut && auj < fin ? ymd(auj) : ymd(debut));
     });
-    document.getElementById('btn-sources').addEventListener('click', ouvrirSources);
+    document.getElementById('btn-sources')?.addEventListener('click', ouvrirSources);
 
     elVue.addEventListener('click', (e) => {
         const evt = e.target.closest('[data-genre]');
@@ -662,6 +707,7 @@
             charger();
             return;
         }
+        if (LECTURE_SEULE) return;   // accueil : pas d'ajout
         // Clic dans un créneau vide de la semaine : heure arrondie à la demi-heure.
         const col = e.target.closest('.sem-col');
         if (col) {
@@ -675,7 +721,7 @@
     });
 
     // Tâches : ajout rapide, cocher, ouvrir.
-    document.getElementById('form-tache').addEventListener('submit', async (e) => {
+    document.getElementById('form-tache')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const f = e.target;
         const rep = await api('creer', { titre: f.titre.value, type: 'tache', date: f.date.value, journee: true });
@@ -686,6 +732,7 @@
         if (!li) return;
         const id = parseInt(li.dataset.id, 10);
         if (e.target.classList.contains('tache-fait')) {
+            if (LECTURE_SEULE) return;
             await api('basculer', { id });
             charger();
         } else if (e.target.classList.contains('tache-titre')) {
@@ -694,7 +741,9 @@
     });
 
     // Raccourcis clavier : ← → (période), T (aujourd'hui).
+    // (pas sur l'accueil : les flèches y font défiler la page)
     document.addEventListener('keydown', (e) => {
+        if (LECTURE_SEULE) return;
         if (document.querySelector('.modale-fond') || e.ctrlKey || e.metaKey || e.altKey) return;
         if (/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || '')) return;
         if (e.key === 'ArrowLeft') naviguer(-1);

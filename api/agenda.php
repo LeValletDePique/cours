@@ -66,7 +66,8 @@ function evenement_json(array $e): array
     return [
         'id'          => (int) $e['id'],
         'type'        => $e['type'],
-        'titre'       => $e['titre'],
+        'titre'       => titre_affiche($e),
+        'intitule'    => $e['titre'],                     // tel qu'importé (ex. code Celcat)
         'description' => (string) $e['description'],
         'lieu'        => (string) $e['lieu'],
         'categorie'   => $e['categorie'],                 // CM / TD / autre (cours importés)
@@ -80,6 +81,18 @@ function evenement_json(array $e): array
         'couleur'     => $e['couleur_ue'] ?: $e['couleur_source'],
         'source'      => $e['source'],
     ];
+}
+
+/**
+ * Titre à afficher : pour un cours importé relié à une matière, le nom de la
+ * matière (sans « (MAN 1) ») ; Celcat ne donne souvent qu'un code (DIDB1BDD).
+ */
+function titre_affiche(array $e): string
+{
+    if ($e['source_id'] && $e['type'] === 'cours' && $e['matiere']) {
+        return trim(preg_replace('/\s*\(.*?\)\s*/', ' ', $e['matiere']));
+    }
+    return $e['titre'];
 }
 
 const SELECT_EVENEMENTS =
@@ -269,12 +282,20 @@ switch ($action) {
 
         // Intitulés de cours qui ne correspondent à aucune matière.
         $stmt = db()->prepare(
-            'SELECT titre, COUNT(*) AS nb FROM evenements
+            "SELECT titre, COUNT(*) AS nb FROM evenements
               WHERE utilisateur_id = ? AND source_id IS NOT NULL AND matiere_id IS NULL
-              GROUP BY titre ORDER BY nb DESC LIMIT 15'
+                AND type = 'cours'
+              GROUP BY titre ORDER BY nb DESC LIMIT 30"
         );
         $stmt->execute([$uid]);
         $non_reconnus = $stmt->fetchAll();
+        // Matière devinée d'après le code (ex. DIDB1BDD -> Base de données), à confirmer.
+        $suggestions = suggerer_matieres(array_column($non_reconnus, 'titre'), $matieres);
+        foreach ($non_reconnus as &$n) {
+            $n['nb'] = (int) $n['nb'];
+            $n['suggestion'] = $suggestions[$n['titre']] ?? null;
+        }
+        unset($n);
 
         repondre_json(['sources' => $sources, 'matieres' => $matieres,
                        'non_reconnus' => $non_reconnus]);
@@ -399,14 +420,14 @@ switch ($action) {
         }
         $jour = date('d/m/Y', strtotime($ev['debut']));
         $type_cours = in_array($ev['categorie'], ['CM', 'TD'], true) ? ' (' . $ev['categorie'] . ')' : '';
-        $titre = mb_substr($ev['titre'] . $type_cours . ' – ' . $jour, 0, 255);
+        $titre = mb_substr(titre_affiche($ev) . $type_cours . ' – ' . $jour, 0, 255);
         // « 28/09/2026, 08:30–10:00 · M. Dupont · CM · Amphi 1 »
         $infos = $jour . ($ev['journee'] ? '' : ', ' . date('H:i', strtotime($ev['debut']))
                  . '–' . date('H:i', strtotime($ev['fin'])));
         foreach ([$ev['intervenant'], $type_cours ? $ev['categorie'] : '', $ev['lieu']] as $info) {
             if ($info) $infos .= ' · ' . $info;
         }
-        $contenu = '# ' . $ev['titre'] . "\n\n*" . $infos . "*\n\n";
+        $contenu = '# ' . titre_affiche($ev) . "\n\n*" . $infos . "*\n\n";
         $stmt = db()->prepare(
             'INSERT INTO notes (matiere_id, utilisateur_id, titre, contenu) VALUES (?, ?, ?, ?)'
         );

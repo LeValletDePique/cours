@@ -876,7 +876,7 @@ kbd {
     position: absolute; padding: .15rem .3rem; font-size: .74rem; line-height: 1.25;
     display: flex; flex-direction: column; box-shadow: 0 1px 2px rgba(0, 0, 0, .15); z-index: 1;
 }
-.evt-titre { font-weight: 600; overflow-wrap: anywhere; }
+.evt-titre { font-weight: 600; overflow-wrap: break-word; hyphens: auto; }
 .evt-lieu { opacity: .9; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .sem-maintenant { position: absolute; left: 0; right: 0; height: 2px; background: var(--danger); z-index: 2; pointer-events: none; }
 .sem-maintenant::before {
@@ -970,6 +970,11 @@ kbd {
 .aide-ical { font-size: .85rem; margin-top: .5rem; color: var(--texte-doux); }
 .aide-ical summary { cursor: pointer; color: var(--accent); }
 .non-reconnus { font-size: .82rem; color: var(--texte-doux); }
+.table-codes { margin-bottom: 1rem; }
+.table-codes select {
+    width: 100%; padding: .3rem .4rem; border: 1px solid var(--bordure); border-radius: 6px;
+    background: var(--fond); color: var(--texte);
+}
 .table-mots-cles { width: 100%; border-collapse: collapse; font-size: .85rem; }
 .table-mots-cles th { text-align: left; color: var(--texte-doux); font-weight: 600; padding: .3rem; }
 .table-mots-cles td { padding: .2rem .3rem; border-top: 1px solid var(--bordure); }
@@ -979,20 +984,25 @@ kbd {
     background: var(--fond); color: var(--texte);
 }
 
-/* Accueil : bloc « Aujourd'hui » */
-.liste-jour { list-style: none; margin: 0; padding: 0; }
-.liste-jour li { display: flex; align-items: center; gap: .6rem; padding: .35rem 0; border-bottom: 1px dashed var(--bordure); }
-.liste-jour .heure { font-variant-numeric: tabular-nums; color: var(--texte-doux); font-size: .85rem; min-width: 6.5rem; }
-.liste-jour .details { color: var(--texte-doux); font-size: .82rem; margin-left: auto; text-align: right; }
-.liste-jour li.retard .heure { color: var(--danger); font-weight: 600; }
+/* Accueil : agenda en consultation */
+.agenda-accueil { margin-bottom: 1.5rem; }
+.agenda-accueil .agenda-barre h2 { margin: 0; }
+.agenda.lecture-seule .agenda-corps { grid-template-columns: minmax(0, 1fr); gap: 1rem; }   /* « À faire » sous l'agenda */
+.agenda.lecture-seule .agenda-vue.vue-semaine { max-height: 560px; }
+.agenda.lecture-seule .sem-col, .agenda.lecture-seule .sem-cellule,
+.agenda.lecture-seule .mois-cellule { cursor: default; }
+.agenda.lecture-seule .agenda-cote {
+    background: var(--fond-carte); border: 1px solid var(--bordure); border-radius: var(--rayon);
+    box-shadow: var(--ombre); padding: .8rem 1rem;
+}
+.agenda.lecture-seule .agenda-cote h3 { margin: 0 0 .4rem; font-size: 1rem; }
+.agenda.lecture-seule .liste-taches { max-height: 240px; }
 
 @media (max-width: 900px) {
-    .agenda-corps { grid-template-columns: 1fr; }
+    .agenda-corps, .agenda.lecture-seule .agenda-corps { grid-template-columns: 1fr; }
     .agenda-actions { margin-left: 0; }
 }
 @media (max-width: 640px) {
     .form-evt { grid-template-columns: 1fr; }
-    .liste-jour li { flex-wrap: wrap; }
-    .liste-jour .details { margin-left: 0; text-align: left; width: 100%; }
 }
 .prochains-cours { color: var(--texte-doux); font-size: .9rem; margin: -.4rem 0 1rem; }

@@ -5,9 +5,7 @@
  * et quelques statistiques. Tout vient de la base (rien codé en dur).
  */
 require_once __DIR__ . '/includes/auth.php';
-require_once __DIR__ . '/includes/agenda.php';
 exiger_connexion();
-installer_agenda();
 
 $uid = utilisateur_id();
 
@@ -76,24 +74,6 @@ $stmt = db()->prepare(
 $stmt->execute([$uid]);
 $prochaines = $stmt->fetchAll();
 
-// --- Aujourd'hui : cours, réunions et tâches du jour + tâches en retard ---
-$aujourdhui = date('Y-m-d 00:00:00');
-$demain     = date('Y-m-d 00:00:00', strtotime('+1 day'));
-$stmt = db()->prepare(
-    "SELECT e.id, e.type, e.categorie, e.intervenant, e.titre, e.lieu, e.debut, e.fin,
-            e.journee, e.fait, m.nom AS matiere
-       FROM evenements e LEFT JOIN matieres m ON m.id = e.matiere_id
-      WHERE e.utilisateur_id = ? AND e.debut IS NOT NULL
-        AND (
-              (e.debut < ? AND (e.fin > ? OR e.debut >= ?))
-           OR (e.type = 'tache' AND e.fait = 0 AND e.debut < ?)
-        )
-      ORDER BY e.debut < ? DESC, e.journee DESC, e.debut
-      LIMIT 15"
-);
-$stmt->execute([$uid, $demain, $aujourdhui, $aujourdhui, $aujourdhui, $aujourdhui]);
-$du_jour = $stmt->fetchAll();
-
 // --- Matière la plus travaillée ---
 $stmt = db()->prepare(
     'SELECT m.nom, COUNT(*) AS c FROM notes n JOIN matieres m ON m.id = n.matiere_id
@@ -130,37 +110,37 @@ require __DIR__ . '/includes/header.php';
     <?php endif; ?>
 </section>
 
-<section class="bloc">
-    <h2>📆 Aujourd'hui</h2>
-    <?php if ($du_jour): ?>
-        <ul class="liste-jour">
-            <?php foreach ($du_jour as $ev):
-                $retard = $ev['type'] === 'tache' && $ev['debut'] < $aujourdhui;
-                if ($retard) {
-                    $heure = 'En retard (' . date('d/m', strtotime($ev['debut'])) . ')';
-                } elseif ($ev['journee']) {
-                    $heure = 'Journée';
-                } elseif ($ev['fin'] > $ev['debut']) {
-                    $heure = date('H:i', strtotime($ev['debut'])) . ' – ' . date('H:i', strtotime($ev['fin']));
-                } else {
-                    $heure = date('H:i', strtotime($ev['debut']));
-                } ?>
-                <li class="<?= $retard ? 'retard' : '' ?>">
-                    <span class="heure"><?= e($heure) ?></span>
-                    <span class="pastille type-<?= e($ev['type']) ?> cat-<?= e((string) $ev['categorie']) ?>"></span>
-                    <span><?= $ev['type'] === 'tache' ? ($ev['fait'] ? '☑ ' : '☐ ') : '' ?><?= e($ev['titre']) ?></span>
-                    <span class="details"><?= e(implode(' · ', array_filter([
-                        $ev['intervenant'], in_array($ev['categorie'], ['CM', 'TD'], true) ? $ev['categorie'] : '',
-                        $ev['lieu'], $ev['matiere'] !== $ev['titre'] ? $ev['matiere'] : '',
-                    ]))) ?></span>
-                </li>
-            <?php endforeach; ?>
-        </ul>
-        <p class="lien-bas"><a href="agenda.php">Ouvrir l'agenda →</a></p>
-    <?php else: ?>
-        <p class="vide">Rien de prévu aujourd'hui. <a href="agenda.php">Ouvrir l'agenda</a></p>
-    <?php endif; ?>
+<!-- Agenda en consultation (ajouts / modifications : page Agenda). Voir assets/js/agenda.js -->
+<section class="agenda-accueil">
+    <div class="agenda lecture-seule" id="agenda" data-lecture-seule="1">
+        <div class="agenda-barre">
+            <h2>📆 Agenda</h2>
+            <div class="agenda-nav">
+                <button type="button" class="btn-secondaire" data-nav="-1" title="Précédent">‹</button>
+                <button type="button" class="btn-secondaire" data-nav="0">Aujourd'hui</button>
+                <button type="button" class="btn-secondaire" data-nav="1" title="Suivant">›</button>
+                <span class="agenda-periode" id="agenda-periode"></span>
+            </div>
+            <div class="agenda-vues" role="tablist">
+                <button type="button" data-vue="semaine">Semaine</button>
+                <button type="button" data-vue="mois">Mois</button>
+                <button type="button" data-vue="liste">Liste</button>
+            </div>
+            <div class="agenda-actions">
+                <a class="btn-secondaire" href="agenda.php" title="Ajouter ou modifier des événements">✏️ Ajouter / modifier</a>
+            </div>
+        </div>
+        <p class="agenda-info" id="agenda-info" hidden></p>
+        <div class="agenda-corps">
+            <div class="agenda-vue" id="agenda-vue"></div>
+            <aside class="agenda-cote">
+                <h3>✅ À faire</h3>
+                <ul class="liste-taches" id="liste-taches"></ul>
+            </aside>
+        </div>
+    </div>
 </section>
+<script defer src="assets/js/agenda.js"></script>
 
 <div class="grille-2">
     <section class="bloc">

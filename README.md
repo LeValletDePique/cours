@@ -57,8 +57,10 @@ Ouvre <http://localhost/cours/>.
 - **Export** d'une note ou d'une matière entière en **Markdown** et **PDF**.
 - **Recherche** plein texte (titre + contenu) avec filtre par tag.
 - **Agenda** (semaine / mois / liste) : emploi du temps importé, réunions, tâches à
-  faire, événements perso et échéances au même endroit ; bloc « Aujourd'hui » sur
-  l'accueil ; depuis un cours, « Prendre des notes » crée la note dans la bonne matière.
+  faire, événements perso et échéances au même endroit ; depuis un cours, « Prendre
+  des notes » crée la note dans la bonne matière.
+- **Agenda sur l'accueil**, en consultation seule (navigation semaine / mois / liste,
+  détails au clic) ; les ajouts et modifications se font dans la page Agenda.
 - **Échéances** (DS, rendus, examens) avec rappels sur le tableau de bord.
 - **Révision** par flashcards (question/réponse, mode révision mélangée).
 - **Tableau de bord** : dernières notes, favoris, prochaines échéances, stats.
@@ -93,16 +95,26 @@ Le fichier généré par `outils/celcat-vers-ics.js` s'importe avec
 un fichier du **même nom** remplace les créneaux de l'import précédent ; les
 réunions, tâches et événements perso créés à la main ne sont **jamais** touchés.
 
-À l'import, chaque créneau est mis en forme ainsi : **matière** (titre),
-**prof**, **CM / TD**, **salle**. Champs lus dans le `.ics` :
+Chaque cours s'affiche ainsi : **matière**, **prof · CM/TD**, **salle**
+(ex. « Base de données / DUPONT Jean · CM / A001 AMPHITHÉÂTRE »).
+
+**Celcat ne donne qu'un code de module** (`DIDB1BDD(DI01C1-260) (TD)`) : le nom
+affiché est celui de la **matière reliée**. Après le premier import, ouvre
+🔗 Emploi du temps → « Cours sans matière » : chaque code y est listé avec une
+matière **pré-sélectionnée** quand le code y ressemble (`DIDB1BDD` → Base de
+données, `DIDB1OPL` → Optimisation linéaire…). Vérifie, complète (ex.
+`DIDANG1D` → TOEIC) puis **Enregistrer les mots-clés** : le code devient un
+mot-clé de la matière, pour cet import et les suivants.
+
+Champs lus dans le `.ics` :
 
 | Champ iCal | Utilisation |
 |---|---|
-| `SUMMARY` | Nom de la matière. Les codes (`P1INF05 - …`, `… [P1INF05]`, `P1INF05 : …`), un `CM`/`TD`/`TP` isolé et le nom du prof sont retirés. L'intitulé d'origine reste en tête de la description, donc un code peut servir de mot-clé de rattachement. |
+| `SUMMARY` | Intitulé. Retirés : `(TD)`/`(CM)` (→ catégorie), le groupe `(DI01C1-260)`, les codes (`P1INF05 - …`, `… [P1INF05]`) et le nom du prof. S'il ne reste qu'un code, il sert de mot-clé pour relier la matière (voir ci-dessus). |
 | `CATEGORIES` | `CM` / « Cours magistral » → **CM (rouge)** ; `TD` / « Travaux dirigés » → **TD (bleu)** ; autre (TP, examen…) → couleur de l'UE ; « Indisponibilité » → importé comme **réunion** avec son titre. À défaut, un `CM`/`TD` présent dans `SUMMARY` est utilisé. |
-| `DESCRIPTION` | Prof : ligne `Prof : …`, `Enseignant : …`, `Intervenant : …` ou `Staff : …`. Le reste est affiché dans le détail du cours. |
+| `DESCRIPTION` | Prof : ligne `Prof : …` (`Enseignant`, `Intervenant`, `Staff`), sinon une ligne au format nom de personne (`DUPONT Jean`, `Jean DUPONT`, `M. Dupont`). Le HTML de Celcat (`<br />`, `&#201;`) est décodé. |
 | `ORGANIZER;CN=…` | Prof, si la description n'en contient pas. |
-| `LOCATION` | Salle. |
+| `LOCATION` | Salle, raccourcie : `PAU E201 SALLE POLYVALENTE 30p` → `E201 SALLE POLYVALENTE` (site et capacité retirés). |
 
 Ces informations sont stockées dans les colonnes `evenements.categorie` (CM/TD/autre)
 et `evenements.intervenant`, ajoutées automatiquement à une base existante.

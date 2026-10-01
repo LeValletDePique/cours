@@ -93,7 +93,10 @@ function ajouter_colonne(string $table, string $colonne, string $definition): vo
 /** Texte iCal -> texte normal (\n, \, \; \\). */
 function ics_texte(string $v): string
 {
-    return strtr($v, ['\\n' => "\n", '\\N' => "\n", '\\,' => ',', '\\;' => ';', '\\\\' => '\\']);
+    $v = strtr($v, ['\\n' => "\n", '\\N' => "\n", '\\,' => ',', '\\;' => ';', '\\\\' => '\\']);
+    // Celcat envoie du HTML : « <br /> » entre les lignes, « &#201; » pour É…
+    $v = preg_replace('#<br\s*/?>#i', "\n", $v);
+    return html_entity_decode($v, ENT_QUOTES | ENT_HTML5, 'UTF-8');
 }
 
 /**
@@ -357,7 +360,7 @@ function ics_creneaux(string $ics): array
                 $finL   = $f->setTimezone($local)->format('Y-m-d H:i:s');
             }
             $creneaux[] = $infos + [
-                'lieu'        => mb_substr(trim($ev['lieu']), 0, 255),
+                'lieu'        => mb_substr(nettoyer_salle($ev['lieu']), 0, 255),
                 'debut'       => $debutL,
                 'fin'         => $finL,
                 'journee'     => $ev['journee'] ? 1 : 0,
@@ -409,6 +412,7 @@ function analyser_creneau(array $ev): array
 {
     $brut = trim(preg_replace('/\s+/u', ' ', $ev['titre']));
     $description = trim($ev['description']);
+    $lieu = trim($ev['lieu']);
 
     $categorie = null;
     foreach ($ev['categories'] as $c) {
@@ -421,13 +425,7 @@ function analyser_creneau(array $ev): array
         $categorie = 'indispo';
     }
 
-    $intervenant = '';
-    if (preg_match('/^\s*(?:prof(?:esseur)?s?|enseignant(?:e)?s?|intervenant(?:e)?s?|formateur|formatrice|staff|teacher)\s*:\s*(.+)$/imu',
-                   $description, $m)) {
-        $intervenant = trim($m[1]);
-    } elseif ($ev['organisateur'] !== '') {
-        $intervenant = $ev['organisateur'];
-    }
+    $intervenant = trouver_intervenant($description, [$brut, $lieu], $ev['organisateur']);
 
     // Indisponibilité : une « réunion » qui garde son titre tel quel.
     if ($categorie === 'indispo') {
@@ -438,14 +436,31 @@ function analyser_creneau(array $ev): array
         ];
     }
 
-    // « P1INF02 - Base de données - CM - M. Dupont » -> « Base de données »
+    // Parenthèses : « (TD) » -> catégorie, « (DI01C1-260) » (groupe) -> retiré.
+    $codes = $groupes = [];
+    $reste = preg_replace_callback('/\(([^()]*)\)/u', function ($m) use (&$categorie, &$groupes) {
+        $dedans = trim($m[1]);
+        if (preg_match('/^(CM|TD|TP|TDM|TPM|CI)$/i', $dedans)
+                || in_array(categorie_cours($dedans), ['CM', 'TD'], true) && mb_strlen($dedans) <= 20) {
+            $categorie = $categorie ?? categorie_cours($dedans);
+            return ' ';
+        }
+        if (est_code($dedans)) {
+            $groupes[] = $dedans;
+            return ' ';
+        }
+        return $m[0];
+    }, $brut);
+
+    // « P1INF05 - Base de données - CM - M. Dupont » -> « Base de données »
     $garde = [];
-    foreach (preg_split('/\s+[-–—|·]\s+/u', $brut) as $morceau) {
+    foreach (preg_split('/\s+[-–—|·]\s+/u', trim(preg_replace('/\s+/u', ' ', $reste))) as $morceau) {
         $morceau = trim(preg_replace([
             '/^[A-Z0-9][A-Z0-9_.\/-]*\d[A-Z0-9_.\/-]*\s*:\s*/',       // « INF101 : Nom »
-            '/\s*[\[(][A-Z0-9_.\/-]*\d[A-Z0-9_.\/-]*[\])]$/',          // « Nom [INF101] »
+            '/\s*\[[A-Z0-9_.\/-]*\d[A-Z0-9_.\/-]*\]$/',               // « Nom [INF101] »
         ], '', $morceau));
-        if ($morceau === '' || est_code($morceau)) continue;
+        if ($morceau === '') continue;
+        if (est_code($morceau)) { $codes[] = $morceau; continue; }
         if (preg_match('/^(CM|TD|TP|TDM|TPM|CI)$/i', $morceau)) {
             $categorie = $categorie ?? categorie_cours($morceau);
             continue;
@@ -453,7 +468,10 @@ function analyser_creneau(array $ev): array
         if ($intervenant !== '' && texte_comparable($morceau) === texte_comparable($intervenant)) continue;
         $garde[] = $morceau;
     }
-    $titre = $garde ? implode(' - ', $garde) : ($brut !== '' ? $brut : '(sans titre)');
+    // Rien d'autre qu'un code (cas Celcat « DIDANG1D(DI01C1-260) (TD) ») :
+    // on garde le code ; l'agenda affichera le nom de la matière reliée.
+    $titre = $garde ? implode(' - ', $garde)
+        : ($codes[0] ?? $groupes[0] ?? ($brut !== '' ? $brut : '(sans titre)'));
     if ($brut !== '' && $titre !== $brut && strpos($description, $brut) === false) {
         $description = trim($brut . "\n" . $description);
     }
@@ -465,6 +483,52 @@ function analyser_creneau(array $ev): array
         'titre'       => mb_substr($titre, 0, 255),
         'description' => $description,
     ];
+}
+
+/**
+ * Prof d'un créneau : ligne « Prof : … » (Enseignant, Intervenant, Staff…)
+ * de la description, sinon une ligne qui ressemble à un nom de personne
+ * (« DUPONT Jean », « Jean DUPONT », « M. Dupont »), sinon ORGANIZER.
+ */
+function trouver_intervenant(string $description, array $a_ignorer, string $organisateur): string
+{
+    if (preg_match('/^\s*(?:prof(?:esseur)?s?|enseignant(?:e)?s?|intervenant(?:e)?s?|formateur|formatrice|staff|teacher)\s*:\s*(.+)$/imu',
+                   $description, $m)) {
+        return trim($m[1]);
+    }
+    $ignorer = array_map('texte_comparable', $a_ignorer);
+    $noms = [];
+    foreach (preg_split('/\R/u', $description) as $ligne) {
+        // Une ligne peut contenir plusieurs profs : « DUPONT Jean ; MARTIN Léa »
+        foreach (preg_split('/\s*[;,]\s*/u', trim($ligne)) as $morceau) {
+            if ($morceau === '' || preg_match('/\d/', $morceau) || mb_strlen($morceau) > 60
+                    || in_array(texte_comparable($morceau), $ignorer, true)
+                    || categorie_cours($morceau) !== 'autre') {
+                continue;
+            }
+            if (preg_match('/^(?:M\.|Mme|Mlle|Mr|Dr)\s+\S+/u', $morceau)
+                    || preg_match("/^\\p{Lu}[\\p{Lu}'’ -]+\\s+\\p{Lu}\\p{Ll}[\\p{L}' -]*$/u", $morceau)   // DUPONT Jean
+                    || preg_match("/^\\p{Lu}\\p{Ll}[\\p{L}'-]*\\s+\\p{Lu}[\\p{Lu}'’ -]+$/u", $morceau)) { // Jean DUPONT
+                $noms[] = $morceau;
+            }
+        }
+    }
+    if ($noms) {
+        return implode(', ', array_unique($noms));
+    }
+    return $organisateur;
+}
+
+/** « PAU E201 SALLE POLYVALENTE (TD ET INFO) 30p » -> « E201 SALLE POLYVALENTE (TD ET INFO) » */
+function nettoyer_salle(string $lieu): string
+{
+    $salles = [];
+    foreach (preg_split('/\s*[;,]\s*/u', trim($lieu)) as $s) {
+        $s = preg_replace('/\s*\d+\s*(?:p|pl|places?)\.?$/iu', '', $s);   // capacité
+        $s = preg_replace('/^\p{Lu}{2,}\s+(?=\p{Lu}?\d)/u', '', $s);        // site (« PAU ») devant le n° de salle
+        if (trim($s) !== '') $salles[] = trim($s);
+    }
+    return implode(', ', $salles);
 }
 
 /**
@@ -647,4 +711,90 @@ function associer_matieres(int $uid): void
             $maj->execute([$nouvelle, $ev['id']]);
         }
     }
+}
+
+// ============================================================
+//  Suggestion de matière pour un code de module (Celcat)
+// ============================================================
+
+/**
+ * Devine la matière de chaque code non reconnu : « DIDB1BDD » -> partie
+ * propre au module « BDD » (après le préfixe commun à tous les codes, ici
+ * « DID ») -> lettres retrouvées dans l'ordre dans « Base De Données ».
+ * Les lettres placées en début de mot comptent double ; en cas d'égalité,
+ * pas de suggestion. Renvoie [code => id de matière].
+ * $matieres : [['id' => …, 'nom' => …], …]
+ */
+function suggerer_matieres(array $codes, array $matieres): array
+{
+    $codes = array_values(array_filter($codes, 'est_code'));
+    if (!$codes) {
+        return [];
+    }
+    // Préfixe commun (seulement s'il y a plusieurs codes à comparer).
+    $prefixe = '';
+    if (count($codes) > 1) {
+        $prefixe = $codes[0];
+        foreach ($codes as $c) {
+            while ($prefixe !== '' && strpos($c, $prefixe) !== 0) {
+                $prefixe = substr($prefixe, 0, -1);
+            }
+        }
+        $prefixe = preg_replace('/[^A-Z]+$/', '', $prefixe);
+    }
+    $noms = [];
+    foreach ($matieres as $m) {
+        $noms[$m['id']] = texte_comparable(preg_replace('/\s*\(.*?\)\s*/', ' ', $m['nom']));
+    }
+
+    $resultat = [];
+    foreach ($codes as $code) {
+        // La plus longue suite de lettres (≥ 3) après le préfixe : « B1BDD » -> « BDD ».
+        preg_match_all('/[A-Z]{2,}/', substr($code, strlen($prefixe)), $m);
+        usort($m[0], fn($a, $b) => strlen($b) <=> strlen($a));
+        $jeton = strtolower($m[0][0] ?? '');
+        if (strlen($jeton) < 2) {
+            continue;
+        }
+        $meilleur = null;
+        $score_max = 0;
+        $egalite = false;
+        foreach ($noms as $id => $nom) {
+            $score = score_sigle($jeton, $nom);
+            if ($score > $score_max) {
+                [$meilleur, $score_max, $egalite] = [$id, $score, false];
+            } elseif ($score > 0 && $score === $score_max) {
+                $egalite = true;
+            }
+        }
+        if ($meilleur !== null && !$egalite) {
+            $resultat[$code] = (int) $meilleur;
+        }
+    }
+    return $resultat;
+}
+
+/** Score d'un sigle (« bdd ») dans un nom (« base de donnees ») ; 0 = impossible. */
+function score_sigle(string $sigle, string $nom): int
+{
+    if ($nom === '' || $sigle[0] !== $nom[0]) {
+        return 0;
+    }
+    $pos = 0;
+    $score = 0;
+    foreach (str_split($sigle) as $lettre) {
+        // D'abord une initiale de mot, sinon n'importe quelle lettre plus loin.
+        if (preg_match('/(?:^|\s)' . preg_quote($lettre, '/') . '/', $nom, $m, PREG_OFFSET_CAPTURE, $pos)) {
+            $pos = $m[0][1] + strlen($m[0][0]);
+            $score += 2;
+            continue;
+        }
+        $i = strpos($nom, $lettre, $pos);
+        if ($i === false) {
+            return 0;
+        }
+        $pos = $i + 1;
+        $score += 1;
+    }
+    return $score;
 }
