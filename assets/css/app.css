@@ -128,3 +128,21 @@ ul.mc-tasks { margin-top: var(--space-2); }
     .mc-tl__time { grid-column: 1 / -1; }
     .mc-tl__room { display: none; }
 }
+
+/* ---------- Palette de commandes (Ctrl K) ---------- */
+.mc-palette-fond {
+    position: fixed; inset: 0; z-index: 100; background: var(--voile);
+    display: flex; justify-content: center; align-items: flex-start;
+    padding: 12vh var(--space-4) var(--space-4);
+}
+.mc-palette__input input {
+    flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--ink);
+    font: 400 16px/22px var(--font-sans);
+}
+.mc-palette__input input::placeholder { color: var(--ink-muted); }
+.mc-palette__input:focus-within { box-shadow: inset 0 -2px 0 var(--accent); }
+.mc-palette__resultats { max-height: min(60vh, 480px); overflow-y: auto; }
+.mc-palette__item { color: var(--ink); text-decoration: none; cursor: pointer; min-width: 0; }
+.mc-palette__texte { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mc-palette__item .mc-meta { flex: none; max-width: 40%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mc-palette__vide { margin: 0; padding: var(--space-4); color: var(--ink-muted); font-size: 14px; }

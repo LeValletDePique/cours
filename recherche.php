@@ -15,51 +15,8 @@ $stmt = db()->prepare('SELECT id, nom, couleur FROM tags WHERE utilisateur_id = 
 $stmt->execute([$uid]);
 $tags = $stmt->fetchAll();
 
-$resultats = [];
-if ($q !== '' || $tag) {
-    // Construction dynamique de la requête (valeurs toujours en paramètres liés).
-    $where  = ['n.utilisateur_id = ?', 'n.supprime = 0'];
-    $params = [$uid];
-    $tri    = 'n.date_modification DESC';
-
-    if ($q !== '') {
-        $bool = requete_fulltext($q);
-        if ($bool !== '') {
-            // Recherche plein texte (rapide, avec score de pertinence).
-            $where[] = 'MATCH(n.titre, n.contenu) AGAINST(? IN BOOLEAN MODE)';
-            $params[] = $bool;
-            $tri = 'pertinence DESC';
-            $select_score = ', MATCH(n.titre, n.contenu) AGAINST(? IN BOOLEAN MODE) AS pertinence';
-            $params_score = [$bool];
-        } else {
-            // Mots trop courts : on retombe sur une recherche simple LIKE.
-            $where[] = '(n.titre LIKE ? OR n.contenu LIKE ?)';
-            $params[] = '%' . $q . '%';
-            $params[] = '%' . $q . '%';
-            $select_score = '';
-            $params_score = [];
-        }
-    } else {
-        $select_score = '';
-        $params_score = [];
-    }
-
-    if ($tag) {
-        $where[] = 'n.id IN (SELECT note_id FROM note_tags WHERE tag_id = ?)';
-        $params[] = $tag;
-    }
-
-    $sql = 'SELECT n.id, n.titre, n.contenu, n.date_modification, m.nom AS matiere'
-         . $select_score
-         . ' FROM notes n LEFT JOIN matieres m ON m.id = n.matiere_id'
-         . ' WHERE ' . implode(' AND ', $where)
-         . ' ORDER BY ' . $tri . ' LIMIT 50';
-
-    // L'éventuel score se place en tête des paramètres (SELECT avant WHERE).
-    $stmt = db()->prepare($sql);
-    $stmt->execute(array_merge($params_score, $params));
-    $resultats = $stmt->fetchAll();
-}
+// Sans mot ni tag : les notes les plus récentes (lien « Toutes » de l'accueil).
+$resultats = rechercher_notes($uid, $q, $tag, 50);
 
 /** Petit extrait du contenu autour, sans le balisage Markdown. */
 function extrait(string $contenu, int $max = 180): string

@@ -740,15 +740,13 @@
         }
     });
 
-    // Raccourcis clavier : ← → (période), T (aujourd'hui).
-    // (pas sur l'accueil : les flèches y font défiler la page)
+    // Raccourcis clavier : ← → (période). (T = ajouter une tâche, géré par app.js.)
     document.addEventListener('keydown', (e) => {
         if (LECTURE_SEULE) return;
         if (document.querySelector('.modale-fond') || e.ctrlKey || e.metaKey || e.altKey) return;
         if (/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || '')) return;
         if (e.key === 'ArrowLeft') naviguer(-1);
         else if (e.key === 'ArrowRight') naviguer(1);
-        else if (e.key === 't' || e.key === 'T') naviguer(0);
     });
 
     charger().then(synchroAuto);

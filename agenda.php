@@ -29,7 +29,7 @@ require __DIR__ . '/includes/header.php';
         <h1>Agenda</h1>
         <div class="agenda-nav">
             <button type="button" class="btn-secondaire" data-nav="-1" title="Précédent (←)">‹</button>
-            <button type="button" class="btn-secondaire" data-nav="0" title="Aujourd'hui (T)">Aujourd'hui</button>
+            <button type="button" class="btn-secondaire" data-nav="0" title="Revenir à aujourd'hui">Aujourd'hui</button>
             <button type="button" class="btn-secondaire" data-nav="1" title="Suivant (→)">›</button>
             <span class="agenda-periode" id="agenda-periode"></span>
         </div>
