@@ -49,6 +49,17 @@ $stmt = db()->prepare(
 $stmt->execute([$matiere_id, $uid]);
 $notes = $stmt->fetchAll();
 
+// --- Prochains cours de cette matière (emploi du temps importé) ---
+require_once __DIR__ . '/includes/agenda.php';
+installer_agenda();
+$stmt = db()->prepare(
+    'SELECT debut, fin, journee, titre, lieu FROM evenements
+      WHERE utilisateur_id = ? AND matiere_id = ? AND fin > ?
+      ORDER BY debut LIMIT 3'
+);
+$stmt->execute([$uid, $matiere_id, date('Y-m-d H:i:s')]);
+$prochains_cours = $stmt->fetchAll();
+
 $titre_page = $matiere['nom'];
 require __DIR__ . '/includes/header.php';
 ?>
@@ -63,6 +74,15 @@ require __DIR__ . '/includes/header.php';
         <button type="submit" class="btn-principal">＋ Nouvelle note</button>
     </form>
 </div>
+
+<?php if ($prochains_cours): ?>
+    <p class="prochains-cours">📆 Prochains cours :
+        <?php foreach ($prochains_cours as $i => $c): ?>
+            <?= $i ? ' · ' : '' ?><a href="agenda.php"><?= e(date($c['journee'] ? 'd/m' : 'd/m H:i', strtotime($c['debut']))) ?></a>
+            <?= $c['lieu'] ? '<small>(' . e($c['lieu']) . ')</small>' : '' ?>
+        <?php endforeach; ?>
+    </p>
+<?php endif; ?>
 
 <?php if ($notes): ?>
     <ul class="liste-notes grande">
