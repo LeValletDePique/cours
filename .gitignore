@@ -9,5 +9,3 @@ uploads/*
 .DS_Store
 *.log
 
-# Dépendances Composer (installées avec « composer install »)
-/vendor/

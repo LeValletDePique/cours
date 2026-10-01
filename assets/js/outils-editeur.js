@@ -1024,5 +1024,8 @@
             }
             if (btn.dataset.action && actions[btn.dataset.action]) actions[btn.dataset.action]();
         });
+
+        // Utilisé par editeur.js (insertion d'une image importée).
+        return { insererBloc };
     };
 })();

@@ -60,11 +60,17 @@ $sections = [
     ],
     [
         'titre' => 'Pseudo-code',
-        'intro' => 'Comme pour le C ou le SQL : ```pseudo puis ton algorithme. Les mots-clés (SI, ALORS, POUR, TANT QUE, Entier…) sont colorés. Alias acceptés : algo, algorithme, pseudocode.',
+        'intro' => 'Comme pour le C ou le SQL : ```pseudo puis ton algorithme. Les mots-clés (SI, ALORS, POUR, TANT QUE, Entier…) sont colorés. Alias acceptés : algo, algorithme, pseudocode. Partout (texte ou pseudo-code), <- s\'affiche ← dans l\'aperçu.',
         'exemples' => [
+            "Affectation : x <- 5",
             "```pseudo\nAlgorithme maximum\nVariables\n    a, b, max : Entier\n{\n    Lire(a)\n    Lire(b)\n    SI (a > b) ALORS {\n        max <- a\n    } SINON {\n        max <- b\n    }\n    Ecrire(\"Le max est \", max)\n}\n```",
             "```pseudo\nPOUR i DE 1 À n FAIRE {\n    TANT QUE (x ≠ 0) FAIRE {\n        x <- x DIV 2   // division entière\n    }\n}\n```",
         ],
+    ],
+    [
+        'titre' => 'Images (ex. MCD draw.io)',
+        'intro' => 'Exporte ton schéma en PNG, puis dans la note : « 📎 Fichiers joints » → Importer (ou colle-le avec Ctrl+V / glisse-le dans la zone de texte). L\'image est insérée à l\'endroit du curseur ; clique dessus dans l\'aperçu pour l\'agrandir.',
+        'exemples' => [],
     ],
     [
         'titre' => 'Mathématiques (LaTeX)',
@@ -160,7 +166,6 @@ require __DIR__ . '/includes/header.php';
         <tr><td><kbd>\</kbd> + lettres dans une formule</td><td>Autocomplétion LaTeX (<code>\pour</code> → ∀, <code>\int</code> → ∫…)</td></tr>
         <tr><td><kbd>Tab</kbd> dans une formule</td><td>Champ suivant à remplir (numérateur → dénominateur…), puis sortie de la formule</td></tr>
     </table>
-    <p class="astuce-mini">Un problème ? Clique sur <strong>🤖 Aide IA</strong> en bas à droite de l'écran.</p>
 </section>
 
 <section class="bloc">

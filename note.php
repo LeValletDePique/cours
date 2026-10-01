@@ -177,12 +177,23 @@ require __DIR__ . '/includes/header.php';
     <section class="pied-bloc">
         <h3>📎 Fichiers joints</h3>
         <ul id="liste-fichiers" class="liste-fichiers">
-            <?php foreach ($fichiers as $f): ?>
-                <li data-fichier-id="<?= (int) $f['id'] ?>">
+            <?php foreach ($fichiers as $f):
+                $est_image = str_starts_with($f['type_mime'], 'image/'); ?>
+                <li data-fichier-id="<?= (int) $f['id'] ?>"
+                    <?php if ($est_image): ?>data-image="1"<?php endif; ?>
+                    data-nom="<?= e($f['nom_original']) ?>">
+                    <?php if ($est_image): ?>
+                        <img class="miniature" src="telecharger.php?id=<?= (int) $f['id'] ?>"
+                             alt="" loading="lazy" title="Agrandir">
+                    <?php endif; ?>
                     <a href="telecharger.php?id=<?= (int) $f['id'] ?>" target="_blank">
                         <?= e($f['nom_original']) ?>
                     </a>
                     <span class="taille"><?= round($f['taille'] / 1024) ?> Ko</span>
+                    <?php if ($est_image): ?>
+                        <button type="button" class="fichier-inserer btn-secondaire"
+                                title="Afficher l'image dans la note, à l'endroit du curseur">Insérer</button>
+                    <?php endif; ?>
                     <button type="button" class="fichier-x" title="Supprimer">✕</button>
                 </li>
             <?php endforeach; ?>
@@ -192,7 +203,9 @@ require __DIR__ . '/includes/header.php';
             <button type="button" id="fichier-envoyer" class="btn-secondaire">Importer</button>
             <span id="fichier-statut" class="statut-save"></span>
         </div>
-        <p class="astuce-mini">PDF, images, .txt, .docx… (20 Mo max)</p>
+        <p class="astuce-mini">PDF, images, .txt, .docx… (20 Mo max).
+            Une image (ex. un MCD exporté de draw.io en PNG) s'affiche directement dans la note ;
+            tu peux aussi la coller (Ctrl+V) ou la glisser dans la zone de texte.</p>
     </section>
 
     <section class="pied-bloc">
