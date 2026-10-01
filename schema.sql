@@ -14,6 +14,8 @@ CREATE DATABASE IF NOT EXISTS cours_db
 USE cours_db;
 
 -- On repart d'une base propre (ordre inverse des dépendances)
+DROP TABLE IF EXISTS evenements;
+DROP TABLE IF EXISTS agenda_sources;
 DROP TABLE IF EXISTS flashcards;
 DROP TABLE IF EXISTS echeances;
 DROP TABLE IF EXISTS fichiers;
@@ -61,6 +63,7 @@ CREATE TABLE matieres (
     ue_id         INT UNSIGNED NOT NULL,
     nom           VARCHAR(150) NOT NULL,
     couleur       VARCHAR(7)   NOT NULL DEFAULT '#0891b2',
+    mots_cles     VARCHAR(255) NULL,                 -- pour reconnaître ses cours dans l'emploi du temps
     position      INT NOT NULL DEFAULT 0,
     date_creation DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_matiere_ue FOREIGN KEY (ue_id)
@@ -177,6 +180,50 @@ CREATE TABLE flashcards (
         REFERENCES notes(id) ON DELETE CASCADE,
     CONSTRAINT fk_flash_matiere FOREIGN KEY (matiere_id)
         REFERENCES matieres(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+--  AGENDA : emplois du temps connectés (lien iCal ou fichier .ics)
+--  (créées aussi automatiquement par includes/agenda.php si absentes)
+-- ------------------------------------------------------------
+CREATE TABLE agenda_sources (
+    id               INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    utilisateur_id   INT UNSIGNED NOT NULL,
+    nom              VARCHAR(100)  NOT NULL,
+    url              VARCHAR(1000) NULL,              -- NULL = fichier importé
+    couleur          VARCHAR(7)    NOT NULL DEFAULT '#0891b2',
+    derniere_synchro DATETIME NULL,
+    dernier_message  VARCHAR(255) NULL,               -- dernière erreur de synchro
+    nb_evenements    INT UNSIGNED NOT NULL DEFAULT 0,
+    date_creation    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_source_utilisateur FOREIGN KEY (utilisateur_id)
+        REFERENCES utilisateurs(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+--  AGENDA : cours (importés), réunions, tâches, événements perso
+-- ------------------------------------------------------------
+CREATE TABLE evenements (
+    id             INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    utilisateur_id INT UNSIGNED NOT NULL,
+    source_id      INT UNSIGNED NULL,                 -- NULL = ajouté à la main
+    matiere_id     INT UNSIGNED NULL,
+    type           ENUM('cours','reunion','tache','perso','autre') NOT NULL DEFAULT 'autre',
+    titre          VARCHAR(255) NOT NULL,
+    description    TEXT NULL,
+    lieu           VARCHAR(255) NULL,
+    debut          DATETIME NULL,                     -- NULL = tâche sans date
+    fin            DATETIME NULL,                     -- exclusive pour une journée entière
+    journee        TINYINT(1) NOT NULL DEFAULT 0,
+    fait           TINYINT(1) NOT NULL DEFAULT 0,     -- tâches
+    date_creation  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_evt_utilisateur FOREIGN KEY (utilisateur_id)
+        REFERENCES utilisateurs(id) ON DELETE CASCADE,
+    CONSTRAINT fk_evt_source FOREIGN KEY (source_id)
+        REFERENCES agenda_sources(id) ON DELETE CASCADE,
+    CONSTRAINT fk_evt_matiere FOREIGN KEY (matiere_id)
+        REFERENCES matieres(id) ON DELETE SET NULL,
+    INDEX idx_evt_utilisateur_debut (utilisateur_id, debut)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================

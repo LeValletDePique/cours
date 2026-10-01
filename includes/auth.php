@@ -7,6 +7,9 @@
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/fonctions.php';
 
+// Fuseau horaire des dates affichées (agenda, échéances…).
+date_default_timezone_set(config_app()['fuseau'] ?? 'Europe/Paris');
+
 // --- Démarrage sécurisé de la session ---
 if (session_status() === PHP_SESSION_NONE) {
     session_set_cookie_params([

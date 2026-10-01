@@ -38,6 +38,7 @@ $titre  = isset($titre_page) ? $titre_page . ' · ' . $config['nom_app'] : $conf
     <?php if ($user): ?>
         <nav class="nav">
             <a href="index.php">Accueil</a>
+            <a href="agenda.php">Agenda</a>
             <a href="recherche.php">Recherche</a>
             <a href="echeances.php">Échéances</a>
             <a href="revision.php">Révision</a>
@@ -59,4 +60,4 @@ $titre  = isset($titre_page) ? $titre_page . ' · ' . $config['nom_app'] : $conf
     <?php endif; ?>
 </header>
 
-<main class="conteneur">
+<main class="conteneur<?= !empty($page_large) ? ' large' : '' ?>">

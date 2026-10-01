@@ -794,3 +794,203 @@ kbd {
 .ref-code.copie { background: #dcfce7; color: #166534; }
 .ref-code.copie::after { content: "  ✓ copié"; }
 .ref-desc { color: var(--texte-doux); }
+
+/* ---------------- Agenda ---------------- */
+.conteneur.large { max-width: 1400px; }
+.agenda-barre { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; margin-bottom: 1rem; }
+.agenda-barre h1 { margin: 0; }
+.agenda-nav { display: flex; align-items: center; gap: .3rem; }
+.agenda-periode { font-weight: 600; margin-left: .4rem; }
+.agenda-vues { display: flex; border: 1px solid var(--bordure); border-radius: 8px; overflow: hidden; }
+.agenda-vues button {
+    background: var(--fond-carte); color: var(--texte-doux); border: 0; padding: .45rem .8rem;
+    cursor: pointer; font-size: .9rem;
+}
+.agenda-vues button + button { border-left: 1px solid var(--bordure); }
+.agenda-vues button.actif { background: var(--accent); color: #fff; }
+.agenda-actions { display: flex; gap: .5rem; margin-left: auto; }
+.agenda-actions .btn-principal { padding: .45rem .9rem; font-size: .9rem; }
+.agenda-info {
+    background: var(--accent-clair); border-radius: 8px; padding: .5rem .8rem; font-size: .88rem; margin: 0 0 .8rem;
+}
+.agenda-info.erreur { background: var(--danger-fond); color: var(--danger); }
+.agenda-corps { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 1.2rem; align-items: start; }
+.agenda-vue {
+    background: var(--fond-carte); border: 1px solid var(--bordure); border-radius: var(--rayon);
+    box-shadow: var(--ombre); overflow: auto;
+}
+.agenda-vue.vue-semaine { max-height: calc(100vh - 170px); }
+.agenda-cote .bloc { padding: 1rem; margin-bottom: 1rem; }
+.agenda-cote h2 { font-size: 1.05rem; }
+
+/* Couleurs par type (les cours prennent la couleur de leur UE via --c) */
+.type-cours    { --c: #0891b2; }
+.type-reunion  { --c: #7c3aed; }
+.type-tache    { --c: #d97706; }
+.type-perso    { --c: #16a34a; }
+.type-autre    { --c: #64748b; }
+.type-echeance { --c: #dc2626; }
+.pastille { display: inline-block; width: .8rem; height: .8rem; border-radius: 3px; background: var(--c); flex-shrink: 0; }
+.legende ul { list-style: none; padding: 0; margin: 0; font-size: .88rem; }
+.legende li { display: flex; align-items: center; gap: .5rem; padding: .15rem 0; }
+
+.evt-puce, .evt-bloc {
+    display: block; width: 100%; text-align: left; border: 0; cursor: pointer; font: inherit;
+    color: #fff; background: var(--c); border-radius: 5px; overflow: hidden;
+}
+.evt-puce {
+    font-size: .76rem; padding: .1rem .35rem; margin-bottom: 2px;
+    white-space: nowrap; text-overflow: ellipsis;
+}
+.evt-puce:hover, .evt-bloc:hover { filter: brightness(1.1); }
+.evt-puce.fait, .evt-bloc.fait { opacity: .5; text-decoration: line-through; }
+.evt-heure { font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* Vue semaine */
+.sem { min-width: 680px; }
+.sem-ligne { display: grid; grid-template-columns: 3.2rem repeat(7, minmax(0, 1fr)); }
+.sem-tete { position: sticky; top: 0; z-index: 3; background: var(--fond-carte); border-bottom: 1px solid var(--bordure); }
+.sem-jour { text-align: center; padding: .4rem 0; font-size: .85rem; color: var(--texte-doux); }
+.sem-jour b { font-size: 1.1rem; color: var(--texte); }
+.sem-jour.aujourdhui b {
+    background: var(--accent); color: #fff; border-radius: 999px; padding: .05rem .45rem;
+}
+.sem-coin { font-size: .7rem; color: var(--texte-doux); text-align: right; padding: .3rem .4rem 0 0; }
+.sem-haut { border-bottom: 1px solid var(--bordure); min-height: 2rem; }
+.sem-cellule { border-left: 1px solid var(--bordure); padding: 3px; cursor: pointer; min-width: 0; }
+.sem-grille { position: relative; }
+.sem-heures { position: relative; }
+.sem-heures span {
+    position: absolute; right: .4rem; transform: translateY(-50%); font-size: .7rem; color: var(--texte-doux);
+}
+.sem-heures span:first-child { transform: none; }
+.sem-col {
+    position: relative; border-left: 1px solid var(--bordure); cursor: pointer;
+    background-image: linear-gradient(to bottom, var(--bordure) 1px, transparent 1px);
+    background-size: 100% var(--hauteur-heure);
+}
+.sem-col.aujourdhui { background-color: var(--accent-clair); }
+.evt-bloc {
+    position: absolute; padding: .15rem .3rem; font-size: .74rem; line-height: 1.25;
+    display: flex; flex-direction: column; box-shadow: 0 1px 2px rgba(0, 0, 0, .15); z-index: 1;
+}
+.evt-titre { font-weight: 600; overflow-wrap: anywhere; }
+.evt-lieu { opacity: .9; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.sem-maintenant { position: absolute; left: 0; right: 0; height: 2px; background: var(--danger); z-index: 2; pointer-events: none; }
+.sem-maintenant::before {
+    content: ""; position: absolute; left: -4px; top: -3px; width: 8px; height: 8px;
+    border-radius: 50%; background: var(--danger);
+}
+
+/* Vue mois */
+.mois { min-width: 560px; }
+.mois-tete, .mois-grille { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.mois-tete div { text-align: center; font-size: .8rem; color: var(--texte-doux); padding: .4rem 0; border-bottom: 1px solid var(--bordure); }
+.mois-cellule {
+    min-height: 6.5rem; padding: 3px; border-right: 1px solid var(--bordure);
+    border-bottom: 1px solid var(--bordure); cursor: pointer; min-width: 0;
+}
+.mois-cellule:nth-child(7n) { border-right: 0; }
+.mois-cellule.hors-mois { background: var(--fond-doux); }
+.mois-cellule.hors-mois .mois-num { opacity: .5; }
+.mois-num {
+    background: none; border: 0; color: var(--texte); font-size: .8rem; cursor: pointer;
+    padding: .1rem .35rem; border-radius: 999px; margin-bottom: 2px;
+}
+.mois-cellule.aujourdhui .mois-num { background: var(--accent); color: #fff; }
+.mois-plus { background: none; border: 0; color: var(--texte-doux); font-size: .74rem; cursor: pointer; padding: 0 .3rem; }
+
+/* Vue liste */
+.liste-agenda { padding: .4rem 1rem 1rem; }
+.liste-agenda h3 { font-size: .95rem; margin: 1rem 0 .4rem; color: var(--texte-doux); }
+.liste-agenda h3.aujourdhui { color: var(--accent); }
+.liste-agenda ul { list-style: none; margin: 0; padding: 0; }
+.liste-agenda li {
+    display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); gap: .1rem .6rem; align-items: center;
+    padding: .3rem 0; border-bottom: 1px dashed var(--bordure);
+}
+.liste-agenda .evt-puce { font-size: .88rem; padding: .25rem .5rem; margin: 0; }
+.liste-heure { font-size: .82rem; color: var(--texte-doux); font-variant-numeric: tabular-nums; }
+.liste-details { grid-column: 2; font-size: .8rem; color: var(--texte-doux); }
+.liste-details:empty { display: none; }
+
+/* Tâches */
+.form-tache { display: flex; gap: .3rem; margin-bottom: .6rem; flex-wrap: wrap; }
+.form-tache input {
+    padding: .4rem .5rem; border: 1px solid var(--bordure); border-radius: 8px;
+    background: var(--fond); color: var(--texte); min-width: 0;
+}
+.form-tache input[name="titre"] { flex: 1 1 100%; }
+.form-tache input[name="date"] { flex: 1; }
+.liste-taches { list-style: none; margin: 0; padding: 0; max-height: 50vh; overflow-y: auto; }
+.liste-taches li { display: flex; align-items: center; gap: .4rem; padding: .3rem 0; border-bottom: 1px dashed var(--bordure); }
+.tache-titre {
+    flex: 1; background: none; border: 0; text-align: left; color: var(--texte);
+    font: inherit; font-size: .9rem; cursor: pointer; padding: 0; overflow-wrap: anywhere;
+}
+.tache-date { font-size: .75rem; color: var(--texte-doux); white-space: nowrap; }
+.liste-taches li.retard .tache-date { color: var(--danger); font-weight: 600; }
+.liste-taches li.fait .tache-titre { text-decoration: line-through; color: var(--texte-doux); }
+
+/* Fenêtres de l'agenda */
+.modale.petite { width: min(620px, 100%); }
+.modale-corps { padding: 1rem; overflow-y: auto; }
+.btn-secondaire.danger { color: var(--danger); }
+.btn-secondaire.danger:hover { background: var(--danger-fond); }
+.form-evt { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem .8rem; }
+.form-evt label { display: flex; flex-direction: column; gap: .2rem; font-size: .85rem; color: var(--texte-doux); }
+.form-evt label.large { grid-column: 1 / -1; }
+.form-evt label.case { flex-direction: row; align-items: center; gap: .4rem; align-self: end; padding-bottom: .5rem; }
+.form-evt label[hidden] { display: none; }
+.form-evt input, .form-evt select, .form-evt textarea {
+    padding: .45rem .55rem; border: 1px solid var(--bordure); border-radius: 8px;
+    background: var(--fond); color: var(--texte); font: inherit; font-size: .95rem;
+}
+.form-evt .form-aide:empty { display: none; }
+.detail-ligne { margin: .3rem 0; }
+.detail-desc { white-space: pre-line; color: var(--texte-doux); font-size: .9rem; background: var(--fond-doux); padding: .5rem .7rem; border-radius: 8px; }
+.notes-seance h4 { margin: .8rem 0 .3rem; }
+.sources h4 { margin: 1.1rem 0 .4rem; }
+.sources h4:first-child { margin-top: 0; }
+.liste-sources { list-style: none; margin: 0; padding: 0; }
+.liste-sources li { display: flex; align-items: center; gap: .6rem; padding: .4rem 0; border-bottom: 1px dashed var(--bordure); }
+.source-info { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.source-info small { color: var(--texte-doux); }
+.source-info small.erreur { color: var(--danger); }
+.form-source, .form-fichier { display: flex; gap: .4rem; flex-wrap: wrap; align-items: center; }
+.form-source input, .form-fichier input {
+    padding: .4rem .5rem; border: 1px solid var(--bordure); border-radius: 8px;
+    background: var(--fond); color: var(--texte); min-width: 0;
+}
+.form-source input[name="url"] { flex: 1 1 260px; }
+.form-source input[name="nom"] { flex: 0 1 160px; }
+.form-source input[type="color"] { padding: 0 .2rem; width: 2.6rem; height: 2.1rem; }
+.aide-ical { font-size: .85rem; margin-top: .5rem; color: var(--texte-doux); }
+.aide-ical summary { cursor: pointer; color: var(--accent); }
+.non-reconnus { font-size: .82rem; color: var(--texte-doux); }
+.table-mots-cles { width: 100%; border-collapse: collapse; font-size: .85rem; }
+.table-mots-cles th { text-align: left; color: var(--texte-doux); font-weight: 600; padding: .3rem; }
+.table-mots-cles td { padding: .2rem .3rem; border-top: 1px solid var(--bordure); }
+.table-mots-cles td.nb { text-align: center; color: var(--texte-doux); width: 3rem; }
+.table-mots-cles input {
+    width: 100%; padding: .3rem .45rem; border: 1px solid var(--bordure); border-radius: 6px;
+    background: var(--fond); color: var(--texte);
+}
+
+/* Accueil : bloc « Aujourd'hui » */
+.liste-jour { list-style: none; margin: 0; padding: 0; }
+.liste-jour li { display: flex; align-items: center; gap: .6rem; padding: .35rem 0; border-bottom: 1px dashed var(--bordure); }
+.liste-jour .heure { font-variant-numeric: tabular-nums; color: var(--texte-doux); font-size: .85rem; min-width: 6.5rem; }
+.liste-jour .details { color: var(--texte-doux); font-size: .82rem; margin-left: auto; text-align: right; }
+.liste-jour li.retard .heure { color: var(--danger); font-weight: 600; }
+
+@media (max-width: 900px) {
+    .agenda-corps { grid-template-columns: 1fr; }
+    .agenda-actions { margin-left: 0; }
+}
+@media (max-width: 640px) {
+    .form-evt { grid-template-columns: 1fr; }
+    .liste-jour li { flex-wrap: wrap; }
+    .liste-jour .details { margin-left: 0; text-align: left; width: 100%; }
+}
+.prochains-cours { color: var(--texte-doux); font-size: .9rem; margin: -.4rem 0 1rem; }

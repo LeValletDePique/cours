@@ -56,10 +56,46 @@ Ouvre <http://localhost/cours/>.
 - **Pseudo-code** : `<-` s'affiche `←` dans l'aperçu.
 - **Export** d'une note ou d'une matière entière en **Markdown** et **PDF**.
 - **Recherche** plein texte (titre + contenu) avec filtre par tag.
+- **Agenda** (semaine / mois / liste) : emploi du temps importé, réunions, tâches à
+  faire, événements perso et échéances au même endroit ; bloc « Aujourd'hui » sur
+  l'accueil ; depuis un cours, « Prendre des notes » crée la note dans la bonne matière.
 - **Échéances** (DS, rendus, examens) avec rappels sur le tableau de bord.
 - **Révision** par flashcards (question/réponse, mode révision mélangée).
 - **Tableau de bord** : dernières notes, favoris, prochaines échéances, stats.
 - **Mode sombre** + **interface responsive** (PC en amphi / téléphone).
+
+---
+
+## Agenda : connecter son emploi du temps
+
+Les tables de l'agenda se créent toutes seules au premier passage (pas besoin de
+réimporter `schema.sql`).
+
+1. **Trouver le lien iCal** de l'emploi du temps : dans le logiciel de l'école
+   (Celcat, HyperPlanning, ADE…), chercher « S'abonner », « Exporter », « iCal »,
+   « ICS » ou « Synchroniser avec mon agenda ». Le lien finit souvent par `.ics`
+   ou commence par `webcal://`. Ça marche aussi avec Google Agenda (« Adresse
+   secrète au format iCal ») ou Outlook (« Publier un calendrier » → lien ICS).
+2. **Agenda → 🔗 Emploi du temps** → coller le lien → **Connecter**.
+   Les cours sont importés (répétitions hebdomadaires comprises) et re-synchronisés
+   automatiquement toutes les 6 h quand on ouvre l'agenda (ou via « ↻ Synchroniser »).
+3. **Relier les cours aux matières** (même fenêtre) : un cours est rattaché à une
+   matière si son intitulé contient le nom de la matière ou un de ses **mots-clés**
+   (ex. `algo, algorithmique` pour « Algorithmique procédurale »). La fenêtre liste
+   les intitulés non reconnus pour savoir quoi ajouter. Un cours relié prend la couleur
+   de son UE, s'affiche sur la page de la matière (« Prochains cours ») et le bouton
+   **📝 Prendre des notes** crée une note pré-remplie dans cette matière.
+
+**Si le lien ne marche pas :**
+- *« il faut être connecté » / erreur 401-403* : le calendrier n'est visible
+  qu'après connexion à l'ENT. Télécharger le fichier `.ics` et l'importer avec
+  « … ou importer un fichier .ics » (à refaire quand l'emploi du temps change).
+- *« Certificat HTTPS non vérifié »* (fréquent sous XAMPP/Windows) : télécharger
+  <https://curl.se/ca/cacert.pem>, le placer par ex. dans `C:\xampp\php\extras\ssl\`,
+  puis dans `php.ini` mettre `curl.cainfo = "C:\xampp\php\extras\ssl\cacert.pem"`
+  et `openssl.cafile` = la même valeur, et redémarrer Apache.
+- Les heures sont affichées dans le fuseau `'fuseau'` de `config.php`
+  (`Europe/Paris` par défaut).
 
 ---
 
@@ -80,13 +116,15 @@ config.php            identifiants BDD (non versionné)
 schema.sql            structure + données de démo
 includes/             connexion PDO, auth, fonctions, gabarits (header/footer)
 api/                  points d'entrée AJAX JSON (notes, tags, structure,
-                      echeances, flashcards, upload, preferences)
+                      echeances, flashcards, upload, preferences, agenda)
 assets/css, assets/js CSS + JavaScript (app, editeur, outils-editeur,
-                      rendu, maths-symboles, mathjax-config)
+                      rendu, agenda, maths-symboles, mathjax-config)
+includes/agenda.php   lecture iCal (.ics), synchro, rattachement aux matières
 uploads/              fichiers importés (accès via telecharger.php)
 index.php             tableau de bord            recherche.php   recherche
 note.php              éditeur de note            corbeille.php   corbeille
 matiere.php           notes d'une matière        echeances.php   échéances
+agenda.php            agenda (cours, réunions, tâches)
 inscription/connexion revision.php  flashcards   reglages.php    réglages
 export.php / imprimer.php   exports Markdown / PDF
 ```
@@ -97,3 +135,4 @@ export.php / imprimer.php   exports Markdown / PDF
 - [x] Structure (CRUD UE/matières), recherche, tags, favoris, corbeille
 - [x] Import de fichiers, export PDF / Markdown
 - [x] Échéances, statistiques, flashcards
+- [x] Agenda : emploi du temps iCal, réunions, tâches

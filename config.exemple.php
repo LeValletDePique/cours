@@ -19,4 +19,6 @@ return [
     'dossier_uploads' => __DIR__ . '/uploads',
     // Taille maximale d'un fichier importé (en octets). 20 Mo par défaut.
     'upload_taille_max' => 20 * 1024 * 1024,
+    // Fuseau horaire (heures de l'agenda et de l'emploi du temps importé).
+    'fuseau' => 'Europe/Paris',
 ];
