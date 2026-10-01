@@ -53,7 +53,7 @@ $notes = $stmt->fetchAll();
 require_once __DIR__ . '/includes/agenda.php';
 installer_agenda();
 $stmt = db()->prepare(
-    'SELECT debut, fin, journee, titre, lieu FROM evenements
+    'SELECT debut, fin, journee, titre, lieu, source_id FROM evenements
       WHERE utilisateur_id = ? AND matiere_id = ? AND fin > ?
       ORDER BY debut LIMIT 3'
 );
@@ -79,7 +79,8 @@ require __DIR__ . '/includes/header.php';
     <p class="prochains-cours">📆 Prochains cours :
         <?php foreach ($prochains_cours as $i => $c): ?>
             <?= $i ? ' · ' : '' ?><a href="agenda.php"><?= e(date($c['journee'] ? 'd/m' : 'd/m H:i', strtotime($c['debut']))) ?></a>
-            <?= $c['lieu'] ? '<small>(' . e($c['lieu']) . ')</small>' : '' ?>
+            <?php $salle = $c['source_id'] ? nettoyer_salle((string) $c['lieu']) : $c['lieu']; ?>
+            <?= $salle ? '<small>(' . e($salle) . ')</small>' : '' ?>
         <?php endforeach; ?>
     </p>
 <?php endif; ?>

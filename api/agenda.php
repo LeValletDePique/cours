@@ -69,7 +69,8 @@ function evenement_json(array $e): array
         'titre'       => titre_affiche($e),
         'intitule'    => $e['titre'],                     // tel qu'importé (ex. code Celcat)
         'description' => (string) $e['description'],
-        'lieu'        => (string) $e['lieu'],
+        // Cours importés : seulement le n° de salle (aussi pour les anciens imports).
+        'lieu'        => $e['source_id'] ? nettoyer_salle((string) $e['lieu']) : (string) $e['lieu'],
         'categorie'   => $e['categorie'],                 // CM / TD / autre (cours importés)
         'intervenant' => (string) $e['intervenant'],
         'debut'       => $e['debut'] ? substr($e['debut'], 0, 16) : null,
@@ -424,7 +425,8 @@ switch ($action) {
         // « 28/09/2026, 08:30–10:00 · M. Dupont · CM · Amphi 1 »
         $infos = $jour . ($ev['journee'] ? '' : ', ' . date('H:i', strtotime($ev['debut']))
                  . '–' . date('H:i', strtotime($ev['fin'])));
-        foreach ([$ev['intervenant'], $type_cours ? $ev['categorie'] : '', $ev['lieu']] as $info) {
+        $salle = $ev['source_id'] ? nettoyer_salle((string) $ev['lieu']) : $ev['lieu'];
+        foreach ([$ev['intervenant'], $type_cours ? $ev['categorie'] : '', $salle] as $info) {
             if ($info) $infos .= ' · ' . $info;
         }
         $contenu = '# ' . titre_affiche($ev) . "\n\n*" . $infos . "*\n\n";

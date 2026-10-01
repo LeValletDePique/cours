@@ -519,14 +519,21 @@ function trouver_intervenant(string $description, array $a_ignorer, string $orga
     return $organisateur;
 }
 
-/** « PAU E201 SALLE POLYVALENTE (TD ET INFO) 30p » -> « E201 SALLE POLYVALENTE (TD ET INFO) » */
+/**
+ * Garde seulement le numéro de salle :
+ * « PAU E201 SALLE POLYVALENTE (TD ET INFO) 30p » -> « E201 »,
+ * « PAU A001 AMPHITHÉÂTRE 150p » -> « A001 », plusieurs salles -> « E201, E109 ».
+ * Sans numéro reconnaissable (« Amphi 1 »), le texte est gardé (sans la capacité).
+ */
 function nettoyer_salle(string $lieu): string
 {
     $salles = [];
     foreach (preg_split('/\s*[;,]\s*/u', trim($lieu)) as $s) {
-        $s = preg_replace('/\s*\d+\s*(?:p|pl|places?)\.?$/iu', '', $s);   // capacité
-        $s = preg_replace('/^\p{Lu}{2,}\s+(?=\p{Lu}?\d)/u', '', $s);        // site (« PAU ») devant le n° de salle
-        if (trim($s) !== '') $salles[] = trim($s);
+        $s = trim(preg_replace('/\s*\d+\s*(?:p|pl|places?)\.?$/iu', '', $s));   // capacité
+        if (preg_match('/(?<![\p{L}\d])\p{Lu}{1,3}\d{1,4}[A-Z]?(?![\p{L}\d])/u', $s, $m)) {
+            $s = $m[0];                                                     // « E201 »
+        }
+        if ($s !== '' && !in_array($s, $salles, true)) $salles[] = $s;
     }
     return implode(', ', $salles);
 }

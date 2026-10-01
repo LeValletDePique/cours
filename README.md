@@ -96,7 +96,7 @@ un fichier du **même nom** remplace les créneaux de l'import précédent ; les
 réunions, tâches et événements perso créés à la main ne sont **jamais** touchés.
 
 Chaque cours s'affiche ainsi : **matière**, **prof · CM/TD**, **salle**
-(ex. « Base de données / DUPONT Jean · CM / A001 AMPHITHÉÂTRE »).
+(ex. « Base de données / DUPONT Jean · CM / A001 »).
 
 **Celcat ne donne qu'un code de module** (`DIDB1BDD(DI01C1-260) (TD)`) : le nom
 affiché est celui de la **matière reliée**. Après le premier import, ouvre
@@ -114,7 +114,7 @@ Champs lus dans le `.ics` :
 | `CATEGORIES` | `CM` / « Cours magistral » → **CM (rouge)** ; `TD` / « Travaux dirigés » → **TD (bleu)** ; autre (TP, examen…) → couleur de l'UE ; « Indisponibilité » → importé comme **réunion** avec son titre. À défaut, un `CM`/`TD` présent dans `SUMMARY` est utilisé. |
 | `DESCRIPTION` | Prof : ligne `Prof : …` (`Enseignant`, `Intervenant`, `Staff`), sinon une ligne au format nom de personne (`DUPONT Jean`, `Jean DUPONT`, `M. Dupont`). Le HTML de Celcat (`<br />`, `&#201;`) est décodé. |
 | `ORGANIZER;CN=…` | Prof, si la description n'en contient pas. |
-| `LOCATION` | Salle, raccourcie : `PAU E201 SALLE POLYVALENTE 30p` → `E201 SALLE POLYVALENTE` (site et capacité retirés). |
+| `LOCATION` | Numéro de salle seulement : `PAU E201 SALLE POLYVALENTE (TD ET INFO) 30p` → `E201`, `PAU A001 AMPHITHÉÂTRE 150p` → `A001`. |
 
 Ces informations sont stockées dans les colonnes `evenements.categorie` (CM/TD/autre)
 et `evenements.intervenant`, ajoutées automatiquement à une base existante.
