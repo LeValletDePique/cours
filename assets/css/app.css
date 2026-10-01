@@ -1,0 +1,107 @@
+/* ============================================================
+   Mes Cours — compléments au design system (assets/css/mes-cours.css).
+   Ce que les composants mc-* ne couvrent pas : mise en page mobile,
+   champs de formulaire, fenêtres, palette, éditeur, agenda…
+   Uniquement les tokens de assets/css/tokens.css (aucune autre couleur).
+   ============================================================ */
+
+* { box-sizing: border-box; }
+a { color: var(--accent); }
+img { max-width: 100%; }
+:where(select, textarea, summary):focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+:is(.mc-nav, .mc-btn, .mc-subj, .mc-note, .mc-brand, .mc-palette__item, .mc-link):is(:hover, :focus) { text-decoration: none; }
+.mc-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+[hidden] { display: none !important; }
+.mc-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Fond semi-transparent (fenêtres, menu mobile, palette) : l'encre du thème. */
+:root { --voile: color-mix(in srgb, var(--ink) 35%, transparent); }
+[data-theme="dark"] { --voile: color-mix(in srgb, var(--paper) 70%, transparent); }
+
+/* ---------- Barre latérale et barre du haut ---------- */
+.mc-main { grid-template-columns: minmax(0, 1fr); }
+.mc-rail { position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+.mc-brand { color: var(--ink); text-decoration: none; }
+.mc-user { gap: 6px; }
+.mc-user .mc-avatar { flex: none; margin-right: 4px; }
+.mc-user__nom { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mc-user .mc-btn { padding: 0 7px; }
+.mc-menu { display: none; padding: 0 10px; }
+.mc-rail-voile { position: fixed; inset: 0; z-index: 50; background: var(--voile); }
+
+button.mc-search { font: 400 14px/20px var(--font-sans); cursor: pointer; text-align: left; }
+button.mc-search:hover { background: var(--surface-sunk); }
+.mc-search__texte { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Titre de page (hors accueil) */
+.mc-hello .mc-title { margin-top: 2px; }
+.mc-page { max-width: 880px; width: 100%; }
+.mc-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
+.mc-entete { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-3); }
+
+/* NoteRow : étoile des favoris devant le titre */
+.mc-note__fav { color: var(--accent); margin-right: 6px; vertical-align: -2px; }
+.mc-note__fav .lucide { fill: currentColor; }
+
+/* ---------- Pages sans compte (connexion, inscription) ---------- */
+.mc-auth {
+    min-height: 100vh; display: grid; place-content: center; justify-items: center;
+    gap: var(--space-5); padding: var(--space-6) var(--space-4);
+}
+.mc-auth .mc-brand { padding: 0; }
+.mc-auth .mc-card { width: min(400px, calc(100vw - 2 * var(--space-4))); display: grid; gap: var(--space-4); }
+.mc-auth__theme { justify-self: center; }
+
+/* ---------- Champs de formulaire ---------- */
+.mc-input, .mc-select, .mc-textarea {
+    height: 36px; padding: 0 12px; border: 1px solid var(--line-strong); border-radius: var(--radius-md);
+    background: var(--surface); color: var(--ink); font: 400 14px/20px var(--font-sans); min-width: 0;
+    box-sizing: border-box;
+}
+.mc-select { padding-right: 8px; }
+.mc-textarea { height: auto; min-height: 72px; padding: 8px 12px; resize: vertical; }
+.mc-input:focus, .mc-select:focus, .mc-textarea:focus { border-color: var(--accent); outline: 0; }
+.mc-input:focus-visible, .mc-select:focus-visible, .mc-textarea:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.mc-input::placeholder, .mc-textarea::placeholder { color: var(--ink-muted); }
+input[type="color"].mc-input { width: 44px; padding: 3px; }
+input[type="file"].mc-input { padding: 6px 8px; height: auto; font-size: 13px; }
+.mc-label { display: grid; gap: 6px; font: 500 13px/18px var(--font-sans); color: var(--ink-muted); }
+.mc-form { display: grid; gap: var(--space-4); }
+.mc-form-ligne { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+.mc-form-ligne > .mc-input, .mc-form-ligne > .mc-select { flex: 1 1 160px; }
+
+/* Messages (succès / erreur), toujours avec un mot */
+.mc-message { margin: 0; padding: 10px 12px; border-radius: var(--radius-md); font-size: 14px; line-height: 20px;
+    display: flex; gap: 8px; align-items: flex-start; }
+.mc-message .lucide { margin-top: 1px; }
+.mc-message--ok { background: var(--success-soft); color: var(--success); }
+.mc-message--erreur { background: var(--accent-soft); color: var(--accent); }
+.mc-message--info { background: var(--surface-sunk); color: var(--ink-muted); }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1180px) {
+    .mc-grid > .mc-col-4, .mc-grid > .mc-col-5, .mc-grid > .mc-col-7, .mc-grid > .mc-col-8 { grid-column: span 12; }
+}
+@media (max-width: 900px) {
+    .mc-app { grid-template-columns: minmax(0, 1fr); }
+    .mc-rail {
+        position: fixed; inset: 0 auto 0 0; z-index: 60; transform: translateX(-100%);
+        transition: transform .2s ease; box-shadow: var(--shadow-pop); visibility: hidden;
+    }
+    body.menu-ouvert .mc-rail { transform: none; visibility: visible; }
+    .mc-menu { display: inline-flex; margin-right: auto; }
+    .mc-main { padding: var(--space-4) var(--space-4) var(--space-6); gap: var(--space-4); }
+    .mc-search { min-width: 0; flex: 1; }
+    .mc-topbar .mc-kbd { display: none; }
+    .mc-grid, .mc-stack { gap: var(--space-4); }
+    .mc-card { padding: var(--space-4); }
+}
+@media (max-width: 640px) {
+    .mc-two { grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
+    .mc-display { font-size: 28px; line-height: 34px; }   /* style « title » sur téléphone */
+    .mc-topbar .mc-btn--primary { padding: 0 10px; }
+    .mc-topbar__libelle { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .mc-rail { transition: none; }
+}

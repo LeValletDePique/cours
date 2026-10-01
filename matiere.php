@@ -61,6 +61,7 @@ $stmt->execute([$uid, $matiere_id, date('Y-m-d H:i:s')]);
 $prochains_cours = $stmt->fetchAll();
 
 $titre_page = $matiere['nom'];
+$matiere_page = $matiere_id;   // « Nouvelle note » (barre du haut, touche N) la range ici
 require __DIR__ . '/includes/header.php';
 ?>
 <p class="fil"><a href="index.php">Accueil</a> ›

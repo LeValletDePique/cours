@@ -44,5 +44,9 @@ function db(): PDO
            . 'Vérifie config.php et que MySQL est démarré.');
     }
 
+    // Même fuseau que PHP pour NOW() / CURRENT_TIMESTAMP (dates des notes),
+    // sinon « aujourd'hui » diffère si MySQL tourne en UTC.
+    $pdo->exec("SET time_zone = '" . date('P') . "'");
+
     return $pdo;
 }
