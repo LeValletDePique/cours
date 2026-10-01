@@ -829,7 +829,9 @@ kbd {
 .type-tache    { --c: #d97706; }
 .type-perso    { --c: #16a34a; }
 .type-autre    { --c: #64748b; }
-.type-echeance { --c: #dc2626; }
+.type-echeance { --c: #db2777; }   /* rose : le rouge est pris par les CM */
+.cat-CM { --c: #dc2626; }
+.cat-TD { --c: #2563eb; }
 .pastille { display: inline-block; width: .8rem; height: .8rem; border-radius: 3px; background: var(--c); flex-shrink: 0; }
 .legende ul { list-style: none; padding: 0; margin: 0; font-size: .88rem; }
 .legende li { display: flex; align-items: center; gap: .5rem; padding: .15rem 0; }

@@ -62,7 +62,9 @@ require __DIR__ . '/includes/header.php';
             <section class="bloc legende">
                 <h2>Légende</h2>
                 <ul>
-                    <li><span class="pastille type-cours"></span> Cours (couleur de l'UE)</li>
+                    <li><span class="pastille cat-CM"></span> CM</li>
+                    <li><span class="pastille cat-TD"></span> TD</li>
+                    <li><span class="pastille type-cours"></span> Autre cours (couleur de l'UE)</li>
                     <li><span class="pastille type-reunion"></span> Réunion</li>
                     <li><span class="pastille type-tache"></span> Tâche</li>
                     <li><span class="pastille type-perso"></span> Perso</li>

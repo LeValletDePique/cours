@@ -69,6 +69,8 @@ function evenement_json(array $e): array
         'titre'       => $e['titre'],
         'description' => (string) $e['description'],
         'lieu'        => (string) $e['lieu'],
+        'categorie'   => $e['categorie'],                 // CM / TD / autre (cours importés)
+        'intervenant' => (string) $e['intervenant'],
         'debut'       => $e['debut'] ? substr($e['debut'], 0, 16) : null,
         'fin'         => $e['fin'] ? substr($e['fin'], 0, 16) : null,
         'journee'     => (bool) $e['journee'],
@@ -396,10 +398,14 @@ switch ($action) {
             repondre_json(['erreur' => 'Événement introuvable'], 404);
         }
         $jour = date('d/m/Y', strtotime($ev['debut']));
-        $titre = mb_substr($ev['titre'] . ' – ' . $jour, 0, 255);
+        $type_cours = in_array($ev['categorie'], ['CM', 'TD'], true) ? ' (' . $ev['categorie'] . ')' : '';
+        $titre = mb_substr($ev['titre'] . $type_cours . ' – ' . $jour, 0, 255);
+        // « 28/09/2026, 08:30–10:00 · M. Dupont · CM · Amphi 1 »
         $infos = $jour . ($ev['journee'] ? '' : ', ' . date('H:i', strtotime($ev['debut']))
-                 . '–' . date('H:i', strtotime($ev['fin'])))
-                 . ($ev['lieu'] ? ' · ' . $ev['lieu'] : '');
+                 . '–' . date('H:i', strtotime($ev['fin'])));
+        foreach ([$ev['intervenant'], $type_cours ? $ev['categorie'] : '', $ev['lieu']] as $info) {
+            if ($info) $infos .= ' · ' . $info;
+        }
         $contenu = '# ' . $ev['titre'] . "\n\n*" . $infos . "*\n\n";
         $stmt = db()->prepare(
             'INSERT INTO notes (matiere_id, utilisateur_id, titre, contenu) VALUES (?, ?, ?, ?)'

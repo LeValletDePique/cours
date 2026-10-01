@@ -86,6 +86,27 @@ réimporter `schema.sql`).
    de son UE, s'affiche sur la page de la matière (« Prochains cours ») et le bouton
    **📝 Prendre des notes** crée une note pré-remplie dans cette matière.
 
+### Import Celcat (`edt-celcat.ics`)
+
+Le fichier généré par `outils/celcat-vers-ics.js` s'importe avec
+**Agenda → 🔗 Emploi du temps → « … ou importer un fichier .ics »**. Réimporter
+un fichier du **même nom** remplace les créneaux de l'import précédent ; les
+réunions, tâches et événements perso créés à la main ne sont **jamais** touchés.
+
+À l'import, chaque créneau est mis en forme ainsi : **matière** (titre),
+**prof**, **CM / TD**, **salle**. Champs lus dans le `.ics` :
+
+| Champ iCal | Utilisation |
+|---|---|
+| `SUMMARY` | Nom de la matière. Les codes (`P1INF05 - …`, `… [P1INF05]`, `P1INF05 : …`), un `CM`/`TD`/`TP` isolé et le nom du prof sont retirés. L'intitulé d'origine reste en tête de la description, donc un code peut servir de mot-clé de rattachement. |
+| `CATEGORIES` | `CM` / « Cours magistral » → **CM (rouge)** ; `TD` / « Travaux dirigés » → **TD (bleu)** ; autre (TP, examen…) → couleur de l'UE ; « Indisponibilité » → importé comme **réunion** avec son titre. À défaut, un `CM`/`TD` présent dans `SUMMARY` est utilisé. |
+| `DESCRIPTION` | Prof : ligne `Prof : …`, `Enseignant : …`, `Intervenant : …` ou `Staff : …`. Le reste est affiché dans le détail du cours. |
+| `ORGANIZER;CN=…` | Prof, si la description n'en contient pas. |
+| `LOCATION` | Salle. |
+
+Ces informations sont stockées dans les colonnes `evenements.categorie` (CM/TD/autre)
+et `evenements.intervenant`, ajoutées automatiquement à une base existante.
+
 **Si le lien ne marche pas :**
 - *« il faut être connecté » / erreur 401-403* : le calendrier n'est visible
   qu'après connexion à l'ENT. Télécharger le fichier `.ics` et l'importer avec

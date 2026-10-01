@@ -80,7 +80,8 @@ $prochaines = $stmt->fetchAll();
 $aujourdhui = date('Y-m-d 00:00:00');
 $demain     = date('Y-m-d 00:00:00', strtotime('+1 day'));
 $stmt = db()->prepare(
-    "SELECT e.id, e.type, e.titre, e.lieu, e.debut, e.fin, e.journee, e.fait, m.nom AS matiere
+    "SELECT e.id, e.type, e.categorie, e.intervenant, e.titre, e.lieu, e.debut, e.fin,
+            e.journee, e.fait, m.nom AS matiere
        FROM evenements e LEFT JOIN matieres m ON m.id = e.matiere_id
       WHERE e.utilisateur_id = ? AND e.debut IS NOT NULL
         AND (
@@ -146,9 +147,12 @@ require __DIR__ . '/includes/header.php';
                 } ?>
                 <li class="<?= $retard ? 'retard' : '' ?>">
                     <span class="heure"><?= e($heure) ?></span>
-                    <span class="pastille type-<?= e($ev['type']) ?>"></span>
+                    <span class="pastille type-<?= e($ev['type']) ?> cat-<?= e((string) $ev['categorie']) ?>"></span>
                     <span><?= $ev['type'] === 'tache' ? ($ev['fait'] ? '☑ ' : '☐ ') : '' ?><?= e($ev['titre']) ?></span>
-                    <span class="details"><?= e(implode(' · ', array_filter([$ev['lieu'], $ev['matiere']]))) ?></span>
+                    <span class="details"><?= e(implode(' · ', array_filter([
+                        $ev['intervenant'], in_array($ev['categorie'], ['CM', 'TD'], true) ? $ev['categorie'] : '',
+                        $ev['lieu'], $ev['matiere'] !== $ev['titre'] ? $ev['matiere'] : '',
+                    ]))) ?></span>
                 </li>
             <?php endforeach; ?>
         </ul>

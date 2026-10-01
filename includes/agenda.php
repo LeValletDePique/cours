@@ -47,9 +47,11 @@ function installer_agenda(): void
             source_id      INT UNSIGNED NULL,
             matiere_id     INT UNSIGNED NULL,
             type           ENUM('cours','reunion','tache','perso','autre') NOT NULL DEFAULT 'autre',
+            categorie      ENUM('CM','TD','autre') NULL,
             titre          VARCHAR(255) NOT NULL,
             description    TEXT NULL,
             lieu           VARCHAR(255) NULL,
+            intervenant    VARCHAR(255) NULL,
             debut          DATETIME NULL,
             fin            DATETIME NULL,
             journee        TINYINT(1) NOT NULL DEFAULT 0,
@@ -64,13 +66,23 @@ function installer_agenda(): void
             INDEX idx_evt_utilisateur_debut (utilisateur_id, debut)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
-    $existe = $pdo->query(
-        "SELECT COUNT(*) FROM information_schema.COLUMNS
-          WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'matieres'
-            AND COLUMN_NAME = 'mots_cles'"
-    )->fetchColumn();
-    if (!$existe) {
-        $pdo->exec('ALTER TABLE matieres ADD mots_cles VARCHAR(255) NULL');
+    // Colonnes ajoutées après coup (bases créées avec une version plus ancienne).
+    ajouter_colonne('matieres', 'mots_cles', 'VARCHAR(255) NULL');
+    ajouter_colonne('evenements', 'categorie', "ENUM('CM','TD','autre') NULL AFTER type");
+    ajouter_colonne('evenements', 'intervenant', 'VARCHAR(255) NULL AFTER lieu');
+}
+
+/** Ajoute une colonne à une table si elle n'existe pas encore. */
+function ajouter_colonne(string $table, string $colonne, string $definition): void
+{
+    $stmt = db()->prepare(
+        'SELECT COUNT(*) FROM information_schema.COLUMNS
+          WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?'
+    );
+    $stmt->execute([$table, $colonne]);
+    if (!$stmt->fetchColumn()) {
+        // Noms fixés dans le code (jamais saisis par l'utilisateur).
+        db()->exec("ALTER TABLE `$table` ADD `$colonne` $definition");
     }
 }
 
@@ -138,7 +150,7 @@ function ics_lire(string $ics): array
             $ev = ['uid' => '', 'titre' => '', 'description' => '', 'lieu' => '',
                    'debut' => null, 'fin' => null, 'journee' => false, 'duree' => null,
                    'rrule' => null, 'exdates' => [], 'recurrence_id' => null,
-                   'annule' => false];
+                   'categories' => [], 'organisateur' => '', 'annule' => false];
             $profondeur = 0;
             continue;
         }
@@ -179,6 +191,14 @@ function ics_lire(string $ics): array
             case 'RRULE':       $ev['rrule'] = $valeur; break;
             case 'DURATION':    $ev['duree'] = $valeur; break;
             case 'STATUS':      $ev['annule'] = strtoupper(trim($valeur)) === 'CANCELLED'; break;
+            case 'CATEGORIES':  // « CM » ou « CM,ING1 » (virgules échappées = dans la valeur)
+                foreach (preg_split('/(?<!\\\\),/', $valeur) as $c) {
+                    if (trim($c) !== '') $ev['categories'][] = trim(ics_texte($c));
+                }
+                break;
+            case 'ORGANIZER':   // ORGANIZER;CN=Mme Durand:mailto:…
+                $ev['organisateur'] = trim($params['CN'] ?? '');
+                break;
             case 'DTSTART':
                 if ($d = ics_date($valeur, $params)) { [$ev['debut'], $ev['journee']] = $d; }
                 break;
@@ -315,6 +335,7 @@ function ics_creneaux(string $ics): array
 
     $creneaux = [];
     foreach ($evenements as $ev) {
+        $infos = analyser_creneau($ev);
         $duree = $ev['fin']->getTimestamp() - $ev['debut']->getTimestamp();
         $debuts = ($ev['rrule'] && !$ev['recurrence_id'])
             ? ics_occurrences($ev, $de->modify('-1 day'), $a)
@@ -335,9 +356,7 @@ function ics_creneaux(string $ics): array
                 $debutL = $d->setTimezone($local)->format('Y-m-d H:i:s');
                 $finL   = $f->setTimezone($local)->format('Y-m-d H:i:s');
             }
-            $creneaux[] = [
-                'titre'       => mb_substr(trim($ev['titre']) ?: '(sans titre)', 0, 255),
-                'description' => trim($ev['description']),
+            $creneaux[] = $infos + [
                 'lieu'        => mb_substr(trim($ev['lieu']), 0, 255),
                 'debut'       => $debutL,
                 'fin'         => $finL,
@@ -346,6 +365,106 @@ function ics_creneaux(string $ics): array
         }
     }
     return $creneaux;
+}
+
+// ============================================================
+//  Intitulés Celcat : matière, type (CM / TD), intervenant
+// ============================================================
+
+/** « CM », « Cours magistral », « TD machine », « Indisponibilité »… -> CM / TD / indispo / autre. */
+function categorie_cours(string $texte): ?string
+{
+    $t = texte_comparable($texte);
+    if ($t === '') {
+        return null;
+    }
+    if (strpos($t, 'indisponib') !== false) {
+        return 'indispo';
+    }
+    if (preg_match('/^cm\b/', $t) || strpos($t, 'magistra') !== false) {
+        return 'CM';
+    }
+    if (preg_match('/^td\b/', $t) || strpos($t, 'travaux diriges') !== false) {
+        return 'TD';
+    }
+    return 'autre';
+}
+
+/** Vrai pour un code de module/groupe : un seul mot en majuscules avec chiffre(s) (ex. P1INF02, ING1-GI). */
+function est_code(string $s): bool
+{
+    return (bool) preg_match('/^(?=[A-Z0-9_.\/-]*[A-Z])(?=[A-Z0-9_.\/-]*\d)[A-Z0-9_.\/-]{2,}$/', trim($s));
+}
+
+/**
+ * Prépare un créneau importé :
+ *  - type « reunion » pour une indisponibilité Celcat, « cours » sinon ;
+ *  - catégorie CM / TD / autre (CATEGORIES, sinon un « CM »/« TD » dans l'intitulé) ;
+ *  - intervenant (ligne « Prof : … » / « Enseignant : … » de la description, sinon ORGANIZER) ;
+ *  - titre réduit au nom de la matière (sans code, type ni intervenant).
+ * L'intitulé d'origine est gardé en tête de la description s'il a été raccourci,
+ * pour que les mots-clés de rattachement (même un code) le trouvent encore.
+ */
+function analyser_creneau(array $ev): array
+{
+    $brut = trim(preg_replace('/\s+/u', ' ', $ev['titre']));
+    $description = trim($ev['description']);
+
+    $categorie = null;
+    foreach ($ev['categories'] as $c) {
+        $k = categorie_cours($c);
+        if ($k && ($categorie === null || $categorie === 'autre')) {
+            $categorie = $k;
+        }
+    }
+    if ($categorie === null && stripos(texte_comparable($brut), 'indisponib') !== false) {
+        $categorie = 'indispo';
+    }
+
+    $intervenant = '';
+    if (preg_match('/^\s*(?:prof(?:esseur)?s?|enseignant(?:e)?s?|intervenant(?:e)?s?|formateur|formatrice|staff|teacher)\s*:\s*(.+)$/imu',
+                   $description, $m)) {
+        $intervenant = trim($m[1]);
+    } elseif ($ev['organisateur'] !== '') {
+        $intervenant = $ev['organisateur'];
+    }
+
+    // Indisponibilité : une « réunion » qui garde son titre tel quel.
+    if ($categorie === 'indispo') {
+        return [
+            'type' => 'reunion', 'categorie' => null, 'intervenant' => mb_substr($intervenant, 0, 255),
+            'titre' => mb_substr($brut !== '' ? $brut : 'Indisponibilité', 0, 255),
+            'description' => $description,
+        ];
+    }
+
+    // « P1INF02 - Base de données - CM - M. Dupont » -> « Base de données »
+    $garde = [];
+    foreach (preg_split('/\s+[-–—|·]\s+/u', $brut) as $morceau) {
+        $morceau = trim(preg_replace([
+            '/^[A-Z0-9][A-Z0-9_.\/-]*\d[A-Z0-9_.\/-]*\s*:\s*/',       // « INF101 : Nom »
+            '/\s*[\[(][A-Z0-9_.\/-]*\d[A-Z0-9_.\/-]*[\])]$/',          // « Nom [INF101] »
+        ], '', $morceau));
+        if ($morceau === '' || est_code($morceau)) continue;
+        if (preg_match('/^(CM|TD|TP|TDM|TPM|CI)$/i', $morceau)) {
+            $categorie = $categorie ?? categorie_cours($morceau);
+            continue;
+        }
+        if ($intervenant !== '' && texte_comparable($morceau) === texte_comparable($intervenant)) continue;
+        $garde[] = $morceau;
+    }
+    $titre = $garde ? implode(' - ', $garde) : ($brut !== '' ? $brut : '(sans titre)');
+    if ($brut !== '' && $titre !== $brut && strpos($description, $brut) === false) {
+        $description = trim($brut . "\n" . $description);
+    }
+
+    return [
+        'type'        => 'cours',
+        'categorie'   => $categorie,
+        'intervenant' => mb_substr($intervenant, 0, 255),
+        'titre'       => mb_substr($titre, 0, 255),
+        'description' => $description,
+    ];
 }
 
 /**
@@ -408,7 +527,9 @@ function ics_telecharger(string $url): string
 }
 
 /**
- * Remplace les cours d'une source par le contenu du calendrier.
+ * Remplace les créneaux d'une source par le contenu du calendrier.
+ * Seuls les événements de CETTE source sont effacés : ceux créés à la main
+ * (réunions, tâches, perso : source_id NULL) et les autres sources restent.
  * Renvoie le nombre de créneaux importés.
  */
 function synchroniser_source(int $uid, int $source_id, string $ics): int
@@ -417,15 +538,19 @@ function synchroniser_source(int $uid, int $source_id, string $ics): int
     $pdo = db();
     $pdo->beginTransaction();
     try {
-        $pdo->prepare('DELETE FROM evenements WHERE source_id = ? AND utilisateur_id = ?')
-            ->execute([$source_id, $uid]);
+        $pdo->prepare(
+            'DELETE FROM evenements
+              WHERE source_id IS NOT NULL AND source_id = ? AND utilisateur_id = ?'
+        )->execute([$source_id, $uid]);
         $ins = $pdo->prepare(
-            "INSERT INTO evenements
-                (utilisateur_id, source_id, type, titre, description, lieu, debut, fin, journee)
-             VALUES (?, ?, 'cours', ?, ?, ?, ?, ?, ?)"
+            'INSERT INTO evenements
+                (utilisateur_id, source_id, type, categorie, titre, description, lieu,
+                 intervenant, debut, fin, journee)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         );
         foreach ($creneaux as $c) {
-            $ins->execute([$uid, $source_id, $c['titre'], $c['description'], $c['lieu'],
+            $ins->execute([$uid, $source_id, $c['type'], $c['categorie'], $c['titre'],
+                           $c['description'], $c['lieu'], $c['intervenant'] ?: null,
                            $c['debut'], $c['fin'], $c['journee']]);
         }
         $pdo->prepare(

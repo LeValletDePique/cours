@@ -17,6 +17,8 @@
 
     const HAUTEUR_HEURE = 48;   // px par heure dans la vue semaine
     const TYPES = { cours: 'Cours', reunion: 'Réunion', tache: 'Tâche', perso: 'Perso', autre: 'Autre' };
+    // Comme sur Celcat : CM en rouge, TD en bleu (les autres cours gardent la couleur de l'UE).
+    const COULEURS_CATEGORIE = { CM: '#dc2626', TD: '#2563eb' };
 
     // ---------- Outils dates ----------
     const deux = (n) => String(n).padStart(2, '0');
@@ -94,7 +96,9 @@
             genre: 'evt', brut: e, id: e.id, type: e.type, titre: e.titre,
             debut: lire(e.debut), fin: lire(e.fin) || lire(e.debut),
             journee: e.journee, fait: e.fait, lieu: e.lieu, matiere: e.matiere,
-            couleur: e.type === 'cours' ? (e.couleur || '#0891b2') : null,
+            categorie: e.categorie, intervenant: e.intervenant,
+            couleur: e.type === 'cours'
+                ? (COULEURS_CATEGORIE[e.categorie] || e.couleur || '#0891b2') : null,
         }));
         donnees.echeances.forEach((e) => liste.push({
             genre: 'ech', brut: e, id: e.id, type: 'echeance',
@@ -104,6 +108,12 @@
         }));
         return liste.sort((a, b) => a.debut - b.debut);
     }
+    // « M. Dupont · CM » (seulement les infos présentes).
+    const profType = (x) => [x.intervenant, COULEURS_CATEGORIE[x.categorie] ? x.categorie : '']
+        .filter(Boolean).join(' · ');
+    // Infobulle : matière · prof · CM/TD · salle
+    const resume = (x) => [x.titre, profType(x), x.lieu].filter(Boolean).join(' · ');
+
     // Les créneaux avec une durée vont dans la grille horaire ; les autres
     // (journée entière, tâche ou échéance à une heure précise) en haut.
     const dansGrille = (x) => !x.journee && x.fin > x.debut;
@@ -124,7 +134,7 @@
         const coche = x.type === 'tache' || x.genre === 'ech' ? (x.fait ? '☑ ' : '☐ ') : '';
         return '<button type="button" class="evt-puce type-' + x.type + (x.fait ? ' fait' : '') + '"'
             + (x.couleur ? ' style="--c:' + echapper(x.couleur) + '"' : '')
-            + ' data-genre="' + x.genre + '" data-id="' + x.id + '" title="' + echapper(x.titre) + '">'
+            + ' data-genre="' + x.genre + '" data-id="' + x.id + '" title="' + echapper(resume(x)) + '">'
             + coche + heure + echapper(x.titre) + '</button>';
     }
 
@@ -193,9 +203,10 @@
                     + ' data-genre="' + x.genre + '" data-id="' + x.id + '"'
                     + ' style="top:' + haut + 'px;height:' + hauteur + 'px;left:calc(' + m.gauche + '% + 2px);'
                     + 'width:calc(' + m.largeur + '% - 4px);' + (x.couleur ? '--c:' + echapper(x.couleur) : '') + '"'
-                    + ' title="' + echapper(hm(x.debut) + '–' + hm(x.fin) + ' ' + x.titre + (x.lieu ? ' · ' + x.lieu : '')) + '">'
+                    + ' title="' + echapper(hm(x.debut) + '–' + hm(x.fin) + ' ' + resume(x)) + '">'
                     + '<span class="evt-heure">' + hm(m.debut) + '–' + hm(m.fin) + '</span>'
                     + '<span class="evt-titre">' + echapper(x.titre) + '</span>'
+                    + (profType(x) ? '<span class="evt-lieu">' + echapper(profType(x)) + '</span>' : '')
                     + (x.lieu ? '<span class="evt-lieu">' + echapper(x.lieu) + '</span>' : '')
                     + '</button>';
             });
@@ -280,7 +291,8 @@
                     : dansGrille(x) ? hm(x.debut) + ' – ' + hm(x.fin) : hm(x.debut);
                 html += '<li><span class="liste-heure">' + horaire + '</span>'
                     + puce(x, false)
-                    + '<span class="liste-details">' + echapper([x.lieu, x.matiere].filter(Boolean).join(' · '))
+                    + '<span class="liste-details">'
+                    + echapper([profType(x), x.lieu, x.matiere !== x.titre ? x.matiere : ''].filter(Boolean).join(' · '))
                     + '</span></li>';
             });
             html += '</ul>';
@@ -426,10 +438,13 @@
             + (ev.journee ? '' : ', ' + hm(d) + ' – ' + hm(f));
         const corps = elementHtml(
             '<p class="detail-ligne">🕒 ' + echapper(horaire) + '</p>'
+            + (ev.intervenant ? '<p class="detail-ligne">👤 ' + echapper(ev.intervenant) + '</p>' : '')
+            + (COULEURS_CATEGORIE[ev.categorie] ? '<p class="detail-ligne">🎓 '
+                + (ev.categorie === 'CM' ? 'CM (cours magistral)' : 'TD (travaux dirigés)') + '</p>' : '')
             + (ev.lieu ? '<p class="detail-ligne">📍 ' + echapper(ev.lieu) + '</p>' : '')
-            + '<p class="detail-ligne">📚 ' + (ev.matiere
+            + (ev.type !== 'cours' ? '' : '<p class="detail-ligne">📚 ' + (ev.matiere
                 ? '<a href="matiere.php?id=' + ev.matiere_id + '">' + echapper(ev.matiere) + '</a>'
-                : '<em>Aucune matière reconnue</em> — ajoute un mot-clé dans « 🔗 Emploi du temps ».') + '</p>'
+                : '<em>Aucune matière reconnue</em> — ajoute un mot-clé dans « 🔗 Emploi du temps ».') + '</p>')
             + (ev.description ? '<p class="detail-desc">' + echapper(ev.description) + '</p>' : '')
             + '<p class="astuce-mini">Importé de « ' + echapper(ev.source) + ' » : modifie-le dans ton emploi du temps d\'origine.</p>'
             + '<div class="notes-seance" hidden><h4>Notes de cette séance</h4><ul></ul></div>');
@@ -443,7 +458,7 @@
                     '<li><a href="note.php?id=' + n.id + '">' + echapper(n.titre) + '</a></li>').join('');
             });
         }
-        ouvrirModale(ev.titre, corps, [
+        ouvrirModale(ev.titre, corps, ev.type !== 'cours' ? [] : [
             bouton('📝 Prendre des notes', 'btn-primaire', async () => {
                 const rep = await api('nouvelle_note', { id: ev.id });
                 if (rep.ok) location.href = 'note.php?id=' + rep.id;

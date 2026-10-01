@@ -209,9 +209,11 @@ CREATE TABLE evenements (
     source_id      INT UNSIGNED NULL,                 -- NULL = ajouté à la main
     matiere_id     INT UNSIGNED NULL,
     type           ENUM('cours','reunion','tache','perso','autre') NOT NULL DEFAULT 'autre',
+    categorie      ENUM('CM','TD','autre') NULL,      -- cours importés : CM en rouge, TD en bleu
     titre          VARCHAR(255) NOT NULL,
     description    TEXT NULL,
     lieu           VARCHAR(255) NULL,
+    intervenant    VARCHAR(255) NULL,                 -- prof (cours importés)
     debut          DATETIME NULL,                     -- NULL = tâche sans date
     fin            DATETIME NULL,                     -- exclusive pour une journée entière
     journee        TINYINT(1) NOT NULL DEFAULT 0,
