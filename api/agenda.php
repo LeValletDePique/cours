@@ -63,6 +63,7 @@ function date_heure(?string $date, ?string $heure = null): ?string
 /** Ligne SQL -> objet JSON pour le calendrier. */
 function evenement_json(array $e): array
 {
+    global $uid;
     return [
         'id'          => (int) $e['id'],
         'type'        => $e['type'],
@@ -71,33 +72,24 @@ function evenement_json(array $e): array
         'description' => (string) $e['description'],
         // Cours importés : seulement le n° de salle (aussi pour les anciens imports).
         'lieu'        => $e['source_id'] ? nettoyer_salle((string) $e['lieu']) : (string) $e['lieu'],
-        'categorie'   => $e['categorie'],                 // CM / TD / autre (cours importés)
+        'categorie'   => $e['categorie'],                 // CM / TD / TP / autre (cours importés)
         'intervenant' => (string) $e['intervenant'],
         'debut'       => $e['debut'] ? substr($e['debut'], 0, 16) : null,
         'fin'         => $e['fin'] ? substr($e['fin'], 0, 16) : null,
         'journee'     => (bool) $e['journee'],
         'fait'        => (bool) $e['fait'],
+        'date_fait'   => $e['date_fait'] ? substr($e['date_fait'], 0, 16) : null,
         'matiere_id'  => $e['matiere_id'] ? (int) $e['matiere_id'] : null,
+        // Couleur de l'UE (design system) : mc-ue-1 … mc-ue-4, mc-ue-autre.
+        'ue_classe'   => classe_ue($uid, $e['ue_id'] ? (int) $e['ue_id'] : null),
         'matiere'     => $e['matiere'],
         'couleur'     => $e['couleur_ue'] ?: $e['couleur_source'],
         'source'      => $e['source'],
     ];
 }
 
-/**
- * Titre à afficher : pour un cours importé relié à une matière, le nom de la
- * matière (sans « (MAN 1) ») ; Celcat ne donne souvent qu'un code (DIDB1BDD).
- */
-function titre_affiche(array $e): string
-{
-    if ($e['source_id'] && $e['type'] === 'cours' && $e['matiere']) {
-        return trim(preg_replace('/\s*\(.*?\)\s*/', ' ', $e['matiere']));
-    }
-    return $e['titre'];
-}
-
 const SELECT_EVENEMENTS =
-    'SELECT e.*, m.nom AS matiere, u.couleur AS couleur_ue,
+    'SELECT e.*, m.nom AS matiere, m.ue_id, u.couleur AS couleur_ue,
             s.nom AS source, s.couleur AS couleur_source
        FROM evenements e
        LEFT JOIN matieres m ON m.id = e.matiere_id
@@ -141,14 +133,15 @@ switch ($action) {
             'description' => (string) $e['description'],
         ], $stmt->fetchAll());
 
-        // Tâches à faire (toutes, pas seulement celles de la période).
+        // Tâches à faire (toutes, pas seulement celles de la période). Une tâche cochée
+        // reste visible jusqu'au lendemain (avant date_fait : 7 jours après sa date).
         $stmt = db()->prepare(SELECT_EVENEMENTS . "
             WHERE e.utilisateur_id = ? AND e.type = 'tache'
-              AND (e.fait = 0 OR e.debut >= ?)
+              AND (e.fait = 0 OR e.date_fait >= ? OR (e.date_fait IS NULL AND e.debut >= ?))
             ORDER BY e.fait, e.debut IS NULL, e.debut, e.id
             LIMIT 200"
         );
-        $stmt->execute([$uid, date('Y-m-d 00:00:00', strtotime('-7 days'))]);
+        $stmt->execute([$uid, date('Y-m-d 00:00:00'), date('Y-m-d 00:00:00', strtotime('-7 days'))]);
         $taches = array_map('evenement_json', $stmt->fetchAll());
 
         repondre_json([
@@ -230,12 +223,17 @@ switch ($action) {
         break;
 
     // ---------------------------------------------------------
-    case 'basculer':   // tâche faite / à faire
+    case 'basculer':   // tâche faite / à faire (MySQL lit le nouveau « fait » pour date_fait)
         $stmt = db()->prepare(
-            'UPDATE evenements SET fait = 1 - fait WHERE id = ? AND utilisateur_id = ?'
+            'UPDATE evenements SET fait = 1 - fait, date_fait = IF(fait = 1, ?, NULL)
+              WHERE id = ? AND utilisateur_id = ?'
         );
+        $stmt->execute([date('Y-m-d H:i:s'), (int) ($data['id'] ?? 0), $uid]);
+        $stmt = db()->prepare('SELECT fait, date_fait FROM evenements WHERE id = ? AND utilisateur_id = ?');
         $stmt->execute([(int) ($data['id'] ?? 0), $uid]);
-        repondre_json(['ok' => true]);
+        $etat = $stmt->fetch();
+        repondre_json(['ok' => true, 'fait' => (bool) ($etat['fait'] ?? false),
+                       'date_fait' => $etat && $etat['date_fait'] ? substr($etat['date_fait'], 0, 16) : null]);
         break;
 
     // ---------------------------------------------------------
@@ -419,9 +417,13 @@ switch ($action) {
         if (!$ev || !$ev['debut']) {
             repondre_json(['erreur' => 'Événement introuvable'], 404);
         }
+        // Créneau sans matière : on la cherche d'après le nom (matière ou mot-clé).
+        if (!$ev['matiere_id']) {
+            $ev['matiere_id'] = trouver_matiere(motifs_matieres($uid), $ev['titre']);
+        }
         $jour = date('d/m/Y', strtotime($ev['debut']));
-        $type_cours = in_array($ev['categorie'], ['CM', 'TD'], true) ? ' (' . $ev['categorie'] . ')' : '';
-        $titre = mb_substr(titre_affiche($ev) . $type_cours . ' – ' . $jour, 0, 255);
+        $type_cours = in_array($ev['categorie'], ['CM', 'TD', 'TP'], true) ? ' (' . $ev['categorie'] . ')' : '';
+        $titre = titre_note_cours($ev);
         // « 28/09/2026, 08:30–10:00 · M. Dupont · CM · Amphi 1 »
         $infos = $jour . ($ev['journee'] ? '' : ', ' . date('H:i', strtotime($ev['debut']))
                  . '–' . date('H:i', strtotime($ev['fin'])));

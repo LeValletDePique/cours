@@ -209,7 +209,7 @@ CREATE TABLE evenements (
     source_id      INT UNSIGNED NULL,                 -- NULL = ajouté à la main
     matiere_id     INT UNSIGNED NULL,
     type           ENUM('cours','reunion','tache','perso','autre') NOT NULL DEFAULT 'autre',
-    categorie      ENUM('CM','TD','autre') NULL,      -- cours importés : CM en rouge, TD en bleu
+    categorie      ENUM('CM','TD','TP','autre') NULL, -- cours importés : étiquette CM / TD / TP
     titre          VARCHAR(255) NOT NULL,
     description    TEXT NULL,
     lieu           VARCHAR(255) NULL,
@@ -218,6 +218,7 @@ CREATE TABLE evenements (
     fin            DATETIME NULL,                     -- exclusive pour une journée entière
     journee        TINYINT(1) NOT NULL DEFAULT 0,
     fait           TINYINT(1) NOT NULL DEFAULT 0,     -- tâches
+    date_fait      DATETIME NULL,                     -- heure où la tâche a été cochée
     date_creation  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_evt_utilisateur FOREIGN KEY (utilisateur_id)
         REFERENCES utilisateurs(id) ON DELETE CASCADE,

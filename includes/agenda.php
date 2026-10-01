@@ -47,7 +47,7 @@ function installer_agenda(): void
             source_id      INT UNSIGNED NULL,
             matiere_id     INT UNSIGNED NULL,
             type           ENUM('cours','reunion','tache','perso','autre') NOT NULL DEFAULT 'autre',
-            categorie      ENUM('CM','TD','autre') NULL,
+            categorie      ENUM('CM','TD','TP','autre') NULL,
             titre          VARCHAR(255) NOT NULL,
             description    TEXT NULL,
             lieu           VARCHAR(255) NULL,
@@ -56,6 +56,7 @@ function installer_agenda(): void
             fin            DATETIME NULL,
             journee        TINYINT(1) NOT NULL DEFAULT 0,
             fait           TINYINT(1) NOT NULL DEFAULT 0,
+            date_fait      DATETIME NULL,
             date_creation  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             CONSTRAINT fk_evt_utilisateur FOREIGN KEY (utilisateur_id)
                 REFERENCES utilisateurs(id) ON DELETE CASCADE,
@@ -68,8 +69,17 @@ function installer_agenda(): void
     );
     // Colonnes ajoutées après coup (bases créées avec une version plus ancienne).
     ajouter_colonne('matieres', 'mots_cles', 'VARCHAR(255) NULL');
-    ajouter_colonne('evenements', 'categorie', "ENUM('CM','TD','autre') NULL AFTER type");
+    ajouter_colonne('evenements', 'categorie', "ENUM('CM','TD','TP','autre') NULL AFTER type");
     ajouter_colonne('evenements', 'intervenant', 'VARCHAR(255) NULL AFTER lieu');
+    ajouter_colonne('evenements', 'date_fait', 'DATETIME NULL AFTER fait');   // heure où la tâche a été cochée
+    // Bases plus anciennes : la catégorie ne connaissait pas encore les TP.
+    $type = db()->query(
+        "SELECT COLUMN_TYPE FROM information_schema.COLUMNS
+          WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'evenements' AND COLUMN_NAME = 'categorie'"
+    )->fetchColumn();
+    if ($type && strpos($type, "'TP'") === false) {
+        db()->exec("ALTER TABLE evenements MODIFY categorie ENUM('CM','TD','TP','autre') NULL");
+    }
 }
 
 /** Ajoute une colonne à une table si elle n'existe pas encore. */
@@ -371,10 +381,10 @@ function ics_creneaux(string $ics): array
 }
 
 // ============================================================
-//  Intitulés Celcat : matière, type (CM / TD), intervenant
+//  Intitulés Celcat : matière, type (CM / TD / TP), intervenant
 // ============================================================
 
-/** « CM », « Cours magistral », « TD machine », « Indisponibilité »… -> CM / TD / indispo / autre. */
+/** « CM », « Cours magistral », « TD machine », « TP », « Indisponibilité »… -> CM / TD / TP / indispo / autre. */
 function categorie_cours(string $texte): ?string
 {
     $t = texte_comparable($texte);
@@ -390,6 +400,9 @@ function categorie_cours(string $texte): ?string
     if (preg_match('/^td\b/', $t) || strpos($t, 'travaux diriges') !== false) {
         return 'TD';
     }
+    if (preg_match('/^tp\b/', $t) || strpos($t, 'travaux pratiques') !== false) {
+        return 'TP';
+    }
     return 'autre';
 }
 
@@ -402,7 +415,7 @@ function est_code(string $s): bool
 /**
  * Prépare un créneau importé :
  *  - type « reunion » pour une indisponibilité Celcat, « cours » sinon ;
- *  - catégorie CM / TD / autre (CATEGORIES, sinon un « CM »/« TD » dans l'intitulé) ;
+ *  - catégorie CM / TD / TP / autre (CATEGORIES, sinon un « CM »/« TD »/« TP » dans l'intitulé) ;
  *  - intervenant (ligne « Prof : … » / « Enseignant : … » de la description, sinon ORGANIZER) ;
  *  - titre réduit au nom de la matière (sans code, type ni intervenant).
  * L'intitulé d'origine est gardé en tête de la description s'il a été raccourci,
@@ -441,7 +454,7 @@ function analyser_creneau(array $ev): array
     $reste = preg_replace_callback('/\(([^()]*)\)/u', function ($m) use (&$categorie, &$groupes) {
         $dedans = trim($m[1]);
         if (preg_match('/^(CM|TD|TP|TDM|TPM|CI)$/i', $dedans)
-                || in_array(categorie_cours($dedans), ['CM', 'TD'], true) && mb_strlen($dedans) <= 20) {
+                || in_array(categorie_cours($dedans), ['CM', 'TD', 'TP'], true) && mb_strlen($dedans) <= 20) {
             $categorie = $categorie ?? categorie_cours($dedans);
             return ' ';
         }
@@ -636,6 +649,30 @@ function synchroniser_source(int $uid, int $source_id, string $ics): int
     }
     associer_matieres($uid);
     return count($creneaux);
+}
+
+// ============================================================
+//  Titres : créneau et note pré-remplie
+// ============================================================
+
+/**
+ * Titre à afficher : pour un cours importé relié à une matière, le nom de la
+ * matière (sans « (MAN 1) ») ; Celcat ne donne souvent qu'un code (DIDB1BDD).
+ * $e : ligne d'evenements + « matiere » (nom de la matière ou null).
+ */
+function titre_affiche(array $e): string
+{
+    if ($e['source_id'] && $e['type'] === 'cours' && $e['matiere']) {
+        return trim(preg_replace('/\s*\(.*?\)\s*/', ' ', $e['matiere']));
+    }
+    return $e['titre'];
+}
+
+/** Titre de la note créée pour un créneau : « Base de données (TD) – 30/09/2026 ». */
+function titre_note_cours(array $e): string
+{
+    $type = in_array($e['categorie'], ['CM', 'TD', 'TP'], true) ? ' (' . $e['categorie'] . ')' : '';
+    return mb_substr(titre_affiche($e) . $type . ' – ' . date('d/m/Y', strtotime($e['debut'])), 0, 255);
 }
 
 // ============================================================

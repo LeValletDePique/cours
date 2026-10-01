@@ -95,7 +95,7 @@ function html_note_row(array $note, int $uid, ?string $date = null, string $extr
     $m = $note['matiere_id'] ? ($matieres[(int) $note['matiere_id']] ?? null) : null;
     $id = (int) $note['id'];
     $sous = $m
-        ? '<span class="mc-dot"></span>' . e($m['court'])
+        ? '<span class="mc-dot"></span><span class="mc-note__matiere">' . e($m['court']) . '</span>'
         : '<span class="mc-dot"></span>Non classée · <span class="mc-link" data-classer="' . $id . '">Classer</span>';
     $etoile = !empty($note['epingle']) ? '<span class="mc-note__fav" title="Favori">' . icone('favori', 'mc-ico-sm') . '</span>' : '';
     return '<a class="mc-note ' . ($m ? e($m['classe']) : 'mc-ue-autre') . '" href="note.php?id=' . $id . '">'

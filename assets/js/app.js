@@ -104,3 +104,59 @@ document.addEventListener('click', (e) => {
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && document.body.classList.contains('menu-ouvert')) menuMobile(false);
 });
+
+// --- Ajout rapide de tâche en langage naturel ---
+// « Finir le TD de BDD pour vendredi » -> titre « Finir le TD de BDD », date = vendredi,
+// matière reconnue d'après son nom ou ses mots-clés. Utilisé sur l'accueil et dans l'Agenda.
+const sansAccents = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+function analyserTache(texte, matieres = []) {
+    const ymdLocal = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0')
+        + '-' + String(d.getDate()).padStart(2, '0');
+    const auj = new Date(); auj.setHours(0, 0, 0, 0);
+    const plus = (n) => { const d = new Date(auj); d.setDate(d.getDate() + n); return d; };
+    const JOURS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+    const MOIS = ['janvier', 'fevrier', 'mars', 'avril', 'mai', 'juin', 'juillet', 'aout',
+        'septembre', 'octobre', 'novembre', 'decembre'];
+    const intro = "(?:pour |avant |d'ici |le |ce |d’ici )?";
+    const fin = '(?=$|[\\s,.;!?])';
+    const regles = [
+        [new RegExp("(?:^|\\s)" + intro + "(?:aujourd'hui|aujourd’hui|ce soir)" + fin, 'i'), () => plus(0)],
+        [new RegExp('(?:^|\\s)' + intro + 'apr[eè]s-demain' + fin, 'i'), () => plus(2)],
+        [new RegExp('(?:^|\\s)' + intro + 'demain' + fin, 'i'), () => plus(1)],
+        [new RegExp('(?:^|\\s)(?:dans|d\'ici|d’ici) (\\d{1,2}) jours?' + fin, 'i'), (m) => plus(parseInt(m[1], 10))],
+        [new RegExp('(?:^|\\s)' + intro + '(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)(?: prochain)?' + fin, 'i'),
+            (m) => { const c = JOURS.indexOf(m[1].toLowerCase()); return plus(((c - auj.getDay() + 6) % 7) + 1); }],
+        [new RegExp('(?:^|\\s)' + intro + '(\\d{1,2})/(\\d{1,2})(?:/(\\d{2,4}))?' + fin, 'i'), (m) => {
+            let an = m[3] ? parseInt(m[3], 10) : auj.getFullYear();
+            if (an < 100) an += 2000;
+            const d = new Date(an, parseInt(m[2], 10) - 1, parseInt(m[1], 10));
+            if (!m[3] && d < auj) d.setFullYear(an + 1);
+            return d;
+        }],
+        [new RegExp('(?:^|\\s)' + intro + '(\\d{1,2}) (janvier|f[ée]vrier|mars|avril|mai|juin|juillet|ao[uû]t|septembre|octobre|novembre|d[ée]cembre)' + fin, 'i'), (m) => {
+            const d = new Date(auj.getFullYear(), MOIS.indexOf(sansAccents(m[2])), parseInt(m[1], 10));
+            if (d < auj) d.setFullYear(d.getFullYear() + 1);
+            return d;
+        }],
+    ];
+    let titre = texte, date = '';
+    for (const [re, calcul] of regles) {
+        const m = titre.match(re);
+        if (!m) continue;
+        const d = calcul(m);
+        if (d && !isNaN(d)) {
+            date = ymdLocal(d);
+            titre = (titre.slice(0, m.index) + ' ' + titre.slice(m.index + m[0].length));
+        }
+        break;
+    }
+    titre = titre.replace(/\s+/g, ' ').replace(/[\s,;:–-]+$/, '').trim() || texte.trim();
+    // Matière : le motif le plus long trouvé en mots entiers.
+    const cible = ' ' + sansAccents(texte).replace(/[^a-z0-9]+/g, ' ') + ' ';
+    let matiere = null, longueur = 0;
+    matieres.forEach((m) => (m.motifs || [m.nom]).forEach((motif) => {
+        const x = sansAccents(motif).replace(/[^a-z0-9]+/g, ' ').trim();
+        if (x.length >= 2 && x.length > longueur && cible.includes(' ' + x + ' ')) { matiere = m; longueur = x.length; }
+    }));
+    return { titre, date, matiere };
+}

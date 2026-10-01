@@ -105,3 +105,26 @@ input[type="file"].mc-input { padding: 6px 8px; height: auto; font-size: 13px; }
 @media (prefers-reduced-motion: reduce) {
     .mc-rail { transition: none; }
 }
+
+/* ---------- Accueil (valeurs reprises de design/maquette-accueil.html) ---------- */
+.mc-now__corps { display: grid; gap: 8px; }
+.mc-now__hint { margin: 0; }
+.mc-next b { font-weight: 500; }
+.mc-next__salle { font-size: 12px; }
+.mc-tl__live { font-size: 11px; }
+.mc-streak__texte { font-size: 14px; }
+.mc-deadlines { display: grid; gap: 10px; }
+.mc-deadline .mc-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0 4px; }
+.mc-quickadd-form { margin: 0; }
+ul.mc-tasks { margin-top: var(--space-2); }
+.mc-task > div { flex: 1; min-width: 0; }
+.mc-task__matiere, .mc-note__matiere { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mc-task__meta .mc-when { white-space: nowrap; }
+.mc-note__sub .mc-link { font-size: 13px; }
+.mc-taches-vide { margin: var(--space-3) 0 0; }
+.mc-now .mc-btn--lg { max-width: 100%; }
+@media (max-width: 640px) {
+    .mc-tl__item { grid-template-columns: 1fr auto; }
+    .mc-tl__time { grid-column: 1 / -1; }
+    .mc-tl__room { display: none; }
+}
