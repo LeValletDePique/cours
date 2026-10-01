@@ -26,15 +26,7 @@ Lance **Apache** et **MySQL** depuis le panneau XAMPP/WAMP.
 Copie `config.exemple.php` en **`config.php`** et adapte si besoin
 (valeurs XAMPP par défaut : `root` / mot de passe vide).
 
-### 5. (Facultatif) Activer l'assistant IA
-1. Installe [Composer](https://getcomposer.org/) puis, dans le dossier du projet :
-   `composer install` (installe le SDK Anthropic dans `vendor/`).
-2. Crée une clé API sur <https://console.anthropic.com> et colle-la dans
-   `config.php` : `'anthropic_api_key' => 'sk-ant-...'`.
-3. Le bouton **🤖 Aide IA** (en bas à droite) répond alors aux questions.
-   Sans clé, le reste du site fonctionne normalement.
-
-### 6. Lancer
+### 5. Lancer
 Ouvre <http://localhost/cours/>.
 - **Compte de démo** : identifiant `demo` / mot de passe `demo1234`
 - Ou **Inscription** : tes UE/matières sont pré-remplies automatiquement.
@@ -57,9 +49,11 @@ Ouvre <http://localhost/cours/>.
   recherche, autocomplétion en tapant `\`, champs à remplir (Tab), aperçu de la
   formule sous le curseur, raccourcis `\R`, `\abs{x}`… et référence complète
   dans la page Aide.
-- **Assistant IA** (Claude) pour dépanner ou expliquer un cours, avec la note jointe.
 - **Tags** transversaux, **favoris** (⭐), **corbeille** (restauration possible).
-- **Import de fichiers** (PDF, images, .txt, .docx… 20 Mo max) rattachés aux notes.
+- **Import de fichiers** (PDF, images, .txt, .docx… 20 Mo max) rattachés aux notes ;
+  les **images** (ex. MCD exportés de draw.io en PNG) s'affichent dans la note
+  (bouton Insérer, Ctrl+V ou glisser-déposer) et s'agrandissent au clic.
+- **Pseudo-code** : `<-` s'affiche `←` dans l'aperçu.
 - **Export** d'une note ou d'une matière entière en **Markdown** et **PDF**.
 - **Recherche** plein texte (titre + contenu) avec filtre par tag.
 - **Échéances** (DS, rendus, examens) avec rappels sur le tableau de bord.
@@ -86,10 +80,9 @@ config.php            identifiants BDD (non versionné)
 schema.sql            structure + données de démo
 includes/             connexion PDO, auth, fonctions, gabarits (header/footer)
 api/                  points d'entrée AJAX JSON (notes, tags, structure,
-                      echeances, flashcards, upload, preferences, assistant)
+                      echeances, flashcards, upload, preferences)
 assets/css, assets/js CSS + JavaScript (app, editeur, outils-editeur,
-                      rendu, assistant, maths-symboles, mathjax-config)
-composer.json         dépendance du SDK Anthropic (assistant IA)
+                      rendu, maths-symboles, mathjax-config)
 uploads/              fichiers importés (accès via telecharger.php)
 index.php             tableau de bord            recherche.php   recherche
 note.php              éditeur de note            corbeille.php   corbeille

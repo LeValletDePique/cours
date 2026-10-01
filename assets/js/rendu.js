@@ -1,9 +1,10 @@
 /* ============================================================
-   Rendu Markdown partagé (éditeur, aide, impression, assistant).
+   Rendu Markdown partagé (éditeur, aide, impression).
    Expose window.rendreMarkdown(source, elementCible) -> Promise
    - protège les formules LaTeX avant le Markdown
    - tolère les notes indentées (voir normaliserRetraits)
    - texte en couleur : [texte]{rouge}   surlignage : ==texte==
+   - affectation du pseudo-code : <- s'affiche ←
    - nettoie le HTML (anti-XSS) avec DOMPurify
    - colore le code (highlight.js, + pseudo-code) et rend les maths (MathJax)
    ============================================================ */
@@ -203,10 +204,29 @@
         });
     }
 
+    // ---------- Flèche d'affectation ----------
+    // « <- » devient « ← » dans le texte, le `code` et le pseudo-code, mais
+    // pas dans le code d'un vrai langage (en C, « x<-1 » veut dire x < -1)
+    // ni dans les formules (encore mises de côté à ce stade).
+    const RE_CODE_HTML = /(<code\b[^>]*>)([\s\S]*?)(<\/code>)/g;
+    const RE_AUTRE_LANGAGE = /class="[^"]*\blanguage-(?!(?:pseudo|pseudocode|algo|algorithme)\b)/;
+
+    function flechesAffectation(html) {
+        const fleches = (s) => s.replace(/&lt;-(?!-|&gt;)/g, '←');
+        let sortie = '', dernier = 0, m;
+        RE_CODE_HTML.lastIndex = 0;
+        while ((m = RE_CODE_HTML.exec(html))) {
+            sortie += fleches(html.slice(dernier, m.index))
+                + (RE_AUTRE_LANGAGE.test(m[1]) ? m[0] : m[1] + fleches(m[2]) + m[3]);
+            dernier = m.index + m[0].length;
+        }
+        return sortie + fleches(html.slice(dernier));
+    }
+
     window.rendreMarkdown = function (source, cible) {
         const { texte, math } = protegerMath((source || '').replace(/\r\n?/g, '\n'));
         let html = marked.parse(normaliserRetraits(texte));
-        html = DOMPurify.sanitize(html);
+        html = flechesAffectation(DOMPurify.sanitize(html));
         html = html.replace(/MJXPH(\d+)ENDPH/g, (_, i) => echapper(math[i]));
         cible.innerHTML = html;
 

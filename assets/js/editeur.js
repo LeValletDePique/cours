@@ -77,7 +77,7 @@
     elMatiere.addEventListener('change', () => { marquerModifie(); sauvegarder(); });
 
     // Barre d'outils, raccourcis (Ctrl+S, Ctrl+Z…), tableaux : voir outils-editeur.js
-    window.installerOutilsEditeur({
+    const outils = window.installerOutilsEditeur({
         zone: elContenu,
         barre: document.getElementById('barre-outils'),
         auChangement: () => { marquerModifie(); planifierRendu(); },
@@ -159,11 +159,11 @@
     const inputFichier = document.getElementById('fichier-input');
     const listeFichiers = document.getElementById('liste-fichiers');
     const statutFichier = document.getElementById('fichier-statut');
+    const echapper = (t) => t.replace(/[&<>"]/g, (c) =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-    document.getElementById('fichier-envoyer').addEventListener('click', async () => {
-        const fichier = inputFichier.files[0];
-        if (!fichier) { statutFichier.textContent = 'Choisis un fichier.'; return; }
-
+    // Envoie un fichier ; une image est aussi affichée dans la note.
+    async function envoyerFichier(fichier, insererImage) {
         const donnees = new FormData();
         donnees.append('fichier', fichier);
         donnees.append('note_id', noteId);
@@ -175,32 +175,100 @@
                 method: 'POST', body: donnees,
             })).json();
 
-            if (rep.ok) {
-                const li = document.createElement('li');
-                li.dataset.fichierId = rep.id;
-                li.innerHTML = '<a href="telecharger.php?id=' + rep.id + '" target="_blank">'
-                    + rep.nom.replace(/[&<>]/g, (c) =>
-                        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])) + '</a>'
-                    + ' <span class="taille">' + Math.round(rep.taille / 1024) + ' Ko</span>'
-                    + ' <button type="button" class="fichier-x" title="Supprimer">✕</button>';
-                listeFichiers.appendChild(li);
-                inputFichier.value = '';
-                statutFichier.textContent = '';
-            } else {
-                statutFichier.textContent = rep.erreur || 'Échec.';
-            }
+            if (!rep.ok) { statutFichier.textContent = rep.erreur || 'Échec.'; return; }
+
+            const image = /^image\//.test(fichier.type);
+            const lien = 'telecharger.php?id=' + rep.id;
+            const li = document.createElement('li');
+            li.dataset.fichierId = rep.id;
+            li.dataset.nom = rep.nom;
+            if (image) li.dataset.image = '1';
+            li.innerHTML = (image ? '<img class="miniature" src="' + lien + '" alt="" title="Agrandir">' : '')
+                + '<a href="' + lien + '" target="_blank">' + echapper(rep.nom) + '</a>'
+                + ' <span class="taille">' + Math.round(rep.taille / 1024) + ' Ko</span>'
+                + (image ? ' <button type="button" class="fichier-inserer btn-secondaire"'
+                    + ' title="Afficher l\'image dans la note, à l\'endroit du curseur">Insérer</button>' : '')
+                + ' <button type="button" class="fichier-x" title="Supprimer">✕</button>';
+            listeFichiers.appendChild(li);
+            statutFichier.textContent = '';
+            if (image && insererImage) insererImageNote(rep.id, rep.nom);
         } catch (e) {
             statutFichier.textContent = 'Échec de l\'envoi.';
         }
+    }
+
+    // Ajoute ![nom](telecharger.php?id=…) à l'endroit du curseur.
+    function insererImageNote(id, nom) {
+        const texte = nom.replace(/\.[^.]+$/, '').replace(/[\[\]\\]/g, '') || 'image';
+        const md = '![' + texte + '](telecharger.php?id=' + id + ')';
+        outils.insererBloc(md, md.length);
+    }
+
+    document.getElementById('fichier-envoyer').addEventListener('click', async () => {
+        const fichier = inputFichier.files[0];
+        if (!fichier) { statutFichier.textContent = 'Choisis un fichier.'; return; }
+        await envoyerFichier(fichier, true);
+        inputFichier.value = '';
+    });
+
+    // Coller (Ctrl+V) ou glisser une image dans la zone de texte.
+    function imagesDe(transfert) {
+        return transfert ? [...transfert.files].filter((f) => /^image\//.test(f.type)) : [];
+    }
+    elContenu.addEventListener('paste', (e) => {
+        // Un copier depuis Excel contient aussi une image : le texte prime.
+        if (e.clipboardData.getData('text/plain')) return;
+        const images = imagesDe(e.clipboardData);
+        if (!images.length) return;
+        e.preventDefault();
+        images.forEach((f) => envoyerFichier(f, true));
+    });
+    elContenu.addEventListener('dragover', (e) => {
+        if ([...e.dataTransfer.types].includes('Files')) e.preventDefault();
+    });
+    elContenu.addEventListener('drop', (e) => {
+        const images = imagesDe(e.dataTransfer);
+        if (!images.length) return;
+        e.preventDefault();
+        images.forEach((f) => envoyerFichier(f, true));
     });
 
     listeFichiers.addEventListener('click', async (e) => {
-        if (!e.target.classList.contains('fichier-x')) return;
-        if (!confirm('Supprimer ce fichier ?')) return;
         const li = e.target.closest('li');
-        const rep = await api('supprimer',
-            { id: parseInt(li.dataset.fichierId, 10) }, 'upload');
-        if (rep.ok) li.remove();
+        if (!li) return;
+        if (e.target.classList.contains('miniature')) {
+            ouvrirVisionneuse(e.target.src);
+        } else if (e.target.classList.contains('fichier-inserer')) {
+            insererImageNote(li.dataset.fichierId, li.dataset.nom || '');
+        } else if (e.target.classList.contains('fichier-x')) {
+            if (!confirm('Supprimer ce fichier ?')) return;
+            const rep = await api('supprimer',
+                { id: parseInt(li.dataset.fichierId, 10) }, 'upload');
+            if (rep.ok) li.remove();
+        }
+    });
+
+    // ---------- Visionneuse : clic sur une image = plein écran ----------
+    // Clic sur l'image : bascule ajusté à l'écran / taille réelle (zoom).
+    function ouvrirVisionneuse(src) {
+        const fond = document.createElement('div');
+        fond.className = 'visionneuse';
+        fond.innerHTML = '<button type="button" class="visionneuse-x" title="Fermer (Échap)">✕</button>';
+        const img = document.createElement('img');
+        img.src = src;
+        img.alt = '';
+        fond.appendChild(img);
+        const fermer = () => { fond.remove(); document.removeEventListener('keydown', clavier); };
+        const clavier = (e) => { if (e.key === 'Escape') fermer(); };
+        fond.addEventListener('click', (e) => {
+            if (e.target === img) img.classList.toggle('taille-reelle');
+            else fermer();
+        });
+        document.addEventListener('keydown', clavier);
+        document.body.appendChild(fond);
+    }
+    elApercu.addEventListener('click', (e) => {
+        if (e.target.tagName === 'IMG' && !e.target.closest('a')) ouvrirVisionneuse(e.target.src);
     });
 
     // ---------- Bascule des vues ----------
