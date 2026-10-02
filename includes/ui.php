@@ -172,3 +172,13 @@ function cours_en_cours(int $uid): ?array
     $stmt->execute([$uid, $maintenant, $maintenant]);
     return $stmt->fetch() ?: null;
 }
+
+/**
+ * Chemin d'un fichier CSS / JS avec sa date de modification (« ?v=… ») :
+ * le navigateur recharge le fichier dès qu'il change au lieu de garder l'ancien en cache.
+ */
+function asset(string $chemin): string
+{
+    $fichier = __DIR__ . '/../' . $chemin;
+    return e($chemin . (is_file($fichier) ? '?v=' . filemtime($fichier) : ''));
+}

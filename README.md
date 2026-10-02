@@ -64,7 +64,8 @@ Ouvre <http://localhost/cours/>.
   notes » pré-rempli (`Matière (TD) – jj/mm/aaaa`), la journée (cours notés ou à
   rattraper), la série de jours avec des notes, les tâches (ajout rapide en langage
   naturel : « Finir le TD de BDD pour vendredi »), les échéances des 7 prochains
-  jours, les matières par UE et les dernières notes.
+  jours, les matières par UE, les dernières notes et une **citation du jour**
+  (`includes/citations.php`, une par jour).
 - **Raccourcis** du site : `N` nouvelle note, `T` ajouter une tâche, `Ctrl K` ou `/`
   recherche, `Échap` ferme.
 - **Échéances** (DS, rendus, examens) avec rappels sur l'accueil.
@@ -157,6 +158,10 @@ Les règles, couleurs, typographies et composants sont dans [`design/`](design/R
   (variables et classes `mc-*`), chargées en premier ;
 - `assets/css/app.css` : ce que les composants ne couvrent pas (mobile, champs,
   fenêtres, éditeur, agenda), avec les seuls tokens ;
+- police : **Plus Jakarta Sans** pour les titres et le texte (variables
+  `--font-display` / `--font-sans` de `tokens.css`), JetBrains Mono pour le code ;
+- les fichiers CSS / JS sont chargés avec `?v=<date de modification>` : le navigateur
+  prend la nouvelle version dès qu'un fichier change ;
 - thème : `data-theme="light"` / `"dark"` sur `<html>` (bouton lune de la barre
   latérale) ; la couleur d'une UE suit son ordre (UE1 à UE4, puis « autre ») ;
 - icônes Lucide en SVG inline (`includes/icones.php`, aussi exposées au JavaScript).

@@ -65,11 +65,11 @@ if ($user) {
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
-    <link rel="stylesheet" href="assets/css/tokens.css">
-    <link rel="stylesheet" href="assets/css/mes-cours.css">
-    <link rel="stylesheet" href="assets/css/app.css">
-    <script defer src="assets/js/app.js"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+    <link rel="stylesheet" href="<?= asset('assets/css/tokens.css') ?>">
+    <link rel="stylesheet" href="<?= asset('assets/css/mes-cours.css') ?>">
+    <link rel="stylesheet" href="<?= asset('assets/css/app.css') ?>">
+    <script defer src="<?= asset('assets/js/app.js') ?>"></script>
 </head>
 <?php if ($user): ?>
 <body data-cours="<?= $cours_actuel ? (int) $cours_actuel['id'] : '' ?>"

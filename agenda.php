@@ -86,5 +86,5 @@ require __DIR__ . '/includes/header.php';
             array_merge([nom_court($m['nom'])], explode(',', (string) $m['mots_cles']))))),
     ], $matieres),
         JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?></script>
-<script defer src="assets/js/agenda.js"></script>
+<script defer src="<?= asset('assets/js/agenda.js') ?>"></script>
 <?php require __DIR__ . '/includes/footer.php'; ?>
