@@ -7,6 +7,7 @@
  */
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/agenda.php';
+require_once __DIR__ . '/includes/citations.php';
 exiger_connexion();
 installer_agenda();
 
@@ -348,8 +349,8 @@ require __DIR__ . '/includes/header.php';
     <?php endif; ?>
     </div>
 
-    <!-- WeekStreak -->
-    <div class="mc-col-4">
+    <!-- WeekStreak + citation du jour -->
+    <div class="mc-col-4 mc-stack">
         <section class="mc-card mc-streak" aria-label="Ta semaine">
             <p class="mc-eyebrow">Ta semaine</p>
             <div>
@@ -374,6 +375,15 @@ require __DIR__ . '/includes/header.php';
                     <a class="mc-link" href="revision.php"><?= $nb_fiches ? 'Réviser maintenant' : 'Créer des fiches' ?></a>
                 </div>
             <?php endif; ?>
+        </section>
+
+        <?php [$citation, $auteur] = citation_du_jour(); ?>
+        <section class="mc-card mc-citation" aria-label="Citation du jour">
+            <p class="mc-eyebrow">Citation du jour</p>
+            <figure>
+                <blockquote class="mc-citation__texte">« <?= e($citation) ?> »</blockquote>
+                <figcaption class="mc-meta">— <?= e($auteur) ?></figcaption>
+            </figure>
         </section>
     </div>
 
@@ -510,5 +520,5 @@ require __DIR__ . '/includes/header.php';
 </div>
 
 <script id="matieres-taches" type="application/json"><?= json_encode($motifs_js, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?></script>
-<script defer src="assets/js/accueil.js"></script>
+<script defer src="<?= asset('assets/js/accueil.js') ?>"></script>
 <?php require __DIR__ . '/includes/footer.php'; ?>

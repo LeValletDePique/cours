@@ -104,9 +104,9 @@ $contenus = array_map(static fn($s) => $s['contenu'], $sections);
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.9/purify.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <script src="assets/js/mathjax-config.js"></script>
+    <script src="<?= asset('assets/js/mathjax-config.js') ?>"></script>
     <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js"></script>
-    <script src="assets/js/rendu.js"></script>
+    <script src="<?= asset('assets/js/rendu.js') ?>"></script>
     <script>
         // Rend chaque section, puis ouvre l'impression une fois tout prêt.
         window.addEventListener('load', () => {

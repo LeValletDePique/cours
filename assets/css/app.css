@@ -6,6 +6,10 @@
    ============================================================ */
 
 * { box-sizing: border-box; }
+/* Plus Jakarta Sans a un espace étroit (0,17 em) : on aère un peu les mots… */
+body { word-spacing: .08em; }
+/* … sauf dans le code et l'éditeur Markdown (police à chasse fixe, alignements). */
+code, pre, kbd, samp, textarea, .mc-mono, .editeur-saisie, .exemple .src { word-spacing: normal; }
 a { color: var(--accent); }
 img { max-width: 100%; }
 :where(select, textarea, summary):focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
@@ -614,3 +618,24 @@ kbd { display: inline-block; font: 500 11px/1 var(--font-mono); padding: 3px 5px
     .markdown table { display: block; overflow-x: auto; }
     .ref-maths { columns: 1; }
 }
+
+/* ---------- Citation du jour (accueil) ---------- */
+.mc-citation { display: grid; gap: var(--space-3); }
+.mc-citation figure { margin: 0; display: grid; gap: var(--space-2); }
+.mc-citation__texte { margin: 0; font: 500 15px/22px var(--font-display); color: var(--ink); }
+
+/* ---------- Agenda : couleurs d'UE bien visibles (clair et sombre) ----------
+   Fond teinté avec la couleur de l'UE + filet de couleur à gauche. */
+.evt-bloc.mc-event, .evt-puce:not(.evt-puce--perso):not(.evt-puce--echeance) {
+    background: color-mix(in srgb, var(--ue) 24%, var(--surface));
+    border-left: 3px solid var(--ue);
+}
+[data-theme="dark"] .evt-bloc.mc-event,
+[data-theme="dark"] .evt-puce:not(.evt-puce--perso):not(.evt-puce--echeance) {
+    background: color-mix(in srgb, var(--ue) 36%, var(--surface));
+}
+.evt-bloc.mc-event--past { background: color-mix(in srgb, var(--ue) 13%, var(--surface)); border-left-color: color-mix(in srgb, var(--ue) 60%, var(--surface)); }
+[data-theme="dark"] .evt-bloc.mc-event--past { background: color-mix(in srgb, var(--ue) 20%, var(--surface)); }
+.evt-bloc.mc-event--past .mc-event__name { color: color-mix(in srgb, var(--ue) 65%, var(--ink-muted)); }
+.evt-bloc.mc-event--perso { background: var(--surface); border: 1px dashed var(--line-strong); }
+.evt-puce .mc-dot { display: none; }
