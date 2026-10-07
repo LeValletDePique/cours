@@ -1,12 +1,15 @@
 /* ============================================================
    Outils de saisie de l'éditeur de note :
-   - barre d'outils (gras, titres, listes, couleurs, maths, code, tableaux)
+   - barre d'outils (gras, souligné, titres, listes, couleurs, maths, code,
+     tableaux, modèles de comptabilité)
    - historique maison : Ctrl+Z / Ctrl+Y (fiable même après un bouton)
-   - Ctrl+S = enregistrer tout de suite, Ctrl+B / Ctrl+I
+   - Ctrl+S = enregistrer tout de suite, Ctrl+B / Ctrl+I / Ctrl+U (souligné)
    - Entrée continue une liste, Tab / Maj+Tab indentent
    - MATHS : palette avec recherche, autocomplétion en tapant \ (ex. \pourtout
      ou \forall), champs à remplir (Tab = champ suivant), aperçu de la
      formule sous le curseur
+   - COMPTES : « @banque » ou « @512 » partout, ou un numéro en début de case
+     de tableau / de ligne d'un bloc de compta -> « 512 Banque » (Entrée, Tab)
    - TABLEAUX : éditeur visuel (comme un tableur), « Nom | Âge » + Entrée
      crée un tableau, Entrée ajoute une ligne, Tab passe à la case suivante,
      coller depuis Excel / Sheets crée un tableau
@@ -19,6 +22,17 @@
         ['pseudo', 'Pseudo-code'], ['c', 'C'], ['python', 'Python'], ['sql', 'SQL'],
         ['javascript', 'JavaScript'], ['html', 'HTML'], ['css', 'CSS'], ['bash', 'Bash / Unix'],
         ['java', 'Java'], ['php', 'PHP'], ['math', 'Formule LaTeX (bloc)'], ['', 'Texte brut'],
+    ];
+
+    // Modèles de comptabilité (rendu : compta-moteur.js). [libellé, aide, texte, texte à sélectionner]
+    const MODELES_COMPTA = [
+        ['Compte en T', '```comptes', '```comptes\n512 Banque\n900 000 | 790 000\n45 000 |\n| 25 000\n```', '512 Banque'],
+        ['Plusieurs comptes en T', 'côte à côte', '```comptes\n607 Achats de marchandises\n540 000 |\n14 000 |\n\n401 Fournisseurs\n200 000 | 435 000\n25 000 | 14 000\n```', '607 Achats de marchandises'],
+        ['Écritures au journal', '```journal', '```journal\n31/12 Achat de marchandises à crédit\n607 Achats de marchandises | 14 000 |\n401 Fournisseurs | | 14 000\n\n31/12 Ventes payées par chèque\n512 / 707 45 000\n```', '31/12 Achat de marchandises à crédit'],
+        ['Balance', '```balance', '```balance\n512 Banque | 60 000 | 25 000\n401 Fournisseurs | 25 000 | 39 000\n607 Achats de marchandises | 39 000 |\n707 Ventes de marchandises | | 60 000\n```', '512 Banque | 60 000 | 25 000'],
+        ['Compte de résultat', '```resultat', '```resultat Compte de résultat N\nCharges\n607 Achats de marchandises 554 000\n641 Salaires 558 500\nProduits\n707 Ventes de marchandises 1 257 000\n```', '607 Achats de marchandises 554 000'],
+        ['Bilan', '```bilan', '```bilan Bilan au 31/12/N\nActif\n# Actif immobilisé\n211 Terrains 300 000\n# Actif circulant\n37 Stocks 250 000\n512 Banque 91 500\nPassif\n# Capitaux propres\n101 Capital 500 000\nRésultat de l\'exercice : ?\n# Dettes\n164 Emprunts 100 000\n```', '211 Terrains 300 000'],
+        ['Formules FR / BFR / trésorerie', 'rappel', '> **FR** = capitaux permanents (capitaux propres + dettes financières) − actif immobilisé\n> **BFR** = (stocks + créances) − dettes d\'exploitation\n> **Trésorerie nette** = FR − BFR = disponibilités − concours bancaires', ''],
     ];
 
     const COULEURS = [
@@ -429,6 +443,73 @@
         zone.addEventListener('input', majAuto);
 
         // =========================================================
+        //  COMPTES (plan comptable) : le numéro donne l'intitulé
+        //  « @banque » / « @512 » n'importe où ; « 512 » seul en début de case
+        //  de tableau ou de ligne d'un bloc ```journal, ```bilan…
+        // =========================================================
+        const LANGAGES_COMPTA = /^(comptes?|t|comptes-t|journal|balance|bilan|r[ée]sultat|compte-de-resultat|cr)$/i;
+        const popupCpt = document.createElement('div');
+        popupCpt.className = 'maths-auto comptes-auto';
+        popupCpt.hidden = true;
+        document.body.appendChild(popupCpt);
+        let sugCpt = [], choixCpt = 0, jetonCpt = null, ignoreCpt = null;
+
+        // Dans un bloc de compta (```bilan…) ?
+        function dansBlocCompta(pos) {
+            let langage = null;
+            zone.value.slice(0, zone.value.lastIndexOf('\n', pos - 1) + 1).split('\n').forEach((l) => {
+                const m = l.match(/^[ \t]*(?:```|~~~)\s*(\S*)/);
+                if (m) langage = langage === null ? m[1] : null;
+            });
+            return !!langage && LANGAGES_COMPTA.test(langage);
+        }
+        function fermerCpt() { popupCpt.hidden = true; sugCpt = []; jetonCpt = null; }
+        function majCpt() {
+            if (!window.Compta) return;
+            const pos = zone.selectionStart;
+            if (pos !== zone.selectionEnd) return fermerCpt();
+            const dl = zone.value.lastIndexOf('\n', pos - 1) + 1;
+            const avant = zone.value.slice(dl, pos);
+            let m = avant.match(/(?:^|[\s|(])@([0-9A-Za-zÀ-ÿ'’ ]{0,30})$/), q = '', debut = 0;
+            if (m) {
+                q = m[1].trimStart();
+                debut = pos - m[1].length - 1;
+                if (dansBlocCode(pos) && !dansBlocCompta(pos)) return fermerCpt();
+            } else {
+                m = avant.match(/(^|\|)\s*(\d{2,8})$/);
+                if (!m || !(dansBlocCompta(pos) || (RE_LIGNE_TAB.test(avant) && m[1] === '|'))) return fermerCpt();
+                q = m[2];
+                debut = pos - q.length;
+            }
+            if (ignoreCpt === dl + ':' + debut) return fermerCpt();
+            sugCpt = q ? window.Compta.suggestionsComptes(q, null, 8) : [];
+            if (!sugCpt.length) return fermerCpt();
+            jetonCpt = { debut, fin: pos, cle: dl + ':' + debut };
+            choixCpt = 0;
+            dessinerCpt();
+            placerBulle(popupCpt, debut);
+        }
+        function dessinerCpt() {
+            popupCpt.innerHTML = sugCpt.map((c, i) => '<div class="auto-ligne' + (i === choixCpt ? ' actif' : '')
+                + '" data-i="' + i + '"><code>' + echapperHtml(c.num) + '</code><span>' + echapperHtml(c.nom) + '</span></div>').join('')
+                + '<div class="auto-aide">Entrée/Tab : « numéro + intitulé » · Échap fermer</div>';
+        }
+        function validerCpt(i) {
+            const c = sugCpt[i ?? choixCpt], j = jetonCpt;
+            fermerCpt();
+            if (c && j) remplacer(j.debut, j.fin, c.num + ' ' + c.nom);
+        }
+        popupCpt.addEventListener('mousedown', (e) => {
+            const l = e.target.closest('.auto-ligne');
+            if (!l) return;
+            e.preventDefault();
+            validerCpt(parseInt(l.dataset.i, 10));
+        });
+        zone.addEventListener('input', majCpt);
+        zone.addEventListener('scroll', fermerCpt);
+        zone.addEventListener('blur', () => setTimeout(() => { if (document.activeElement !== zone) fermerCpt(); }, 150));
+
+        // =========================================================
         //  TABLEAUX
         // =========================================================
         const RE_LIGNE_TAB = /^\s*\|/;
@@ -790,6 +871,14 @@
             const mod = e.ctrlKey || e.metaKey;
             const k = e.key.toLowerCase();
 
+            // Suggestions de comptes ouvertes : elles ont la priorité.
+            if (!popupCpt.hidden && sugCpt.length) {
+                if (e.key === 'ArrowDown') { e.preventDefault(); choixCpt = (choixCpt + 1) % sugCpt.length; dessinerCpt(); return; }
+                if (e.key === 'ArrowUp') { e.preventDefault(); choixCpt = (choixCpt - 1 + sugCpt.length) % sugCpt.length; dessinerCpt(); return; }
+                if ((e.key === 'Enter' || e.key === 'Tab') && !mod && !e.shiftKey) { e.preventDefault(); validerCpt(); return; }
+                if (e.key === 'Escape') { e.preventDefault(); ignoreCpt = jetonCpt && jetonCpt.cle; fermerCpt(); return; }
+            }
+
             // Autocomplétion ouverte : elle a la priorité.
             if (!popup.hidden && suggestions.length) {
                 if (e.key === 'ArrowDown') { e.preventDefault(); choix = (choix + 1) % suggestions.length; dessinerAuto(); return; }
@@ -802,6 +891,7 @@
             if (mod && !e.altKey && (k === 'y' || (k === 'z' && e.shiftKey))) { e.preventDefault(); retablir(); return; }
             if (mod && !e.altKey && k === 'b') { e.preventDefault(); entourer('**', '**', 'texte en gras'); return; }
             if (mod && !e.altKey && k === 'i') { e.preventDefault(); entourer('*', '*', 'texte en italique'); return; }
+            if (mod && !e.altKey && k === 'u') { e.preventDefault(); entourer('++', '++', 'texte souligné'); return; }
             if (mod && !e.altKey && k === 'm') { e.preventDefault(); insererMaths(''); return; }
             if (e.key === 'Escape') { champs = []; bulle.hidden = true; return; }
 
@@ -854,6 +944,7 @@
         const actions = {
             gras:      () => entourer('**', '**', 'texte en gras'),
             italique:  () => entourer('*', '*', 'texte en italique'),
+            souligner: () => entourer('++', '++', 'texte souligné'),
             barre:     () => entourer('~~', '~~', 'texte barré'),
             surligner: () => entourer('==', '==', 'texte surligné'),
             code:      () => entourer('`', '`', 'code'),
@@ -913,6 +1004,8 @@
                 });
                 menuCouleurs.appendChild(bouton('menu-ligne', '<mark>Surligner</mark> <small>==texte==</small>',
                     '', () => { fermerMenus(); actions.surligner(); }));
+                menuCouleurs.appendChild(bouton('menu-ligne', '<u>Souligner</u> <small>++texte++ (Ctrl+U)</small>',
+                    '', () => { fermerMenus(); actions.souligner(); }));
             }
 
             // Maths : recherche + formules + matrice sur mesure + tous les symboles.
@@ -994,6 +1087,58 @@
                     + '(<code>\\pour</code>, <code>\\int</code>, <code>\\alpha</code>…) : '
                     + 'une liste apparaît. <b>Tab</b> passe au champ suivant.';
                 menuMaths.append(recherche, haut, matrice, aide, liste);
+            }
+
+            // Comptabilité : modèles de blocs (comptes en T, journal, balance, bilan…)
+            const menuCompta = barre.querySelector('[data-menu="compta"]');
+            if (menuCompta && window.Compta) {
+                // Insérer un compte : on tape le numéro (ou un mot), on obtient « 512 Banque ».
+                const cherche = document.createElement('input');
+                cherche.type = 'search';
+                cherche.className = 'maths-recherche';
+                cherche.placeholder = 'Insérer un compte : 10, 512, banque, ventes…';
+                const resultats = document.createElement('div');
+                resultats.className = 'compta-resultats';
+                const inserer = (c) => {
+                    fermerMenus();
+                    remplacer(zone.selectionStart, zone.selectionEnd, c.num + ' ' + c.nom);
+                    cherche.value = '';
+                    resultats.innerHTML = '';
+                };
+                cherche.addEventListener('input', () => {
+                    resultats.innerHTML = '';
+                    window.Compta.suggestionsComptes(cherche.value, null, 6).forEach((c) => {
+                        resultats.appendChild(bouton('menu-ligne', '<code>' + echapperHtml(c.num) + '</code> ' + echapperHtml(c.nom),
+                            '', () => inserer(c)));
+                    });
+                });
+                cherche.addEventListener('keydown', (e) => {
+                    if (e.key !== 'Enter') return;
+                    e.preventDefault();
+                    const c = window.Compta.suggestionsComptes(cherche.value, null, 1)[0];
+                    if (c) inserer(c);
+                });
+                menuCompta.append(cherche, resultats);
+            }
+            if (menuCompta) {
+                MODELES_COMPTA.forEach(([nom, aide, texte, aSelectionner]) => {
+                    menuCompta.appendChild(bouton('menu-ligne', echapperHtml(nom) + ' <small>' + echapperHtml(aide) + '</small>', '',
+                        () => {
+                            fermerMenus();
+                            const i = aSelectionner ? texte.indexOf(aSelectionner) : texte.length;
+                            insererBloc(texte, i, i + (aSelectionner ? aSelectionner.length : 0));
+                        }));
+                });
+                const lien = document.createElement('a');
+                lien.className = 'menu-ligne';
+                lien.href = 'compta.php';
+                lien.target = '_blank';
+                lien.innerHTML = 'Ouvrir l\'atelier comptable <small>(nouvel onglet)</small>';
+                const aide = document.createElement('p');
+                aide.className = 'menu-aide';
+                aide.innerHTML = 'Les totaux, soldes et le résultat se calculent tout seuls. '
+                    + 'Montants : <code>1 500 000</code>. Dans un bilan, <code>Résultat : ?</code> est calculé pour équilibrer.';
+                menuCompta.append(lien, aide);
             }
 
             // Blocs de code

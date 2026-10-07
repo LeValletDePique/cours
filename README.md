@@ -40,7 +40,8 @@ Ouvre <http://localhost/cours/>.
 - **Raccourcis** : Ctrl+S (enregistrer), Ctrl+Z / Ctrl+Y (annuler / rétablir),
   Ctrl+B / Ctrl+I, Tab / Maj+Tab, Entrée continue une liste.
 - **Notes indentées** acceptées : le gras et les puces marchent même décalés.
-- **Texte en couleur** `[texte]{rouge}` et **surlignage** `==texte==`.
+- **Texte en couleur** `[texte]{rouge}`, **surlignage** `==texte==` et **souligné**
+  `++texte++` (bouton U ou Ctrl+U).
 - **Tableaux faciles** : `Titre 1 | Titre 2` + Entrée crée le tableau, Entrée ajoute
   une ligne, Tab passe de case en case (alignement auto), éditeur visuel type
   tableur (création et modification), collage depuis Excel / Google Sheets.
@@ -68,9 +69,48 @@ Ouvre <http://localhost/cours/>.
   (`includes/citations.php`, une par jour).
 - **Raccourcis** du site : `N` nouvelle note, `T` ajouter une tâche, `Ctrl K` ou `/`
   recherche, `Échap` ferme.
+- **Comptabilité (Gestion de l'entreprise)** : voir ci-dessous.
 - **Échéances** (DS, rendus, examens) avec rappels sur l'accueil.
 - **Révision** par flashcards (question/réponse, mode révision mélangée).
 - **Thème clair / sombre** + **interface responsive** (PC en amphi / téléphone).
+
+---
+
+## Comptabilité (Gestion de l'entreprise)
+
+**Atelier comptable** (`compta.php`, menu « Comptabilité ») : un dossier par exercice
+(TD, cas d'entreprise), enregistré automatiquement.
+0. **Bilan de départ** (facultatif) : actif et passif de l'énoncé, comptes par numéro ou par
+   nom (« dettes fournisseurs » → 401), ou tout le bilan collé d'un coup. Chaque poste ouvre
+   son compte dans le grand livre (à-nouveau **AN** : actif au débit, passif au crédit).
+1. **Journal** : saisie rapide `31/12 607 / 401 14000 Achat de marchandises`
+   (les comptes peuvent aussi s'écrire en mots : `banque / ventes 45000`),
+   **opérations courantes** expliquées (quel compte débiter / créditer et pourquoi, TVA
+   20 % calculée), ou écritures à plusieurs lignes. Taper un numéro de compte remplit
+   l'intitulé ; une nouvelle ligne reçoit le montant qui équilibre l'écriture.
+2. **Grand livre** (comptes en T), 3. **Balance**, 4. **Compte de résultat**, 5. **Bilan** :
+   calculés à partir du journal, avec vérification (balance et bilan équilibrés).
+- **Analyse** : fonds de roulement, BFR, trésorerie nette (avec commentaire), soldes
+  intermédiaires de gestion (marge, VA, EBE…) et ratios (marge, rentabilités, autonomie,
+  liquidité, délais clients / fournisseurs).
+- **Aide-mémoire** : méthode, débit / crédit, classes du plan comptable, structure du bilan
+  et du compte de résultat, formules, pièges fréquents, opérations courantes, plan
+  comptable avec recherche.
+- **Bilan** : comparaison avec le bilan de départ, et « Exercice suivant » qui crée un dossier
+  dont le bilan de départ est ce bilan de fin (résultat en 120 / 129).
+- **Exemples** : « du bilan de départ au bilan de fin » et cas Brico Dépôt (grand livre au
+  30/12 + opérations du 31/12) pour vérifier son corrigé.
+- **Créer une note** : copie tout le dossier dans une note (rangée dans la matière de gestion).
+
+**Dans les notes** (menu **Compta** de l'éditeur) : blocs ```` ```comptes ```` (comptes en T),
+```` ```journal ````, ```` ```balance ````, ```` ```resultat ```` et ```` ```bilan ```` ; totaux,
+soldes et résultat sont calculés à l'affichage (syntaxe dans la page Aide).
+**Le numéro suffit** : `512` s'affiche « 512 Banque » ; dans l'éditeur, `@banque` ou `@512`
+insère « 512 Banque », et dans un tableau ou un bloc de compta le numéro seul propose
+l'intitulé (Entrée / Tab). Le menu Compta a aussi une recherche de compte.
+
+Calculs : `assets/js/compta-moteur.js` (aussi utilisé par l'aide et l'impression).
+La table `compta_dossiers` se crée toute seule au premier passage.
 
 ---
 
@@ -186,6 +226,7 @@ note.php              éditeur de note            corbeille.php   corbeille
 matieres.php          matières par UE            matiere.php     notes d'une matière
 favoris.php           notes épinglées            echeances.php   échéances
 agenda.php            agenda (cours, réunions, tâches)
+compta.php            atelier comptable (journal → bilan, analyse, aide-mémoire)
 inscription/connexion revision.php  flashcards   reglages.php    réglages
 export.php / imprimer.php   exports Markdown / PDF
 ```
@@ -198,3 +239,4 @@ export.php / imprimer.php   exports Markdown / PDF
 - [x] Échéances, statistiques, flashcards
 - [x] Agenda : emploi du temps iCal, réunions, tâches
 - [x] Nouvelle interface : design system, accueil « Aujourd'hui », palette Ctrl K
+- [x] Comptabilité : atelier (journal, grand livre, balance, résultat, bilan, analyse), blocs dans les notes, souligné

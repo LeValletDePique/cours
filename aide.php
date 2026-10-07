@@ -15,7 +15,7 @@ $sections = [
         'intro' => 'Le texte s\'écrit normalement ; on ajoute juste quelques symboles.',
         'exemples' => [
             "# Grand titre\n## Sous-titre\n### Petit titre",
-            "**gras**, *italique*, ~~barré~~ et `code court`",
+            "**gras**, *italique*, ~~barré~~, ++souligné++ et `code court`",
             "- Première puce\n- Deuxième puce\n    - Sous-puce (4 espaces devant)",
             "1. Premier\n2. Deuxième\n3. Troisième",
             "- [x] Chapitre revu\n- [ ] Exercices à finir",
@@ -47,7 +47,8 @@ $sections = [
         'intro' => 'Dans l\'éditeur : sélectionne le texte puis clique sur « A » dans la barre d\'outils. Couleurs : rouge, orange, jaune, vert, bleu, violet, rose, gris (ou un code #hexa).',
         'exemples' => [
             "Un mot [important]{rouge}, une [définition]{bleu} et un [exemple]{vert}.",
-            "Tu peux aussi ==surligner== un passage, ou [**mettre en gras et en couleur**]{violet}.",
+            "Tu peux aussi ==surligner== un passage, le ++souligner++ (Ctrl+U), ou [**mettre en gras et en couleur**]{violet}.",
+            "Tout se combine : ++[**titre souligné en rouge**]{rouge}++",
             "Couleur libre : [texte]{#e11d48}",
         ],
     ],
@@ -65,6 +66,24 @@ $sections = [
             "Affectation : x <- 5",
             "```pseudo\nAlgorithme maximum\nVariables\n    a, b, max : Entier\n{\n    Lire(a)\n    Lire(b)\n    SI (a > b) ALORS {\n        max <- a\n    } SINON {\n        max <- b\n    }\n    Ecrire(\"Le max est \", max)\n}\n```",
             "```pseudo\nPOUR i DE 1 À n FAIRE {\n    TANT QUE (x ≠ 0) FAIRE {\n        x <- x DIV 2   // division entière\n    }\n}\n```",
+        ],
+    ],
+    [
+        'id' => 'compta',
+        'titre' => 'Comptabilité : comptes en T et écritures',
+        'intro' => 'Menu « Compta » de l\'éditeur, ou à la main. Un numéro de compte seul suffit : l\'intitulé du plan comptable s\'affiche (512 → Banque). Dans l\'éditeur, tape @banque ou @512 pour l\'insérer ; dans un tableau ou un bloc de compta, le numéro seul propose l\'intitulé (Entrée ou Tab). Montants : 1 500 000 ou 1500000. Totaux et soldes sont calculés. Atelier complet : page Comptabilité.',
+        'exemples' => [
+            "```comptes\n512\n900 000 | 790 000\n(4) 45 000 |\n| 25 000\n\n401 Fournisseurs\n200 000 | 435 000\n| 14 000\n```",
+            "```journal\n31/12 Achat de marchandises à crédit\n607 | 14 000 |\n401 | | 14 000\n\n31/12 Ventes payées par chèque\nbanque / ventes 45 000\n```",
+            "```balance\n512 | 60 000 | 25 000\n401 | 25 000 | 39 000\n607 | 39 000 |\n707 | | 60 000\n```",
+        ],
+    ],
+    [
+        'titre' => 'Comptabilité : compte de résultat et bilan',
+        'intro' => 'Une colonne puis l\'autre (« Charges » / « Produits », « Actif » / « Passif »), « # Rubrique » pour un sous-total, une ligne par poste avec son montant à la fin. Le résultat (bénéfice ou perte) est calculé ; dans un bilan, « : ? » calcule le montant qui équilibre.',
+        'exemples' => [
+            "```resultat Compte de résultat N\nCharges\n607 554 000\n615 17 000\n641 Salaires 558 500\nProduits\n707 1 257 000\n```",
+            "```bilan Bilan au 31/12/N\nActif\n# Actif immobilisé\n211 300 000\n2182 150 000\n# Actif circulant\n411 435 000\n512 91 500\nPassif\n# Capitaux propres\n10 Capital 230 000\nRésultat de l'exercice : ?\n# Dettes\n164 Emprunt 430 000\n401 229 000\n```",
         ],
     ],
     [
@@ -173,7 +192,8 @@ require __DIR__ . '/includes/header.php';
         <tr><td><kbd>Ctrl</kbd> + <kbd>S</kbd></td><td>Enregistrer tout de suite (l'enregistrement auto continue aussi)</td></tr>
         <tr><td><kbd>Ctrl</kbd> + <kbd>Z</kbd></td><td>Annuler</td></tr>
         <tr><td><kbd>Ctrl</kbd> + <kbd>Y</kbd> ou <kbd>Ctrl</kbd> + <kbd>Maj</kbd> + <kbd>Z</kbd></td><td>Rétablir</td></tr>
-        <tr><td><kbd>Ctrl</kbd> + <kbd>B</kbd> / <kbd>Ctrl</kbd> + <kbd>I</kbd></td><td>Gras / italique</td></tr>
+        <tr><td><kbd>Ctrl</kbd> + <kbd>B</kbd> / <kbd>Ctrl</kbd> + <kbd>I</kbd> / <kbd>Ctrl</kbd> + <kbd>U</kbd></td><td>Gras / italique / souligné (<code>++texte++</code>)</td></tr>
+        <tr><td><kbd>@</kbd> + nom ou numéro de compte</td><td>Compte du plan comptable : <code>@banque</code> ou <code>@512</code> → « 512 Banque » (Entrée). Dans un tableau ou un bloc de compta, le numéro seul suffit.</td></tr>
         <tr><td><kbd>Tab</kbd> / <kbd>Maj</kbd> + <kbd>Tab</kbd></td><td>Décaler / recaler les lignes — dans un tableau : case suivante / précédente</td></tr>
         <tr><td><kbd>Entrée</kbd> dans une liste</td><td>Nouvelle puce automatiquement (Entrée sur une puce vide = fin de la liste)</td></tr>
         <tr><td><kbd>Entrée</kbd> dans un tableau</td><td>Nouvelle ligne (Entrée sur une ligne vide = sortir du tableau)</td></tr>
@@ -220,7 +240,7 @@ require __DIR__ . '/includes/header.php';
 </section>
 
 <?php foreach ($sections as $sec): ?>
-    <section class="mc-card mc-aide">
+    <section class="mc-card mc-aide"<?= !empty($sec['id']) ? ' id="' . e($sec['id']) . '"' : '' ?>>
         <div class="mc-card__head"><h2 class="mc-h"><?= e($sec['titre']) ?></h2></div>
         <?php if (!empty($sec['intro'])): ?>
             <p class="mc-meta"><?= e($sec['intro']) ?></p>
@@ -259,6 +279,7 @@ require __DIR__ . '/includes/header.php';
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <script src="<?= asset('assets/js/mathjax-config.js') ?>"></script>
 <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js"></script>
+<script defer src="<?= asset('assets/js/compta-moteur.js') ?>"></script>
 <script defer src="<?= asset('assets/js/rendu.js') ?>"></script>
 <script defer src="<?= asset('assets/js/maths-symboles.js') ?>"></script>
 <script>

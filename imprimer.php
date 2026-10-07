@@ -75,6 +75,29 @@ $contenus = array_map(static fn($s) => $s['contenu'], $sections);
         .couleur-bleu { color: #2563eb; } .couleur-violet { color: #7c3aed; }
         .couleur-rose { color: #db2777; } .couleur-gris { color: #6b7280; }
         mark { background: #fef08a; }
+        /* Comptabilité (blocs ```comptes, ```bilan…) */
+        .cpt-num, .cpt-mono { font-family: Consolas, monospace; font-size: .85em; color: #555; }
+        .cpt-mt { text-align: right; white-space: nowrap; }
+        .cpt-ref { font-size: .75em; color: #777; }
+        .cpt-calc { font-size: .75em; color: #b8380f; }
+        .cpt-verif { font-size: .85em; margin: .3em 0 0; color: #2b7349; }
+        .cpt-verif.ko { color: #9a5800; }
+        .cpt-doc { margin: .8em 0; }
+        .cpt-table { width: 100%; font-size: .9em; }
+        .cpt-table caption { font-weight: bold; padding: .3em; background: #eee; border: 1px solid #999; border-bottom: 0; }
+        .cpt-table thead th, .cpt-table tfoot td, .cpt-doc__st td, .cpt-doc__total td { background: #f0f0f0; font-weight: bold; }
+        .cpt-doc__rub th { background: #fff5c2; text-transform: uppercase; font-size: .85em; }
+        .cpt-doc__resultat td { font-weight: bold; }
+        .cpt-j__date td { text-align: center; background: #f5f5f5; font-size: .85em; }
+        .cpt-j__credit { padding-left: 2em; } .cpt-j__lib td { font-style: italic; color: #555; }
+        .cpt-t-grille { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: .8em 0; }
+        .cpt-t { width: 100%; border-collapse: collapse; break-inside: avoid; font-size: .9em; }
+        .cpt-t caption { font-weight: bold; border-bottom: 2px solid #000; }
+        .cpt-t th, .cpt-t td { border: 0; width: 50%; text-align: right; padding: .1em .5em; }
+        .cpt-t thead th { font-size: .7em; text-transform: uppercase; color: #777; text-align: center; }
+        .cpt-t__d, .cpt-t thead th:first-child, .cpt-t__tot td:first-child { border-right: 2px solid #000 !important; }
+        .cpt-t__tot td { border-top: 1px solid #999; font-weight: bold; }
+        .cpt-t__solde td { text-align: center; font-size: .8em; color: #555; }
         * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .btn-imprimer { position: fixed; top: 1rem; right: 1rem; padding: .6rem 1rem;
                         background: #4f46e5; color: #fff; border: 0; border-radius: 8px;
@@ -106,6 +129,7 @@ $contenus = array_map(static fn($s) => $s['contenu'], $sections);
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="<?= asset('assets/js/mathjax-config.js') ?>"></script>
     <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js"></script>
+    <script src="<?= asset('assets/js/compta-moteur.js') ?>"></script>
     <script src="<?= asset('assets/js/rendu.js') ?>"></script>
     <script>
         // Rend chaque section, puis ouvre l'impression une fois tout prêt.

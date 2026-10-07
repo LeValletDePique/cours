@@ -14,6 +14,7 @@ CREATE DATABASE IF NOT EXISTS cours_db
 USE cours_db;
 
 -- On repart d'une base propre (ordre inverse des dépendances)
+DROP TABLE IF EXISTS compta_dossiers;
 DROP TABLE IF EXISTS evenements;
 DROP TABLE IF EXISTS agenda_sources;
 DROP TABLE IF EXISTS flashcards;
@@ -180,6 +181,24 @@ CREATE TABLE flashcards (
         REFERENCES notes(id) ON DELETE CASCADE,
     CONSTRAINT fk_flash_matiere FOREIGN KEY (matiere_id)
         REFERENCES matieres(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+--  ATELIER COMPTABLE (Gestion de l'entreprise) : un dossier par exercice
+--  (écritures en JSON ; grand livre, balance, bilan calculés dans le navigateur)
+--  (créée aussi automatiquement par includes/compta.php si absente)
+-- ------------------------------------------------------------
+CREATE TABLE compta_dossiers (
+    id                INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    utilisateur_id    INT UNSIGNED NOT NULL,
+    titre             VARCHAR(255) NOT NULL DEFAULT 'Dossier comptable',
+    donnees           MEDIUMTEXT NOT NULL,             -- JSON : écritures, noms de comptes
+    date_creation     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    date_modification DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+                      ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_compta_utilisateur FOREIGN KEY (utilisateur_id)
+        REFERENCES utilisateurs(id) ON DELETE CASCADE,
+    INDEX idx_compta_utilisateur (utilisateur_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------

@@ -3,8 +3,10 @@
    Expose window.rendreMarkdown(source, elementCible) -> Promise
    - protège les formules LaTeX avant le Markdown
    - tolère les notes indentées (voir normaliserRetraits)
-   - texte en couleur : [texte]{rouge}   surlignage : ==texte==
+   - texte en couleur : [texte]{rouge}   surlignage : ==texte==   souligné : ++texte++
    - affectation du pseudo-code : <- s'affiche ←
+   - comptabilité : blocs ```journal, ```comptes (comptes en T), ```balance,
+     ```resultat et ```bilan (voir compta-moteur.js, chargé avant ce fichier)
    - nettoie le HTML (anti-XSS) avec DOMPurify
    - colore le code (highlight.js, + pseudo-code) et rend les maths (MathJax)
    ============================================================ */
@@ -154,6 +156,18 @@
             renderer(t) { return '<mark>' + this.parser.parseInline(t.tokens) + '</mark>'; },
         },
         {
+            // ++souligné++  (« C++ » ou « i++ » seuls ne soulignent rien)
+            name: 'souligne',
+            level: 'inline',
+            start(src) { const i = src.indexOf('++'); return i < 0 ? undefined : i; },
+            tokenizer(src) {
+                const m = /^\+\+(?=[^\s+])([^\n]*?[^\s+])\+\+(?!\+)/.exec(src);
+                if (!m) return;
+                return { type: 'souligne', raw: m[0], tokens: this.lexer.inlineTokens(m[1]) };
+            },
+            renderer(t) { return '<u>' + this.parser.parseInline(t.tokens) + '</u>'; },
+        },
+        {
             // **gras** plus tolérant que la norme : « **Rappel :**suite »,
             // « **mot**, » ou « l'**éthique** » fonctionnent toujours.
             name: 'grasSouple',
@@ -169,7 +183,15 @@
     ];
 
     if (window.marked) {
-        marked.use({ gfm: true, breaks: true, extensions });
+        marked.use({
+            gfm: true, breaks: true, extensions,
+            renderer: {
+                // Blocs de comptabilité : ```bilan, ```comptes… (sinon bloc de code normal).
+                code(code, info) {
+                    return (window.Compta && window.Compta.blocMarkdown(info, code)) || false;
+                },
+            },
+        });
     }
 
     // ---------- Coloration du pseudo-code (```pseudo) ----------

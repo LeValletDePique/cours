@@ -639,3 +639,175 @@ kbd { display: inline-block; font: 500 11px/1 var(--font-mono); padding: 3px 5px
 .evt-bloc.mc-event--past .mc-event__name { color: color-mix(in srgb, var(--ue) 65%, var(--ink-muted)); }
 .evt-bloc.mc-event--perso { background: var(--surface); border: 1px dashed var(--line-strong); }
 .evt-puce .mc-dot { display: none; }
+
+/* ============================================================
+   Comptabilité : documents (notes et atelier) — compta-moteur.js
+   ============================================================ */
+.cpt-num, .cpt-mono { font: 500 12px/18px var(--font-mono); color: var(--ink-muted); }
+.cpt-mt { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.cpt-ref { font: 400 11px/1 var(--font-mono); color: var(--ink-faint); }
+.cpt-vide { color: var(--ink-muted); font-size: 14px; }
+.cpt-calc { display: inline-block; padding: 0 5px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); font: 500 11px/16px var(--font-sans); }
+.cpt-verif { margin: 6px 0 0; font-size: 13px; line-height: 18px; display: flex; gap: 6px; align-items: baseline; }
+.cpt-verif::before { font-weight: 700; }
+.cpt-verif.ok { color: var(--success); } .cpt-verif.ok::before { content: "✓"; }
+.cpt-verif.ko { color: var(--warning); } .cpt-verif.ko::before { content: "!"; }
+
+/* Comptes en T */
+.cpt-t-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr)); gap: var(--space-4); margin: .8em 0; align-items: start; }
+.cpt-t-grille .cpt-t { display: table; width: 100%; margin: 0; border-collapse: collapse; font-size: 14px; line-height: 20px; }
+.cpt-t-grille .cpt-t caption { padding: 4px 6px; font-weight: 600; text-align: center; border-bottom: 2px solid var(--ink); background: var(--surface-sunk); border-radius: var(--radius-sm) var(--radius-sm) 0 0; }
+.cpt-t-grille .cpt-t th, .cpt-t-grille .cpt-t td { border: 0; padding: 2px 8px; width: 50%; background: none; }
+.cpt-t-grille .cpt-t thead th { font: 500 11px/16px var(--font-sans); letter-spacing: .04em; text-transform: uppercase; color: var(--ink-faint); text-align: center; }
+.cpt-t-grille .cpt-t td { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cpt-t-grille .cpt-t .cpt-t__d, .cpt-t-grille .cpt-t thead th:first-child, .cpt-t-grille .cpt-t__tot td:first-child { border-right: 2px solid var(--ink); }
+.cpt-t-grille .cpt-t td[title] { cursor: help; }
+.cpt-t-grille .cpt-t__tot td { border-top: 1px solid var(--line-strong); font-weight: 600; }
+.cpt-t-grille .cpt-t__solde td { text-align: center; font-size: 12px; color: var(--ink-muted); border-top: 1px solid var(--line); }
+.cpt-t-grille .cpt-t__solde td.sd { color: var(--ue-1); } .cpt-t-grille .cpt-t__solde td.sc { color: var(--ue-3); }
+
+/* Tableaux : balance, journal, bilan, compte de résultat */
+.cpt-doc { margin: .8em 0; overflow-x: auto; }
+.cpt-doc .cpt-table, .cpt-table { display: table; width: 100%; border-collapse: collapse; font-size: 14px; line-height: 20px; margin: 0; }
+.cpt-doc .cpt-table caption { padding: 6px; font-weight: 600; background: var(--ue-2-soft); color: var(--ue-2); border: 1px solid var(--line-strong); border-bottom: 0; border-radius: var(--radius-sm) var(--radius-sm) 0 0; }
+.cpt-table th, .cpt-table td { border: 1px solid var(--line-strong); padding: 4px 8px; vertical-align: top; }
+.cpt-table thead th { background: var(--surface-sunk); text-align: center; font-weight: 600; }
+.cpt-table .cpt-total td, .cpt-table tfoot td { font-weight: 700; background: var(--surface-sunk); }
+.cpt-doc__table col.cpt-col-mt { width: 18%; }
+.cpt-doc__table td { border-top: 0; border-bottom: 0; }
+.cpt-doc__table .cpt-doc__rub th { background: var(--warning-soft); color: var(--ink); font: 600 12px/18px var(--font-sans); letter-spacing: .04em; text-transform: uppercase; text-align: center; border: 1px solid var(--line-strong); }
+.cpt-doc__table .cpt-doc__st td, .cpt-doc__table .cpt-doc__total td, .cpt-doc__table .cpt-doc__resultat td { border: 1px solid var(--line-strong); }
+.cpt-doc__table .cpt-doc__st td { font-weight: 600; background: var(--surface-sunk); }
+.cpt-doc__table .cpt-doc__resultat td { font-weight: 600; color: var(--accent); }
+.cpt-doc__table .cpt-doc__total td { font-weight: 700; background: var(--surface-sunk); text-transform: uppercase; }
+.cpt-doc__table tbody tr:last-child td { border-bottom: 1px solid var(--line-strong); }
+.cpt-journal .cpt-j__date td { text-align: center; color: var(--ink-muted); font: 500 12px/18px var(--font-mono); background: var(--surface-sunk); }
+.cpt-journal .cpt-j__credit { padding-left: 32px; }
+.cpt-journal .cpt-j__lib td { font-style: italic; color: var(--ink-muted); }
+.cpt-journal .cpt-j__ko td { color: var(--warning); font-size: 13px; }
+.cpt-journal td:nth-child(1), .cpt-journal td:nth-child(2) { width: 1%; white-space: nowrap; }
+
+/* ---------- Atelier comptable ---------- */
+.compta-barre { display: grid; gap: var(--space-3); padding: var(--space-4); }
+.compta-barre__ligne { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); }
+.compta-barre__dossier { flex: 1 1 220px; max-width: 360px; }
+.compta-barre__fin { margin-left: auto; gap: 2px; }
+.compta-barre__infos { align-items: flex-end; padding-top: var(--space-3); border-top: 1px solid var(--line); }
+.compta-champ { display: grid; gap: 4px; flex: 1 1 180px; font-size: 12px; color: var(--ink-muted); }
+.compta-champ--court { flex: 0 1 120px; }
+.compta-onglets { flex-wrap: wrap; justify-self: start; max-width: 100%; }
+.compta-panneau { display: grid; gap: var(--space-5); align-content: start; }
+section.compta-panneau { display: block; }
+.compta-saisie { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: var(--space-5); margin-bottom: var(--space-3); }
+.compta-saisie__bloc { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-2); align-content: start; margin: 0; min-width: 0; }
+.compta-saisie__bloc .mc-meta { margin: 0; }
+.compta-apercu { color: var(--success); font-weight: 500; }
+.compta-apercu.ko { color: var(--warning); }
+.compta-pourquoi { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; font-size: 13px; line-height: 18px; }
+.compta-pourquoi:empty { display: none; }
+.cpt-sens { padding: 2px 8px; border-radius: var(--radius-sm); }
+.cpt-sens--D { background: var(--ue-1-soft); color: var(--ue-1); }
+.cpt-sens--C { background: var(--ue-3-soft); color: var(--ue-3); }
+.compta-pourquoi__texte { flex-basis: 100%; color: var(--ink-muted); }
+button.compta-lien { border: 0; background: none; padding: 0; cursor: pointer; font: inherit; color: var(--accent); }
+.compta-ecritures { display: grid; gap: var(--space-3); }
+.compta-ecritures__pied { margin-top: var(--space-4); }
+.cpt-ecr { border: 1px solid var(--line); border-radius: var(--radius-md); padding: var(--space-2) var(--space-3) var(--space-3); background: var(--surface); transition: box-shadow .3s; }
+.cpt-ecr--nouvelle { box-shadow: 0 0 0 2px var(--accent); }
+.cpt-ecr__tete { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-bottom: 4px; }
+.cpt-ecr__n { display: grid; place-items: center; min-width: 26px; height: 26px; border-radius: var(--radius-pill); background: var(--surface-sunk); font: 600 12px/1 var(--font-mono); color: var(--ink-muted); }
+.cpt-ecr__tete .cpt-ecr__date { width: 80px; flex: none; }
+.cpt-ecr__tete .cpt-ecr__lib { width: auto; flex: 1 1 200px; font-weight: 500; }
+.cpt-ecr__etat { font-size: 12px; line-height: 16px; color: var(--ink-muted); white-space: nowrap; }
+.cpt-ecr__etat.ok { color: var(--success); } .cpt-ecr__etat.ko { color: var(--warning); font-weight: 600; }
+.cpt-ecr__cadre { overflow-x: auto; }
+.cpt-ecr__lignes { width: 100%; border-collapse: collapse; font-size: 14px; }
+.cpt-ecr__lignes th { padding: 2px 4px; text-align: left; font: 500 11px/16px var(--font-sans); letter-spacing: .04em; text-transform: uppercase; color: var(--ink-faint); }
+.cpt-ecr__lignes td { padding: 1px 2px; }
+.cpt-ecr__lignes td:nth-child(1) { width: 96px; } .cpt-ecr__lignes td:nth-child(3), .cpt-ecr__lignes td:nth-child(4) { width: 130px; }
+.cpt-ecr__lignes td:last-child { width: 32px; }
+.cpt-in { width: 100%; min-width: 0; height: 30px; padding: 0 6px; border: 1px solid transparent; border-radius: var(--radius-sm); background: transparent; color: var(--ink); font: 400 14px/20px var(--font-sans); }
+.cpt-in:hover { border-color: var(--line); }
+.cpt-in:focus { border-color: var(--accent); background: var(--surface); outline: 0; }
+.cpt-in:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
+.cpt-in--compte { font-family: var(--font-mono); font-size: 13px; }
+.cpt-in--mt { text-align: right; font-variant-numeric: tabular-nums; }
+.cpt-in[aria-invalid="true"] { border-color: var(--warning); background: var(--warning-soft); }
+.compta-filtre { max-width: 260px; }
+.compta-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-3); }
+.compta-kpi { display: grid; gap: 4px; padding: var(--space-4); border-radius: var(--radius-md); background: var(--surface-sunk); }
+.compta-kpi p { margin: 0; }
+.compta-kpi__val { font: 600 24px/30px var(--font-display); color: var(--success); font-variant-numeric: tabular-nums; }
+.compta-kpi__val.neg { color: var(--accent); }
+.compta-sig td small { display: block; color: var(--ink-muted); font-size: 12px; line-height: 16px; font-weight: 400; }
+.compta-sig td { border-left: 0; border-right: 0; }
+.compta-analyse { align-items: start; gap: var(--space-5); }
+.compta-memo__table { font-size: 13px; }
+.compta-memo__table td:not(:first-child) { white-space: nowrap; }
+.compta-memo__astuces { margin-top: var(--space-4); }
+.compta-ops tr[data-op] { cursor: pointer; }
+.compta-ops tr[data-op]:hover, .compta-ops tr[data-op]:focus { background: var(--surface-sunk); outline: 0; }
+.compta-ops td:last-child { white-space: normal; }
+.compta-schema { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); font-size: 14px; line-height: 21px; }
+.compta-schema > div { padding: var(--space-3); border-radius: var(--radius-md); background: var(--surface-sunk); }
+.compta-schema p { margin: 0 0 8px; }
+.compta-formules { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: var(--space-4); font-size: 14px; }
+.compta-formules h3 { margin: 0 0 6px; font: 600 12px/16px var(--font-sans); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-muted); }
+.compta-formules p { margin: 0 0 6px; }
+.compta-formules code { white-space: normal; background: var(--surface-sunk); padding: 1px 5px; border-radius: 4px; font: 400 12.5px/20px var(--font-mono); }
+.compta-pcg { columns: 2 380px; column-gap: var(--space-5); margin-top: var(--space-3); }
+.compta-pcg__num { width: 1%; white-space: nowrap; }
+
+/* Bilan de départ */
+.compta-barre__exemple { flex: 0 1 230px; }
+.compta-depart__date { flex: 0 0 120px; }
+.compta-depart { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(360px, 100%), 1fr)); gap: var(--space-4); margin-top: var(--space-3); }
+.compta-depart__cote { display: grid; gap: var(--space-2); align-content: start; padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-md); min-width: 0; overflow-x: auto; }
+.compta-depart__cote[data-cote="actif"] .mc-eyebrow { color: var(--ue-1); }
+.compta-depart__cote[data-cote="passif"] .mc-eyebrow { color: var(--ue-3); }
+.compta-depart__pied { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); }
+.compta-depart__total { font-weight: 600; font-size: 14px; font-variant-numeric: tabular-nums; }
+/* Cases du bilan de départ : contour visible (comme un formulaire à remplir) */
+.compta-depart .cpt-ecr__lignes td { padding: 3px; }
+.compta-depart .cpt-ecr__lignes td:nth-child(1) { width: 116px; }
+.compta-depart .cpt-in { border-color: var(--line-strong); background: var(--surface); }
+.compta-depart .cpt-in:hover { border-color: var(--ink-faint); }
+.compta-depart .cpt-in:focus { border-color: var(--accent); }
+.compta-depart .cpt-in[aria-invalid="true"] { border-color: var(--warning); background: var(--warning-soft); }
+.compta-depart .cpt-in::placeholder { color: var(--ink-faint); }
+#depart-verif { margin-top: var(--space-3); }
+.compta-depart__avert { margin: 4px 0 0; font-size: 13px; line-height: 18px; color: var(--warning); }
+.compta-coller, .compta-comparer { margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--line); }
+.compta-coller summary, .compta-comparer summary { cursor: pointer; font-weight: 500; font-size: 14px; color: var(--accent); }
+.compta-coller[open] { display: grid; gap: var(--space-2); }
+.compta-coller textarea { width: 100%; resize: vertical; }
+.compta-an { margin: -8px 0 var(--space-3); padding: 8px 12px; border-radius: var(--radius-md); background: var(--ue-2-soft); color: var(--ink); }
+.compta-bilan__pied { margin-top: var(--space-4); }
+
+/* Éditeur : menu Compta et suggestions de comptes */
+.menu-compta { width: min(380px, 92vw); max-height: 70vh; overflow-y: auto; }
+.menu-compta .maths-recherche { height: 32px; padding: 0 8px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--ink); font: 400 13px/18px var(--font-sans); }
+.compta-resultats:not(:empty) { margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+.menu-ligne code, .comptes-auto code { font: 500 12px/18px var(--font-mono); color: var(--ink-muted); }
+.comptes-auto .auto-ligne { grid-template-columns: 64px 1fr; }
+
+@media (max-width: 640px) {
+    .compta-schema { grid-template-columns: 1fr; }
+    .compta-barre__fin { margin-left: 0; }
+    .cpt-doc .cpt-table { font-size: 13px; }
+    .compta-memo__table { display: block; overflow-x: auto; }
+    .compta-memo__table td:not(:first-child) { white-space: normal; }
+    .compta-ops td:last-child { min-width: 200px; }
+}
+
+/* Impression de l'atelier : seulement l'onglet affiché (le journal en version « papier »). */
+@media print {
+    .mc-rail, .mc-topbar, .compta-barre, .compta-onglets, .compta-entete p, .compta-saisie-carte,
+    #ecritures, .compta-ecritures__pied, .compta-filtre, .mc-palette-fond { display: none !important; }
+    .mc-app { display: block; background: none; }
+    .mc-main { padding: 0; }
+    .mc-card { box-shadow: none; border: 0; padding: 0; }
+    #journal-papier { display: block !important; }
+    .cpt-t-grille { grid-template-columns: repeat(3, 1fr); }
+    .cpt-t, .cpt-table tr { break-inside: avoid; }
+}

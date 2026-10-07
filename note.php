@@ -119,6 +119,7 @@ require __DIR__ . '/includes/header.php';
         <span class="outil-sep"></span>
         <button type="button" data-action="gras" title="Gras (Ctrl+B)" aria-label="Gras"><b>G</b></button>
         <button type="button" data-action="italique" title="Italique (Ctrl+I)" aria-label="Italique"><i>I</i></button>
+        <button type="button" data-action="souligner" title="Souligné (Ctrl+U) → ++texte++" aria-label="Souligné"><u>U</u></button>
         <button type="button" data-action="barre" title="Barré" aria-label="Barré"><s>S</s></button>
         <div class="outil-deroulant">
             <button type="button" data-ouvrir="couleurs" title="Texte en couleur / surligner" aria-label="Couleurs">
@@ -140,6 +141,10 @@ require __DIR__ . '/includes/header.php';
         <div class="outil-deroulant">
             <button type="button" data-ouvrir="code" title="Bloc de code (pseudo-code, C, SQL…)"><?= icone('code', 'mc-ico-sm') ?>Code<?= icone('bas', 'mc-ico-sm') ?></button>
             <div class="outil-menu menu-code" data-menu="code"></div>
+        </div>
+        <div class="outil-deroulant">
+            <button type="button" data-ouvrir="compta" title="Comptabilité : compte en T, journal, balance, compte de résultat, bilan"><?= icone('calculatrice', 'mc-ico-sm') ?>Compta<?= icone('bas', 'mc-ico-sm') ?></button>
+            <div class="outil-menu menu-compta" data-menu="compta"></div>
         </div>
         <button type="button" data-action="code" title="Code dans le texte" aria-label="Code dans le texte"><span class="mc-mono">`c`</span></button>
         <button type="button" data-action="lien" title="Lien" aria-label="Lien"><?= icone('lien', 'mc-ico-sm') ?></button>
@@ -238,6 +243,7 @@ require __DIR__ . '/includes/header.php';
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <script src="<?= asset('assets/js/mathjax-config.js') ?>"></script>
 <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js"></script>
+<script defer src="<?= asset('assets/js/compta-moteur.js') ?>"></script>
 <script defer src="<?= asset('assets/js/rendu.js') ?>"></script>
 <script defer src="<?= asset('assets/js/maths-symboles.js') ?>"></script>
 <script defer src="<?= asset('assets/js/outils-editeur.js') ?>"></script>
