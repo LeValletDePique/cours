@@ -1,6 +1,7 @@
 /* ============================================================
    Atelier comptable (compta.php) : interface.
    - dossiers (un par exercice) enregistrés automatiquement (api/compta.php)
+   - bilan de départ (actif / passif) : ses montants ouvrent les comptes (AN)
    - journal modifiable : saisie rapide « 607 / 401 14000 », opérations
      courantes expliquées, écritures à plusieurs lignes
    - onglets calculés à l'affichage : grand livre, balance, compte de
@@ -26,8 +27,9 @@
         elStatut.textContent = texte;
         elStatut.className = 'statut-save ' + classe;
     }
+    const ouvertureVide = () => ({ date: '01/01/N', actif: [], passif: [] });
     const dossierVide = (titre) => ({ version: 1, titre: titre || 'Nouveau dossier', entreprise: '',
-        cloture: '31/12/N', comptes: {}, ecritures: [] });
+        cloture: '31/12/N', comptes: {}, ouverture: ouvertureVide(), ecritures: [] });
 
     // =========================================================
     //  Dossiers : liste, ouverture, enregistrement automatique
@@ -61,6 +63,9 @@
             etat.d = Object.assign(dossierVide(rep.titre), rep.donnees || {}, { titre: rep.titre });
             if (!Array.isArray(etat.d.ecritures)) etat.d.ecritures = [];
             if (!etat.d.comptes || Array.isArray(etat.d.comptes)) etat.d.comptes = {};
+            const ouv = etat.d.ouverture;
+            if (!ouv || typeof ouv !== 'object') etat.d.ouverture = ouvertureVide();
+            ['actif', 'passif'].forEach((c) => { if (!Array.isArray(etat.d.ouverture[c])) etat.d.ouverture[c] = []; });
             try { localStorage.setItem('compta-dossier', String(rep.id)); } catch (e) {}
             statut('');
         } catch (e) {
@@ -129,6 +134,7 @@
             $('#compta-entreprise').value = etat.d.entreprise || '';
             $('#compta-cloture').value = etat.d.cloture || '';
             if (etat.d.matiere_id !== undefined) $('#compta-matiere').value = etat.d.matiere_id || '';
+            dessinerDepart();
             dessinerJournal();
         }
         afficherOnglet(etat.onglet);
@@ -156,6 +162,7 @@
         if (nom === 'memo' || !etat.d) return;
         const calc = C.calculer(etat.d);
         const cloture = etat.d.cloture || '31/12/N';
+        if (nom === 'depart') majDepart();
         if (nom === 'journal') majResume(calc);
         if (nom === 'grand-livre') dessinerGrandLivre(calc);
         if (nom === 'balance') {
@@ -163,7 +170,12 @@
             $('#balance-date').textContent = 'au ' + cloture;
         }
         if (nom === 'resultat') $('#resultat').innerHTML = C.htmlDoc(C.docResultat(calc.resultat, 'Compte de résultat au ' + cloture));
-        if (nom === 'bilan') $('#bilan').innerHTML = C.htmlDoc(C.docBilan(calc.bilan, 'Bilan au ' + cloture));
+        if (nom === 'bilan') {
+            $('#bilan').innerHTML = C.htmlDoc(C.docBilan(calc.bilan, 'Bilan au ' + cloture));
+            const an = C.ecritureOuverture(etat.d);
+            $('#bilan-comparer').hidden = !an;
+            if (an) $('#bilan-depart').innerHTML = C.htmlDoc(C.docOuverture(etat.d));
+        }
         if (nom === 'analyse') dessinerAnalyse(calc);
     }
 
@@ -237,6 +249,15 @@
     }
 
     function majResume(calc) {
+        const an = C.ecritureOuverture(etat.d);
+        const elAn = $('#journal-an');
+        elAn.hidden = !an;
+        if (an) {
+            elAn.innerHTML = 'Bilan de départ repris : ' + an.lignes.length + ' compte' + (an.lignes.length > 1 ? 's' : '')
+                + ' ouvert' + (an.lignes.length > 1 ? 's' : '') + (an.date ? ' au ' + ech(an.date) : '')
+                + ' (à-nouveaux <b>AN</b> dans le grand livre). '
+                + '<button type="button" class="mc-link compta-lien" data-c="aller-depart">Modifier le bilan de départ</button>';
+        }
         const ecritures = etat.d.ecritures;
         const bal = (calc || C.calculer(etat.d)).balance;
         const ko = ecritures.filter((ecr) => C.ecartEcriture(ecr).ecart).length;
@@ -247,7 +268,8 @@
     }
 
     function dessinerPapier() {
-        $('#journal-papier').innerHTML = C.htmlJournal(etat.d.ecritures, etat.d.comptes);
+        const an = C.ecritureOuverture(etat.d);
+        $('#journal-papier').innerHTML = C.htmlJournal((an ? [an] : []).concat(etat.d.ecritures), etat.d.comptes);
     }
 
     function ajouterEcriture(ecr, focus) {
@@ -268,7 +290,7 @@
         nom = nom.trim();
         const officiel = C.nomCompte(num);
         if (!nom || nom === officiel) delete etat.d.comptes[num]; else etat.d.comptes[num] = nom;
-        $$('#ecritures tr').forEach((tr) => {
+        $$('#ecritures tr, #depart-editeur tr').forEach((tr) => {
             const c = tr.querySelector('[data-champ="compte"]'), n = tr.querySelector('[data-champ="nom"]');
             if (c && n && n !== document.activeElement && C.normaliserCompte(c.value) === num) n.value = C.nomCompte(num, etat.d.comptes);
         });
@@ -376,6 +398,162 @@
             dessinerJournal();
         }
     });
+
+    // =========================================================
+    //  Bilan de départ : deux colonnes (actif / passif) de « compte · montant »
+    // =========================================================
+    const editeurDepart = $('#depart-editeur');
+
+    function htmlLigneDepart(l, j) {
+        const n = C.normaliserCompte(l.compte);
+        const inconnu = l.compte && !n;
+        return '<tr data-l="' + j + '">'
+            + '<td><input class="cpt-in cpt-in--compte" data-champ="compte" list="pcg-liste" value="' + ech(l.compte || '')
+            + '" placeholder="N° ou nom" aria-label="Compte (numéro ou nom)"' + (inconnu ? ' aria-invalid="true" title="Compte introuvable : tape son numéro"' : '') + '></td>'
+            + '<td><input class="cpt-in" data-champ="nom" value="' + ech(n ? C.nomCompte(n, etat.d.comptes) : '')
+            + '" placeholder="Intitulé" aria-label="Intitulé du compte"></td>'
+            + '<td><input class="cpt-in cpt-in--mt" data-champ="montant" inputmode="decimal" value="' + ech(montantSaisi(l.montant))
+            + '" aria-label="Montant"></td>'
+            + '<td><button type="button" class="mc-btn mc-btn--ghost mc-btn--sm" data-c="suppr-ligne" title="Retirer la ligne" aria-label="Retirer la ligne">'
+            + icone('fermer', 'mc-ico-sm') + '</button></td></tr>';
+    }
+
+    function dessinerDepart(focus) {
+        const ouv = etat.d.ouverture;
+        $('#depart-date').value = ouv.date || '';
+        ['actif', 'passif'].forEach((cote) => {
+            if (!ouv[cote].length) ouv[cote].push({ compte: '', montant: null });
+            editeurDepart.querySelector('[data-cote="' + cote + '"] tbody').innerHTML = ouv[cote].map(htmlLigneDepart).join('');
+        });
+        majDepart();
+        if (focus) {
+            const el = editeurDepart.querySelector(focus);
+            if (el) { el.focus(); if (el.select) el.select(); }
+        }
+    }
+
+    function majDepart() {
+        const ouv = etat.d.ouverture;
+        const total = (cote) => ouv[cote].reduce((t, l) => t + Math.round((Number(l.montant) || 0) * 100), 0) / 100;
+        ['actif', 'passif'].forEach((cote) => {
+            editeurDepart.querySelector('[data-cote="' + cote + '"] .compta-depart__total').textContent =
+                'Total ' + cote + ' : ' + C.fmt(total(cote));
+        });
+        const verif = $('#depart-verif');
+        if (!C.ecritureOuverture(etat.d)) {
+            verif.className = 'cpt-verif';
+            verif.textContent = 'Pas de bilan de départ : les comptes partent de zéro.';
+            $('#depart-apercu').innerHTML = '<p class="cpt-vide">Le bilan s\'affichera ici dès la première ligne.</p>';
+        } else {
+            const doc = C.docOuverture(etat.d);
+            verif.className = 'cpt-verif ' + (doc.verif.ok ? 'ok' : 'ko');
+            verif.textContent = doc.verif.texte;
+            $('#depart-apercu').innerHTML = C.htmlDoc(doc);
+        }
+    }
+
+    function ligneDepart(el) {
+        const cote = el.closest('[data-cote]').dataset.cote, tr = el.closest('[data-l]');
+        return { cote, tr, j: tr ? +tr.dataset.l : -1, l: tr ? etat.d.ouverture[cote][+tr.dataset.l] : null };
+    }
+
+    editeurDepart.addEventListener('input', (e) => {
+        const champ = e.target.dataset.champ;
+        if (!champ) return;
+        const { tr, l } = ligneDepart(e.target);
+        if (champ === 'compte') {
+            l.compte = e.target.value.trim();
+            const n = C.normaliserCompte(l.compte);
+            tr.querySelector('[data-champ="nom"]').value = n ? C.nomCompte(n, etat.d.comptes) : '';
+            e.target.removeAttribute('aria-invalid');
+        } else if (champ === 'nom') {
+            renommerCompte(C.normaliserCompte(l.compte), e.target.value);
+        } else {
+            const brut = e.target.value.trim(), v = C.parseMontant(brut);
+            e.target.setAttribute('aria-invalid', brut && v == null ? 'true' : 'false');
+            l.montant = v;
+        }
+        majDepart();
+        modifie();
+    });
+    editeurDepart.addEventListener('change', (e) => {
+        const champ = e.target.dataset.champ;
+        if (!champ) return;
+        const { tr, l } = ligneDepart(e.target);
+        if (champ === 'montant' && l.montant != null) e.target.value = montantSaisi(l.montant);
+        // « banque », « dettes fournisseurs » : remplacé par le numéro du compte.
+        if (champ === 'compte' && l.compte && !/^\d/.test(l.compte)) {
+            const trouve = C.chercherCompte(l.compte, etat.d.comptes);
+            if (trouve) {
+                l.compte = trouve;
+                e.target.value = trouve;
+                tr.querySelector('[data-champ="nom"]').value = C.nomCompte(trouve, etat.d.comptes);
+                majDepart();
+                modifie();
+            } else {
+                e.target.setAttribute('aria-invalid', 'true');
+            }
+        }
+    });
+    editeurDepart.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter' || !e.target.dataset.champ) return;
+        e.preventDefault();
+        const { cote, j } = ligneDepart(e.target);
+        const lignes = etat.d.ouverture[cote];
+        if (j === lignes.length - 1) {
+            lignes.push({ compte: '', montant: null });
+            dessinerDepart('[data-cote="' + cote + '"] [data-l="' + (j + 1) + '"] [data-champ="compte"]');
+        } else {
+            const suivant = editeurDepart.querySelector('[data-cote="' + cote + '"] [data-l="' + (j + 1) + '"] [data-champ="' + e.target.dataset.champ + '"]');
+            if (suivant) suivant.focus();
+        }
+    });
+    editeurDepart.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-c]');
+        if (!b) return;
+        const { cote, j } = ligneDepart(b);
+        const lignes = etat.d.ouverture[cote];
+        if (b.dataset.c === 'depart-ligne') {
+            lignes.push({ compte: '', montant: null });
+            dessinerDepart('[data-cote="' + cote + '"] [data-l="' + (lignes.length - 1) + '"] [data-champ="compte"]');
+        }
+        if (b.dataset.c === 'suppr-ligne') {
+            lignes.splice(j, 1);
+            modifie();
+            dessinerDepart();
+        }
+    });
+    $('#depart-date').addEventListener('input', (e) => {
+        etat.d.ouverture.date = e.target.value;
+        majDepart();
+        modifie();
+    });
+
+    // Tout le bilan collé ou tapé d'un coup (même syntaxe que le bloc ```bilan des notes).
+    function remplirDepart() {
+        const texte = $('#depart-texte').value;
+        const statutTexte = $('#depart-texte-statut');
+        const doc = C.parseDoc(texte, 'bilan');
+        const ouv = { date: etat.d.ouverture.date, actif: [], passif: [] };
+        let inconnus = 0;
+        [['gauche', 'actif'], ['droite', 'passif']].forEach(([cote, dest]) => doc[cote].forEach((rub) => rub.lignes.forEach((l) => {
+            if (l.montant == null || /^total/i.test(l.libelle)) return;
+            const compte = l.num || C.chercherCompte(l.libelle, etat.d.comptes);
+            if (!compte) inconnus++;
+            ouv[dest].push({ compte: compte || l.libelle, montant: l.montant });
+        })));
+        if (!ouv.actif.length && !ouv.passif.length) {
+            statutTexte.textContent = 'Aucune ligne avec un montant trouvée.';
+            return;
+        }
+        const existant = C.ecritureOuverture(etat.d);
+        if (existant && !confirm('Remplacer le bilan de départ actuel ?')) return;
+        etat.d.ouverture = ouv;
+        modifie();
+        dessinerDepart();
+        statutTexte.textContent = (ouv.actif.length + ouv.passif.length) + ' lignes reprises'
+            + (inconnus ? ' · ' + inconnus + ' compte' + (inconnus > 1 ? 's' : '') + ' à préciser (en orange)' : '') + '.';
+    }
 
     // ---------- Saisie rapide ----------
     function decrireLignes(lignes) {
@@ -525,6 +703,12 @@
     //  Barre du dossier
     // =========================================================
     $('#compta-dossier').addEventListener('change', (e) => { if (e.target.value) ouvrir(+e.target.value); });
+    $('#compta-exemple').addEventListener('change', async (e) => {
+        const choix = e.target.value;
+        e.target.value = '';
+        if (choix === 'brico') await creer(C.exempleBricoDepot());
+        if (choix === 'depart' && await creer(C.exempleBilanDepart())) afficherOnglet('depart');
+    });
     [['#compta-titre', 'titre'], ['#compta-entreprise', 'entreprise'], ['#compta-cloture', 'cloture']].forEach(([sel, cle]) => {
         $(sel).addEventListener('input', (e) => { if (etat.d) { etat.d[cle] = e.target.value; modifie(); } });
     });
@@ -552,14 +736,39 @@
 
     document.addEventListener('click', async (e) => {
         const b = e.target.closest('[data-c]');
-        if (!b || b.closest('#ecritures')) return;
+        if (!b || b.closest('#ecritures') || b.closest('#depart-editeur')) return;
         switch (b.dataset.c) {
             case 'nouveau':
-                if (await creer(dossierVide())) { $('#compta-titre').focus(); $('#compta-titre').select(); }
+                if (await creer(dossierVide())) {
+                    afficherOnglet('depart');
+                    $('#compta-titre').focus();
+                    $('#compta-titre').select();
+                }
                 break;
             case 'exemple':
                 await creer(C.exempleBricoDepot());
                 break;
+            case 'exemple-depart':
+                if (await creer(C.exempleBilanDepart())) afficherOnglet('depart');
+                break;
+            case 'aller-journal':
+                afficherOnglet('journal');
+                break;
+            case 'aller-depart':
+                afficherOnglet('depart');
+                break;
+            case 'depart-remplir':
+                if (etat.d) remplirDepart();
+                break;
+            case 'exercice-suivant': {
+                if (!etat.d) return;
+                const suivant = Object.assign(dossierVide((etat.d.titre || 'Dossier') + ' – exercice suivant'), {
+                    entreprise: etat.d.entreprise || '', cloture: '31/12/N+1', comptes: Object.assign({}, etat.d.comptes),
+                    ouverture: C.ouvertureDepuisBilan(etat.d), matiere_id: etat.d.matiere_id,
+                });
+                if (await creer(suivant)) afficherOnglet('depart');
+                break;
+            }
             case 'ecriture-vide':
                 if (!etat.d) return;
                 ajouterEcriture({ date: dateParDefaut(), libelle: '', lignes: [

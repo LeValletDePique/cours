@@ -1,6 +1,7 @@
 <?php
 /**
- * Atelier comptable (Gestion de l'entreprise) : on saisit les écritures
+ * Atelier comptable (Gestion de l'entreprise) : on part d'un bilan de départ
+ * (facultatif, ses montants ouvrent les comptes : à-nouveaux), on saisit les écritures
  * (saisie rapide « 607 / 401 14000 », opérations courantes expliquées ou
  * lignes libres) et tout le reste se calcule : grand livre (comptes en T),
  * balance, compte de résultat, bilan, analyse (FR, BFR, trésorerie, SIG,
@@ -36,7 +37,12 @@ require __DIR__ . '/includes/header.php';
         <label class="mc-sr" for="compta-dossier">Dossier</label>
         <select id="compta-dossier" class="mc-select compta-barre__dossier" title="Changer de dossier"></select>
         <button type="button" class="mc-btn mc-btn--sm" data-c="nouveau"><?= icone('plus', 'mc-ico-sm') ?>Nouveau</button>
-        <button type="button" class="mc-btn mc-btn--sm" data-c="exemple" title="Cas Brico Dépôt : grand livre au 30/12 et opérations du 31/12"><?= icone('livre', 'mc-ico-sm') ?>Exemple Brico Dépôt</button>
+        <label class="mc-sr" for="compta-exemple">Ouvrir un exemple</label>
+        <select id="compta-exemple" class="mc-select compta-barre__exemple" title="Crée un dossier d'exemple pour voir le résultat attendu">
+            <option value="">Ouvrir un exemple…</option>
+            <option value="depart">Du bilan de départ au bilan de fin</option>
+            <option value="brico">Cas Brico Dépôt (grand livre au 30/12)</option>
+        </select>
         <span id="compta-statut" class="statut-save" role="status"></span>
         <span class="mc-actions compta-barre__fin">
             <button type="button" class="mc-btn mc-btn--sm" data-c="note" data-dossier-requis title="Crée une note avec le journal, le grand livre, la balance, le compte de résultat et le bilan"><?= icone('note', 'mc-ico-sm') ?>Créer une note</button>
@@ -63,6 +69,7 @@ require __DIR__ . '/includes/header.php';
 </section>
 
 <div class="mc-seg compta-onglets" role="tablist" aria-label="Étapes">
+    <button type="button" role="tab" data-onglet="depart">0. Bilan de départ</button>
     <button type="button" role="tab" data-onglet="journal" class="actif">1. Journal</button>
     <button type="button" role="tab" data-onglet="grand-livre">2. Grand livre</button>
     <button type="button" role="tab" data-onglet="balance">3. Balance</button>
@@ -75,13 +82,57 @@ require __DIR__ . '/includes/header.php';
 <!-- Aucun dossier encore -->
 <section class="mc-card" id="compta-vide" hidden>
     <div class="mc-empty">
-        <p>Crée un dossier pour un exercice (un TD, un cas d'entreprise…), ou ouvre l'exemple Brico Dépôt pour voir le résultat attendu.</p>
+        <p>Crée un dossier pour un exercice (un TD, un cas d'entreprise…), ou ouvre un exemple pour voir le résultat attendu.</p>
         <div class="mc-actions">
             <button type="button" class="mc-btn mc-btn--sm mc-btn--primary" data-c="nouveau"><?= icone('plus', 'mc-ico-sm') ?>Nouveau dossier</button>
-            <button type="button" class="mc-btn mc-btn--sm" data-c="exemple"><?= icone('livre', 'mc-ico-sm') ?>Ouvrir l'exemple Brico Dépôt</button>
+            <button type="button" class="mc-btn mc-btn--sm" data-c="exemple-depart"><?= icone('livre', 'mc-ico-sm') ?>Exemple : du bilan de départ au bilan de fin</button>
+            <button type="button" class="mc-btn mc-btn--sm" data-c="exemple"><?= icone('livre', 'mc-ico-sm') ?>Exemple : cas Brico Dépôt</button>
         </div>
     </div>
 </section>
+
+<!-- 0. Bilan de départ -->
+<div class="compta-panneau" data-panneau="depart" hidden>
+    <section class="mc-card" aria-labelledby="titre-depart">
+        <div class="mc-card__head">
+            <h2 class="mc-h" id="titre-depart"><?= icone('tableau', 'mc-ico-sm') ?>Bilan de départ</h2>
+            <label class="compta-champ compta-champ--court compta-depart__date">Date
+                <input type="text" id="depart-date" class="mc-input" maxlength="20" placeholder="01/01/N"></label>
+        </div>
+        <p class="mc-meta">Recopie le bilan donné dans l'énoncé : chaque montant ouvre son compte dans le grand livre
+            (un « à-nouveau », noté <b>AN</b>), puis les opérations du journal s'y ajoutent. Tape le numéro du compte
+            <em>ou</em> son nom (« banque », « capital », « dettes fournisseurs »). Un amortissement se saisit en négatif à l'actif.
+            Laisse vide si l'exercice part de zéro.</p>
+        <div class="compta-depart" id="depart-editeur">
+            <div class="compta-depart__cote" data-cote="actif">
+                <p class="mc-eyebrow">Actif — ce que l'entreprise possède</p>
+                <table class="cpt-ecr__lignes"><thead><tr><th>Compte</th><th>Intitulé</th><th>Montant</th><th></th></tr></thead><tbody></tbody></table>
+                <div class="compta-depart__pied"><button type="button" class="mc-link compta-lien" data-c="depart-ligne">+ ligne</button>
+                    <span class="compta-depart__total"></span></div>
+            </div>
+            <div class="compta-depart__cote" data-cote="passif">
+                <p class="mc-eyebrow">Passif — comment c'est financé</p>
+                <table class="cpt-ecr__lignes"><thead><tr><th>Compte</th><th>Intitulé</th><th>Montant</th><th></th></tr></thead><tbody></tbody></table>
+                <div class="compta-depart__pied"><button type="button" class="mc-link compta-lien" data-c="depart-ligne">+ ligne</button>
+                    <span class="compta-depart__total"></span></div>
+            </div>
+        </div>
+        <p class="cpt-verif" id="depart-verif"></p>
+        <details class="compta-coller">
+            <summary>Coller ou taper tout le bilan d'un coup</summary>
+            <p class="mc-meta">Une ligne par poste avec son montant, « Actif » puis « Passif » (les titres de rubriques sont ignorés).
+                Exemple : <code>Terrains 300 000</code>, <code>Capital : 500 000</code>, <code>164 Emprunts 100000</code>.</p>
+            <textarea id="depart-texte" class="mc-textarea mc-mono" rows="8" placeholder="Actif&#10;Constructions 120 000&#10;Matériel de transport 30 000&#10;Banque 22 000&#10;Passif&#10;Capital 150 000&#10;Emprunts 22 000"></textarea>
+            <div class="mc-actions"><button type="button" class="mc-btn mc-btn--sm" data-c="depart-remplir">Remplir le bilan de départ</button>
+                <span class="mc-meta" id="depart-texte-statut"></span></div>
+        </details>
+    </section>
+    <section class="mc-card" aria-labelledby="titre-depart-apercu">
+        <div class="mc-card__head"><h2 class="mc-h" id="titre-depart-apercu">Aperçu</h2>
+            <button type="button" class="mc-btn mc-btn--sm" data-c="aller-journal">Passer au journal<?= icone('suivant', 'mc-ico-sm') ?></button></div>
+        <div id="depart-apercu"></div>
+    </section>
+</div>
 
 <!-- 1. Journal -->
 <div class="compta-panneau" data-panneau="journal">
@@ -118,6 +169,7 @@ require __DIR__ . '/includes/header.php';
             <h2 class="mc-h" id="titre-journal"><?= icone('livre', 'mc-ico-sm') ?>Journal</h2>
             <span class="mc-meta" id="journal-resume"></span>
         </div>
+        <p class="mc-meta compta-an" id="journal-an" hidden></p>
         <datalist id="pcg-liste"></datalist>
         <div id="ecritures" class="compta-ecritures"></div>
         <div class="mc-actions compta-ecritures__pied">
@@ -160,6 +212,14 @@ require __DIR__ . '/includes/header.php';
     <p class="mc-meta">Comptes de classes 1 à 5 avec leur solde : ce que l'entreprise possède (actif) et
         comment c'est financé (passif). Le résultat du compte de résultat rejoint les capitaux propres.</p>
     <div id="bilan"></div>
+    <details class="compta-comparer" id="bilan-comparer" hidden>
+        <summary>Comparer avec le bilan de départ</summary>
+        <div id="bilan-depart"></div>
+    </details>
+    <div class="mc-actions compta-bilan__pied">
+        <button type="button" class="mc-btn mc-btn--sm" data-c="exercice-suivant" title="Nouveau dossier dont le bilan de départ est ce bilan de fin">
+            <?= icone('suivant', 'mc-ico-sm') ?>Exercice suivant à partir de ce bilan</button>
+    </div>
 </section>
 
 <!-- Analyse -->
@@ -186,6 +246,8 @@ require __DIR__ . '/includes/header.php';
     <section class="mc-card mc-aide">
         <div class="mc-card__head"><h2 class="mc-h"><?= icone('chapeau', 'mc-ico-sm') ?>La méthode, étape par étape</h2></div>
         <ol class="guide">
+            <li><strong>Bilan de départ</strong> (s'il y en a un) : chaque poste ouvre son compte dans le grand livre,
+                du côté où il figure au bilan : actif au débit, passif au crédit (les « à-nouveaux »).</li>
             <li><strong>Analyser l'opération</strong> : quels comptes sont touchés ? Augmentent-ils ou diminuent-ils ?
                 Il y a toujours <em>au moins deux comptes</em> (principe de la partie double).</li>
             <li><strong>Journal</strong> : on écrit l'opération (date, comptes, montants, libellé).

@@ -4,6 +4,7 @@
    notes (blocs ```journal, ```comptes, ```balance, ```resultat, ```bilan).
 
    - plan comptable général (PCG) : numéros et intitulés usuels
+   - bilan de départ : ses montants ouvrent les comptes (à-nouveaux « AN »)
    - à partir des écritures : grand livre, balance, compte de résultat,
      bilan, analyse (FR / BFR / trésorerie, SIG, ratios)
    - rendu HTML de ces documents (comptes en T, tableaux)
@@ -243,7 +244,15 @@
         interets: '661', 'interets d\'emprunt': '661', vente: '707', ventes: '707', 'ventes de marchandises': '707',
         prestations: '706', services: '706', subvention: '74', subventions: '74', 'produits financiers': '768',
         'impot sur les benefices': '695', is: '695',
+        // Intitulés de bilan courants
+        'creances clients': '411', 'dettes fournisseurs': '401', 'dettes fiscales': '44551', 'dettes sociales': '431',
+        'emprunts bancaires': '164', 'dettes financieres': '164', disponibilites: '512', tresorerie: '512',
+        'materiel de bureau': '2183', 'materiel informatique': '2183', materiel: '2154', 'materiel industriel': '2154',
+        'resultat de l\'exercice': '120', 'report a nouveau': '110', 'stocks de marchandises': '37',
+        'valeurs mobilieres de placement': '50', vmp: '50', 'concours bancaires': '519', decouvert: '519',
     };
+    const MOTS_VIDES = ['dettes', 'dette', 'creances', 'creance', 'de', 'des', 'du', 'd', 'sur', 'les', 'la', 'le',
+        'l', 'et', 'a', 'au', 'aux', 'autres', 'autre', 'en', 'pour', 'total'];
 
     // Compte désigné par un numéro ou par son nom (« 512 », « banque », « Ventes de marchandises »).
     function chercherCompte(texte, perso) {
@@ -251,7 +260,15 @@
         if (!t) return '';
         const num = normaliserCompte(t);
         if (num && /^\d/.test(t)) return num;
-        return (suggestionsComptes(t, perso, 1)[0] || {}).num || '';
+        const direct = suggestionsComptes(t, perso, 1)[0];
+        if (direct) return direct.num;
+        // « Dettes fournisseurs », « Créances clients » : on essaie les mots significatifs.
+        for (const mot of sansAccents(t).split(/[\s'’(),–-]+/)) {
+            if (mot.length < 3 || MOTS_VIDES.includes(mot)) continue;
+            const s = suggestionsComptes(mot, perso, 1)[0];
+            if (s) return s.num;
+        }
+        return '';
     }
 
     // Comptes qui correspondent au début d'un numéro ou à un mot (autocomplétion).
@@ -285,18 +302,91 @@
     //  Grand livre et balance
     // =========================================================
 
-    // dossier = { comptes: {num: nom}, ecritures: [{ date, libelle, lignes: [{ compte, debit, credit }] }] }
+    // =========================================================
+    //  Bilan de départ (bilan d'ouverture)
+    //  dossier.ouverture = { date, actif: [{ compte, montant }], passif: [{ compte, montant }] }
+    //  Actif -> débit (un amortissement saisi en négatif -> crédit) ; passif -> crédit.
+    // =========================================================
+    function lignesOuverture(ouv) {
+        const lignes = [];
+        [['actif', 1], ['passif', -1]].forEach(([cote, signe]) => {
+            ((ouv && ouv[cote]) || []).forEach((l) => {
+                const num = normaliserCompte(l.compte), m = cents(l.montant) * signe;
+                if (!num || !m) return;
+                lignes.push({ compte: num, debit: m > 0 ? euros(m) : null, credit: m < 0 ? euros(-m) : null });
+            });
+        });
+        return lignes;
+    }
+
+    // Écriture d'à-nouveaux (ou null s'il n'y a pas de bilan de départ).
+    function ecritureOuverture(dossier) {
+        const ouv = dossier && dossier.ouverture;
+        const lignes = lignesOuverture(ouv);
+        if (!lignes.length) return null;
+        return { date: (ouv && ouv.date) || '', libelle: 'À-nouveaux : reprise du bilan de départ', lignes, ouverture: true };
+    }
+
+    // Bilan de départ présenté comme un bilan (rubriques d'après les numéros de comptes).
+    function docOuverture(dossier, titre) {
+        const ouv = (dossier && dossier.ouverture) || {};
+        const perso = (dossier && dossier.comptes) || {};
+        const rub = { immo: [], circulant: [], cp: [], dettes: [] };
+        const ligne = (l) => {
+            const num = normaliserCompte(l.compte);
+            return { num, libelle: num ? nomCompte(num, perso) : 'Compte à préciser', montant: cents(l.montant) ? Number(l.montant) : 0 };
+        };
+        (ouv.actif || []).forEach((l) => {
+            if (l.montant == null || l.montant === '') return;
+            const x = ligne(l);
+            rub[x.num && x.num[0] === '2' ? 'immo' : 'circulant'].push(x);
+        });
+        (ouv.passif || []).forEach((l) => {
+            if (l.montant == null || l.montant === '') return;
+            const x = ligne(l);
+            const k2 = x.num.slice(0, 2);
+            rub[x.num[0] === '1' && !['15', '16', '17', '18'].includes(k2) ? 'cp' : 'dettes'].push(x);
+        });
+        return completerDoc({
+            type: 'bilan', titre: titre || 'Bilan de départ' + (ouv.date ? ' au ' + ouv.date : ''), entetes: ['Actif', 'Passif'],
+            gauche: [{ titre: 'Actif immobilisé', lignes: rub.immo }, { titre: 'Actif circulant', lignes: rub.circulant }],
+            droite: [{ titre: 'Capitaux propres', lignes: rub.cp }, { titre: 'Dettes', lignes: rub.dettes }],
+        });
+    }
+
+    // Bilan de fin d'un dossier -> bilan de départ de l'exercice suivant
+    // (le résultat devient « 120 Résultat de l'exercice » ou « 129 … (perte) », à affecter).
+    function ouvertureDepuisBilan(dossier) {
+        const calc = calculer(dossier);
+        const ouv = { date: '01/01/N+1', actif: [], passif: [] };
+        calc.comptes.forEach((c) => {
+            const s = cents(c.solde);
+            const cl = s ? classerBilan(c.num, s) : null;
+            if (!cl) return;
+            ouv[cl.cote].push({ compte: c.num, montant: euros(cl.cote === 'actif' ? s : -s) });
+        });
+        const r = cents(calc.resultat.resultat);
+        if (r > 0) ouv.passif.push({ compte: '120', montant: euros(r) });
+        if (r < 0) ouv.passif.push({ compte: '129', montant: euros(r) });
+        return ouv;
+    }
+
+    // dossier = { comptes: {num: nom}, ouverture?, ecritures: [{ date, libelle, lignes: [{ compte, debit, credit }] }] }
     function grandLivre(dossier) {
         const perso = (dossier && dossier.comptes) || {};
         const map = new Map();
-        ((dossier && dossier.ecritures) || []).forEach((ecr, i) => {
+        const an = ecritureOuverture(dossier);
+        (an ? [an] : []).concat((dossier && dossier.ecritures) || []).forEach((ecr, k) => {
+            const i = an ? k - 1 : k;
             (ecr.lignes || []).forEach((l) => {
                 const num = normaliserCompte(l.compte);
                 const d = cents(l.debit), c = cents(l.credit);
                 if (!num || (!d && !c)) return;
                 if (!map.has(num)) map.set(num, { num, nom: nomCompte(num, perso), mvts: [], d: 0, c: 0 });
                 const cpt = map.get(num);
-                const info = { n: i + 1, date: ecr.date || '', libelle: ecr.libelle || '' };
+                const info = ecr.ouverture
+                    ? { n: 0, ref: 'AN', date: ecr.date || '', libelle: 'À-nouveau (bilan de départ)' }
+                    : { n: i + 1, date: ecr.date || '', libelle: ecr.libelle || '' };
                 if (d) { cpt.mvts.push(Object.assign({ sens: 'D', montant: euros(d) }, info)); cpt.d += d; }
                 if (c) { cpt.mvts.push(Object.assign({ sens: 'C', montant: euros(c) }, info)); cpt.c += c; }
             });
@@ -664,7 +754,8 @@
         ecritures.forEach((ecr, i) => {
             const lignes = (ecr.lignes || []).filter((l) => normaliserCompte(l.compte) && (cents(l.debit) || cents(l.credit)));
             const tri = lignes.filter((l) => cents(l.debit)).concat(lignes.filter((l) => !cents(l.debit)));
-            corps += '<tr class="cpt-j__date"><td colspan="5"><span>' + (i + 1) + ' · ' + echapper(ecr.date || '') + '</span></td></tr>';
+            const numero = ecr.ouverture ? 'AN' : (ecritures[0] && ecritures[0].ouverture ? i : i + 1);
+            corps += '<tr class="cpt-j__date"><td colspan="5"><span>' + numero + ' · ' + echapper(ecr.date || '') + '</span></td></tr>';
             tri.forEach((l) => {
                 const n = normaliserCompte(l.compte), d = cents(l.debit), c = cents(l.credit);
                 td += d; tc += c;
@@ -904,8 +995,20 @@
                 .filter(Boolean).join(' · ') + '*', '');
         }
 
+        const an = ecritureOuverture(dossier);
+        if (an) {
+            out.push('## Bilan de départ', '', '```bilan ' + docOuverture(dossier).titre, 'Actif');
+            [['actif', 'Actif'], ['passif', 'Passif']].forEach(([cote, nom]) => {
+                if (cote === 'passif') out.push(nom);
+                (dossier.ouverture[cote] || []).forEach((l) => {
+                    const n = normaliserCompte(l.compte);
+                    if (n && cents(l.montant)) out.push(n + ' ' + nomCompte(n, perso) + ' ' + t(l.montant));
+                });
+            });
+            out.push('```', '');
+        }
         out.push('## Journal', '', '```journal');
-        (dossier.ecritures || []).forEach((ecr) => {
+        (an ? [an] : []).concat(dossier.ecritures || []).forEach((ecr) => {
             out.push(((ecr.date || '') + ' ' + (ecr.libelle || '')).trim() || 'Écriture');
             (ecr.lignes || []).forEach((l) => {
                 const n = normaliserCompte(l.compte);
@@ -1051,6 +1154,43 @@
     }
 
     // =========================================================
+    //  Exemple : bilan de départ + opérations de l'année (création d'un petit commerce)
+    // =========================================================
+    function exempleBilanDepart() {
+        const L = (compte, debit, credit) => ({ compte, debit: debit || null, credit: credit || null });
+        const op = (date, libelle, d, c, m) => ({ date, libelle, lignes: [L(d, m, 0), L(c, 0, m)] });
+        return {
+            version: 1,
+            titre: 'Exemple : du bilan de départ au bilan de fin',
+            entreprise: 'Boutique Martin',
+            cloture: '31/12/N',
+            comptes: {},
+            ouverture: {
+                date: '01/01/N',
+                actif: [
+                    { compte: '213', montant: 120000 }, { compte: '2182', montant: 30000 },
+                    { compte: '37', montant: 15000 }, { compte: '411', montant: 8000 },
+                    { compte: '512', montant: 22000 }, { compte: '530', montant: 5000 },
+                ],
+                passif: [
+                    { compte: '101', montant: 150000 }, { compte: '164', montant: 35000 }, { compte: '401', montant: 15000 },
+                ],
+            },
+            ecritures: [
+                op('05/01', 'Achat de marchandises à crédit', '607', '401', 6000),
+                op('12/01', 'Ventes de marchandises payées par chèque', '512', '707', 12000),
+                op('15/01', 'Règlement d\'un fournisseur par chèque', '401', '512', 10000),
+                op('20/01', 'Encaissement d\'un client par chèque', '512', '411', 5000),
+                op('25/01', 'Ventes de marchandises en espèces', '530', '707', 2500),
+                op('31/01', 'Loyer payé par virement', '613', '512', 1200),
+                op('31/01', 'Salaires payés par virement', '641', '512', 3500),
+                op('31/01', 'Intérêts de l\'emprunt prélevés', '661', '512', 300),
+                op('31/01', 'Remboursement d\'une partie de l\'emprunt', '164', '512', 2000),
+            ],
+        };
+    }
+
+    // =========================================================
     //  Exemple : cas Brico Dépôt (grand livre au 30/12 + opérations du 31/12)
     // =========================================================
     function exempleBricoDepot() {
@@ -1095,7 +1235,8 @@
         analyse, calculer, classerBilan,
         htmlComptesT, htmlBalance, htmlDoc, htmlJournal,
         saisieRapide, parseComptesT, parseJournal, parseBalance, parseDoc, blocMarkdown,
-        versMarkdown, ecritureOperation, exempleBricoDepot,
+        versMarkdown, ecritureOperation, exempleBricoDepot, exempleBilanDepart,
+        ecritureOuverture, docOuverture, ouvertureDepuisBilan,
     };
     racine.Compta = Compta;
     if (typeof module !== 'undefined' && module.exports) module.exports = Compta;

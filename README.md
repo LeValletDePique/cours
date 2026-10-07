@@ -80,6 +80,9 @@ Ouvre <http://localhost/cours/>.
 
 **Atelier comptable** (`compta.php`, menu « Comptabilité ») : un dossier par exercice
 (TD, cas d'entreprise), enregistré automatiquement.
+0. **Bilan de départ** (facultatif) : actif et passif de l'énoncé, comptes par numéro ou par
+   nom (« dettes fournisseurs » → 401), ou tout le bilan collé d'un coup. Chaque poste ouvre
+   son compte dans le grand livre (à-nouveau **AN** : actif au débit, passif au crédit).
 1. **Journal** : saisie rapide `31/12 607 / 401 14000 Achat de marchandises`
    (les comptes peuvent aussi s'écrire en mots : `banque / ventes 45000`),
    **opérations courantes** expliquées (quel compte débiter / créditer et pourquoi, TVA
@@ -93,7 +96,10 @@ Ouvre <http://localhost/cours/>.
 - **Aide-mémoire** : méthode, débit / crédit, classes du plan comptable, structure du bilan
   et du compte de résultat, formules, pièges fréquents, opérations courantes, plan
   comptable avec recherche.
-- **Exemple Brico Dépôt** (grand livre au 30/12 + opérations du 31/12) pour vérifier son corrigé.
+- **Bilan** : comparaison avec le bilan de départ, et « Exercice suivant » qui crée un dossier
+  dont le bilan de départ est ce bilan de fin (résultat en 120 / 129).
+- **Exemples** : « du bilan de départ au bilan de fin » et cas Brico Dépôt (grand livre au
+  30/12 + opérations du 31/12) pour vérifier son corrigé.
 - **Créer une note** : copie tout le dossier dans une note (rangée dans la matière de gestion).
 
 **Dans les notes** (menu **Compta** de l'éditeur) : blocs ```` ```comptes ```` (comptes en T),
