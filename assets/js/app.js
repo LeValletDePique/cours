@@ -172,6 +172,8 @@ const palette = (function () {
         { libelle: 'Aujourd\'hui', icone: 'aujourdhui', href: 'index.php' },
         { libelle: 'Matières', icone: 'matieres', href: 'matieres.php' },
         { libelle: 'Agenda', icone: 'agenda', href: 'agenda.php' },
+        { libelle: 'Comptabilité : atelier (bilan, grand livre, balance)', icone: 'calculatrice', href: 'compta.php' },
+        { libelle: 'Comptabilité : plan comptable et aide-mémoire', icone: 'calculatrice', href: 'compta.php#memo' },
         { libelle: 'Révision', icone: 'revision', href: 'revision.php' },
         { libelle: 'Échéances', icone: 'echeances', href: 'echeances.php' },
         { libelle: 'Favoris', icone: 'favori', href: 'favoris.php' },

@@ -29,7 +29,7 @@ if ($user) {
 
     $nav_actif ??= [
         'index' => 'aujourdhui', 'matieres' => 'matieres', 'matiere' => 'matieres',
-        'agenda' => 'agenda', 'revision' => 'revision', 'echeances' => 'echeances',
+        'agenda' => 'agenda', 'compta' => 'calculatrice', 'revision' => 'revision', 'echeances' => 'echeances',
         'favoris' => 'favori', 'corbeille' => 'corbeille', 'reglages' => 'reglages', 'aide' => 'aide',
     ][basename($_SERVER['SCRIPT_NAME'], '.php')] ?? '';
 
@@ -81,6 +81,7 @@ if ($user) {
     <?= $lien_nav('aujourdhui', 'index.php', 'Aujourd\'hui') ?>
     <?= $lien_nav('matieres', 'matieres.php', 'Matières', (int) $compteurs['matieres']) ?>
     <?= $lien_nav('agenda', 'agenda.php', 'Agenda') ?>
+    <?= $lien_nav('calculatrice', 'compta.php', 'Comptabilité') ?>
     <?= $lien_nav('revision', 'revision.php', 'Révision', (int) $compteurs['fiches']) ?>
     <?= $lien_nav('echeances', 'echeances.php', 'Échéances') ?>
     <div class="mc-rail__sep"></div>
