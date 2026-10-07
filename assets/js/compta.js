@@ -413,7 +413,7 @@
             + '<td><input class="cpt-in" data-champ="nom" value="' + ech(n ? C.nomCompte(n, etat.d.comptes) : '')
             + '" placeholder="Intitulé" aria-label="Intitulé du compte"></td>'
             + '<td><input class="cpt-in cpt-in--mt" data-champ="montant" inputmode="decimal" value="' + ech(montantSaisi(l.montant))
-            + '" aria-label="Montant"></td>'
+            + '" placeholder="Montant" aria-label="Montant"></td>'
             + '<td><button type="button" class="mc-btn mc-btn--ghost mc-btn--sm" data-c="suppr-ligne" title="Retirer la ligne" aria-label="Retirer la ligne">'
             + icone('fermer', 'mc-ico-sm') + '</button></td></tr>';
     }
@@ -439,6 +439,21 @@
             editeurDepart.querySelector('[data-cote="' + cote + '"] .compta-depart__total').textContent =
                 'Total ' + cote + ' : ' + C.fmt(total(cote));
         });
+        // Compte dans la mauvaise colonne (ex. 10 Capital à l'actif) : on le signale.
+        const malPlaces = [];
+        [['actif', '1', 'au passif'], ['passif', '23', 'à l\'actif']].forEach(([cote, classes, autre]) => ouv[cote].forEach((l) => {
+            const n = C.normaliserCompte(l.compte);
+            if (n && classes.includes(n[0])) malPlaces.push(n + ' ' + C.nomCompte(n, etat.d.comptes) + ' est normalement ' + autre);
+        }));
+        let avert = $('#depart-avert');
+        if (!avert) {
+            avert = document.createElement('p');
+            avert.id = 'depart-avert';
+            avert.className = 'compta-depart__avert';
+            $('#depart-verif').after(avert);
+        }
+        avert.hidden = !malPlaces.length;
+        avert.textContent = malPlaces.length ? '⚠ ' + malPlaces.join(' · ') + '.' : '';
         const verif = $('#depart-verif');
         if (!C.ecritureOuverture(etat.d)) {
             verif.className = 'cpt-verif';
