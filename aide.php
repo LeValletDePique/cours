@@ -35,11 +35,12 @@ $sections = [
     ],
     [
         'titre' => 'Blocs de code colorés',
-        'intro' => 'Trois accents graves ``` puis le nom du langage : la couleur est automatique.',
+        'intro' => 'Trois accents graves ``` puis le nom du langage : la couleur est automatique. Les couleurs [texte]{rouge} et le ++souligné++ restent actifs dedans (sauf ++ en C, Java, JS…, où c\'est un opérateur).',
         'exemples' => [
             "```python\ndef carre(x):\n    return x * x\n```",
             "```c\nint somme(int a, int b) {\n    return a + b;\n}\n```",
             "```sql\nSELECT nom FROM matieres WHERE ue_id = 2;\n```",
+            "Dans un bloc de code, ++souligné++ et [texte]{rouge} marchent aussi (pratique pour un MLD) :\n\n```sql\nPersonne(++idPersonne++, nom, prenom)\nTelephone(++idTelephone++, numero, #idPersonne) [← clé étrangère : pas soulignée]{rouge}\n```",
         ],
     ],
     [

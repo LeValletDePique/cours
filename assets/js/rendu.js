@@ -182,13 +182,88 @@
         },
     ];
 
+    // ---------- Couleur et souligné dans les blocs de code ----------
+    // Dans un bloc ``` (SQL, MLD, pseudo-code…), [texte]{rouge} et ++texte++
+    // restent actifs. On remplace d'abord ces balises par des caractères
+    // invisibles (zone Unicode privée) qui traversent highlight.js sans être
+    // touchés, puis marquerCode() les transforme en <span>/<u> dans le DOM.
+    const M_SOUL = '', M_FIN_SOUL = '', M_FIN_COUL = '';
+    const M_COUL = 0xE100;   // + n° de la couleur dans la liste du bloc
+    const RE_MARQUES = /([--])/;
+    // Langages où « ++ » est un opérateur : « ++i + j++ » ne souligne rien.
+    const LANGAGES_PLUSPLUS = new Set(['c', 'h', 'cpp', 'cc', 'cxx', 'hpp', 'c++', 'java',
+        'js', 'javascript', 'jsx', 'mjs', 'ts', 'typescript', 'tsx', 'cs', 'csharp', 'c#',
+        'php', 'go', 'golang', 'kotlin', 'kt', 'swift', 'dart', 'objectivec', 'objc',
+        'groovy', 'perl', 'pl', 'awk', 'arduino', 'ino', 'glsl', 'd']);
+    const couleursCode = [];
+
+    function baliserCode(code, langage) {
+        let s = code.replace(new RegExp(RE_COULEUR.source.slice(1), 'g'), (m, texte, couleur) => {
+            let i = couleursCode.indexOf(couleur);
+            if (i < 0) i = couleursCode.push(couleur) - 1;
+            return i > 0xFF ? m : String.fromCharCode(M_COUL + i) + texte + M_FIN_COUL;
+        });
+        if (!LANGAGES_PLUSPLUS.has(langage.toLowerCase().replace(/[^a-z0-9+#]/g, ''))) {
+            s = s.replace(/(?<!\+)\+\+(?=[^\s+])([^\n]*?[^\s+])\+\+(?!\+)/g,
+                (m, texte) => M_SOUL + texte + M_FIN_SOUL);
+        }
+        return s;
+    }
+
+    // Remplace les caractères-balises par de vrais éléments, morceau de texte
+    // par morceau de texte : une couleur peut ainsi traverser les <span> de
+    // highlight.js (commentaire, mot-clé…) sans casser le HTML.
+    function marquerCode(bloc) {
+        const textes = [];
+        const parcours = document.createTreeWalker(bloc, NodeFilter.SHOW_TEXT);
+        while (parcours.nextNode()) textes.push(parcours.currentNode);
+        let souligne = 0;
+        const pile = [];   // couleurs ouvertes
+        textes.forEach((noeud) => {
+            if (!RE_MARQUES.test(noeud.data) && !souligne && !pile.length) return;
+            const frag = document.createDocumentFragment();
+            noeud.data.split(RE_MARQUES).forEach((morceau) => {
+                if (morceau === M_SOUL) souligne++;
+                else if (morceau === M_FIN_SOUL) souligne = Math.max(0, souligne - 1);
+                else if (morceau === M_FIN_COUL) pile.pop();
+                else if (morceau.length === 1 && RE_MARQUES.test(morceau)) {
+                    pile.push(couleursCode[morceau.charCodeAt(0) - M_COUL]);
+                } else if (morceau) {
+                    let el = document.createTextNode(morceau);
+                    const couleur = pile[pile.length - 1];
+                    if (couleur) {
+                        const span = document.createElement('span');
+                        if (couleur[0] === '#') span.style.color = couleur;
+                        else span.className = 'couleur-' + couleur;
+                        span.appendChild(el);
+                        el = span;
+                    }
+                    if (souligne) {
+                        const u = document.createElement('u');
+                        u.appendChild(el);
+                        el = u;
+                    }
+                    frag.appendChild(el);
+                }
+            });
+            noeud.parentNode.replaceChild(frag, noeud);
+        });
+    }
+
     if (window.marked) {
         marked.use({
             gfm: true, breaks: true, extensions,
             renderer: {
-                // Blocs de comptabilité : ```bilan, ```comptes… (sinon bloc de code normal).
+                // Blocs de comptabilité : ```bilan, ```comptes… ; sinon bloc de
+                // code normal, avec couleurs et souligné (voir baliserCode).
                 code(code, info) {
-                    return (window.Compta && window.Compta.blocMarkdown(info, code)) || false;
+                    const compta = window.Compta && window.Compta.blocMarkdown(info, code);
+                    if (compta) return compta;
+                    const langage = (info || '').match(/\S*/)[0];
+                    const classe = langage
+                        ? ' class="language-' + echapper(langage).replace(/"/g, '&quot;') + '"' : '';
+                    return '<pre><code' + classe + '>'
+                        + echapper(baliserCode(code.replace(/\n$/, ''), langage)) + '\n</code></pre>\n';
                 },
             },
         });
@@ -246,6 +321,7 @@
     }
 
     window.rendreMarkdown = function (source, cible) {
+        couleursCode.length = 0;
         const { texte, math } = protegerMath((source || '').replace(/\r\n?/g, '\n'));
         let html = marked.parse(normaliserRetraits(texte));
         html = flechesAffectation(DOMPurify.sanitize(html));
@@ -255,6 +331,7 @@
         if (window.hljs) {
             cible.querySelectorAll('pre code').forEach((b) => hljs.highlightElement(b));
         }
+        cible.querySelectorAll('pre code').forEach(marquerCode);
         if (window.MathJax && MathJax.typesetPromise) {
             return MathJax.typesetPromise([cible]).catch(() => {});
         }
