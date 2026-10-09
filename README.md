@@ -41,7 +41,8 @@ Ouvre <http://localhost/cours/>.
   Ctrl+B / Ctrl+I, Tab / Maj+Tab, Entrée continue une liste.
 - **Notes indentées** acceptées : le gras et les puces marchent même décalés.
 - **Texte en couleur** `[texte]{rouge}`, **surlignage** `==texte==` et **souligné**
-  `++texte++` (bouton U ou Ctrl+U), y compris dans les blocs de code (MLD en SQL…).
+  `++texte++` (bouton U ou Ctrl+U), y compris dans les blocs de code SQL / pseudo-code
+  (avec aussi `~~barré~~`, `==surligné==` et `**gras**` ; seule la couleur en C, Python…).
 - **Tableaux faciles** : `Titre 1 | Titre 2` + Entrée crée le tableau, Entrée ajoute
   une ligne, Tab passe de case en case (alignement auto), éditeur visuel type
   tableur (création et modification), collage depuis Excel / Google Sheets.

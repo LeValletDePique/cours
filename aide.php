@@ -35,12 +35,12 @@ $sections = [
     ],
     [
         'titre' => 'Blocs de code colorés',
-        'intro' => 'Trois accents graves ``` puis le nom du langage : la couleur est automatique. Les couleurs [texte]{rouge} et le ++souligné++ restent actifs dedans (sauf ++ en C, Java, JS…, où c\'est un opérateur).',
+        'intro' => 'Trois accents graves ``` puis le nom du langage : la couleur est automatique. En SQL, en pseudo-code ou sans langage, [texte]{rouge}, ++souligné++, ~~barré~~, ==surligné== et **gras** restent actifs dedans. Dans les langages où ces symboles sont des opérateurs (C, Python, Java, JS…), seule la couleur marche.',
         'exemples' => [
             "```python\ndef carre(x):\n    return x * x\n```",
             "```c\nint somme(int a, int b) {\n    return a + b;\n}\n```",
             "```sql\nSELECT nom FROM matieres WHERE ue_id = 2;\n```",
-            "Dans un bloc de code, ++souligné++ et [texte]{rouge} marchent aussi (pratique pour un MLD) :\n\n```sql\nPersonne(++idPersonne++, nom, prenom)\nTelephone(++idTelephone++, numero, #idPersonne) [← clé étrangère : pas soulignée]{rouge}\n```",
+            "Dans un bloc de code, couleurs, ++souligné++, ~~barré~~, ==surligné== et **gras** marchent aussi (pratique pour un MLD) :\n\n```sql\nPersonne(++idPersonne++, nom, prenom)\nTelephone(++idTelephone++, numero, #idPersonne) [← clé étrangère : pas soulignée]{rouge}\nVoiture(++idVoiture++, ~~appelation~~, **marque**, ==#idPersonne==)\n```",
         ],
     ],
     [

@@ -4,6 +4,7 @@
    - protège les formules LaTeX avant le Markdown
    - tolère les notes indentées (voir normaliserRetraits)
    - texte en couleur : [texte]{rouge}   surlignage : ==texte==   souligné : ++texte++
+     (aussi dans les blocs de code, sauf langages où ce sont des opérateurs)
    - affectation du pseudo-code : <- s'affiche ←
    - comptabilité : blocs ```journal, ```comptes (comptes en T), ```balance,
      ```resultat et ```bilan (voir compta-moteur.js, chargé avant ce fichier)
@@ -182,19 +183,31 @@
         },
     ];
 
-    // ---------- Couleur et souligné dans les blocs de code ----------
-    // Dans un bloc ``` (SQL, MLD, pseudo-code…), [texte]{rouge} et ++texte++
-    // restent actifs. On remplace d'abord ces balises par des caractères
-    // invisibles (zone Unicode privée) qui traversent highlight.js sans être
-    // touchés, puis marquerCode() les transforme en <span>/<u> dans le DOM.
-    const M_SOUL = '', M_FIN_SOUL = '', M_FIN_COUL = '';
-    const M_COUL = 0xE100;   // + n° de la couleur dans la liste du bloc
-    const RE_MARQUES = /([--])/;
-    // Langages où « ++ » est un opérateur : « ++i + j++ » ne souligne rien.
-    const LANGAGES_PLUSPLUS = new Set(['c', 'h', 'cpp', 'cc', 'cxx', 'hpp', 'c++', 'java',
+    // ---------- Mise en forme dans les blocs de code ----------
+    // Dans un bloc ``` (SQL, MLD, pseudo-code…), [texte]{rouge}, ++souligné++,
+    // ~~barré~~, ==surligné== et **gras** restent actifs. On remplace d'abord
+    // ces balises par des caractères invisibles (zone Unicode privée) qui
+    // traversent highlight.js sans être touchés, puis marquerCode() les
+    // transforme en vrais éléments dans le DOM.
+    const STYLES_CODE = [
+        // ouverture, fermeture, élément, balise Markdown
+        { ouv: '\uE000', ferm: '\uE001', el: 'u', re: /(?<!\+)\+\+(?=[^\s+])([^\n]*?[^\s+])\+\+(?!\+)/g },
+        { ouv: '\uE002', ferm: '\uE003', el: 'del', re: /(?<!~)~~(?=[^\s~])([^\n]*?[^\s~])~~(?!~)/g },
+        { ouv: '\uE004', ferm: '\uE005', el: 'mark', re: /(?<!=)==(?=[^\s=])([^\n]*?[^\s=])==(?!=)/g },
+        { ouv: '\uE006', ferm: '\uE007', el: 'strong', re: /(?<!\*)\*\*(?=[^\s*])([^\n]*?[^\s*])\*\*(?!\*)/g },
+    ];
+    const M_FIN_COUL = '\uE00F';
+    const M_COUL = 0xE100;   // + n° de la couleur dans la liste couleursCode
+    const RE_MARQUES = /([\uE000-\uE00F\uE100-\uE1FF])/;
+    // Langages où ++, ~~, == ou ** sont des opérateurs (« i++ », « a == b »,
+    // « x ** 2 », « char **argv ») : seule la couleur y est active.
+    const LANGAGES_OPERATEURS = new Set(['c', 'h', 'cpp', 'cc', 'cxx', 'hpp', 'c++', 'java',
         'js', 'javascript', 'jsx', 'mjs', 'ts', 'typescript', 'tsx', 'cs', 'csharp', 'c#',
         'php', 'go', 'golang', 'kotlin', 'kt', 'swift', 'dart', 'objectivec', 'objc',
-        'groovy', 'perl', 'pl', 'awk', 'arduino', 'ino', 'glsl', 'd']);
+        'groovy', 'perl', 'pl', 'awk', 'arduino', 'ino', 'glsl', 'd', 'python', 'py',
+        'ruby', 'rb', 'rust', 'rs', 'scala', 'r', 'julia', 'lua', 'haskell', 'hs',
+        'ocaml', 'ml', 'fortran', 'matlab', 'bash', 'sh', 'shell', 'zsh', 'powershell', 'ps1',
+        'elixir', 'erlang', 'vb', 'vbnet']);
     const couleursCode = [];
 
     function baliserCode(code, langage) {
@@ -203,32 +216,37 @@
             if (i < 0) i = couleursCode.push(couleur) - 1;
             return i > 0xFF ? m : String.fromCharCode(M_COUL + i) + texte + M_FIN_COUL;
         });
-        if (!LANGAGES_PLUSPLUS.has(langage.toLowerCase().replace(/[^a-z0-9+#]/g, ''))) {
-            s = s.replace(/(?<!\+)\+\+(?=[^\s+])([^\n]*?[^\s+])\+\+(?!\+)/g,
-                (m, texte) => M_SOUL + texte + M_FIN_SOUL);
+        if (!LANGAGES_OPERATEURS.has(langage.toLowerCase().replace(/[^a-z0-9+#]/g, ''))) {
+            STYLES_CODE.forEach((st) => {
+                s = s.replace(st.re, (m, texte) => st.ouv + texte + st.ferm);
+            });
         }
         return s;
     }
 
     // Remplace les caractères-balises par de vrais éléments, morceau de texte
-    // par morceau de texte : une couleur peut ainsi traverser les <span> de
-    // highlight.js (commentaire, mot-clé…) sans casser le HTML.
+    // par morceau de texte : une mise en forme peut ainsi traverser les <span>
+    // de highlight.js (commentaire, mot-clé…) sans casser le HTML.
     function marquerCode(bloc) {
         const textes = [];
         const parcours = document.createTreeWalker(bloc, NodeFilter.SHOW_TEXT);
         while (parcours.nextNode()) textes.push(parcours.currentNode);
-        let souligne = 0;
-        const pile = [];   // couleurs ouvertes
+        const actifs = STYLES_CODE.map(() => 0);   // profondeur de chaque style
+        const pile = [];                           // couleurs ouvertes
+        const ouvert = () => pile.length || actifs.some((n) => n > 0);
         textes.forEach((noeud) => {
-            if (!RE_MARQUES.test(noeud.data) && !souligne && !pile.length) return;
+            if (!RE_MARQUES.test(noeud.data) && !ouvert()) return;
             const frag = document.createDocumentFragment();
             noeud.data.split(RE_MARQUES).forEach((morceau) => {
-                if (morceau === M_SOUL) souligne++;
-                else if (morceau === M_FIN_SOUL) souligne = Math.max(0, souligne - 1);
+                if (!morceau) return;
+                const iOuv = STYLES_CODE.findIndex((st) => st.ouv === morceau);
+                const iFerm = STYLES_CODE.findIndex((st) => st.ferm === morceau);
+                if (iOuv >= 0) actifs[iOuv]++;
+                else if (iFerm >= 0) actifs[iFerm] = Math.max(0, actifs[iFerm] - 1);
                 else if (morceau === M_FIN_COUL) pile.pop();
                 else if (morceau.length === 1 && RE_MARQUES.test(morceau)) {
                     pile.push(couleursCode[morceau.charCodeAt(0) - M_COUL]);
-                } else if (morceau) {
+                } else {
                     let el = document.createTextNode(morceau);
                     const couleur = pile[pile.length - 1];
                     if (couleur) {
@@ -238,10 +256,11 @@
                         span.appendChild(el);
                         el = span;
                     }
-                    if (souligne) {
-                        const u = document.createElement('u');
-                        u.appendChild(el);
-                        el = u;
+                    for (let i = STYLES_CODE.length - 1; i >= 0; i--) {
+                        if (!actifs[i]) continue;
+                        const enveloppe = document.createElement(STYLES_CODE[i].el);
+                        enveloppe.appendChild(el);
+                        el = enveloppe;
                     }
                     frag.appendChild(el);
                 }
@@ -255,7 +274,7 @@
             gfm: true, breaks: true, extensions,
             renderer: {
                 // Blocs de comptabilité : ```bilan, ```comptes… ; sinon bloc de
-                // code normal, avec couleurs et souligné (voir baliserCode).
+                // code normal, avec couleurs, souligné, barré… (voir baliserCode).
                 code(code, info) {
                     const compta = window.Compta && window.Compta.blocMarkdown(info, code);
                     if (compta) return compta;
