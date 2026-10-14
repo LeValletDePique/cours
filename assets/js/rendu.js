@@ -7,7 +7,7 @@
      (aussi dans les blocs de code, sauf langages où ce sont des opérateurs)
    - affectation du pseudo-code : <- s'affiche ←
    - comptabilité : blocs ```journal, ```comptes (comptes en T), ```balance,
-     ```resultat et ```bilan (voir compta-moteur.js, chargé avant ce fichier)
+     ```resultat, ```bilan et ```facture (voir compta-moteur.js, chargé avant ce fichier)
    - nettoie le HTML (anti-XSS) avec DOMPurify
    - colore le code (highlight.js, + pseudo-code) et rend les maths (MathJax)
    ============================================================ */

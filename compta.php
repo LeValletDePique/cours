@@ -5,7 +5,9 @@
  * (saisie rapide « 607 / 401 14000 », opérations courantes expliquées ou
  * lignes libres) et tout le reste se calcule : grand livre (comptes en T),
  * balance, compte de résultat, bilan, analyse (FR, BFR, trésorerie, SIG,
- * ratios). Aide-mémoire du cours en dernier onglet.
+ * ratios). Onglet « Factures & TVA » : une facture (remises, escompte, port,
+ * acompte) ou un avoir donne ses écritures chez le fournisseur et chez le client ;
+ * ristourne selon un barème ; déclaration de TVA. Aide-mémoire du cours en dernier onglet.
  * Calculs : assets/js/compta-moteur.js ; interface : assets/js/compta.js.
  */
 require_once __DIR__ . '/includes/auth.php';
@@ -42,6 +44,7 @@ require __DIR__ . '/includes/header.php';
             <option value="">Ouvrir un exemple…</option>
             <option value="depart">Du bilan de départ au bilan de fin</option>
             <option value="brico">Cas Brico Dépôt (grand livre au 30/12)</option>
+            <option value="facturation">La facturation (factures, avoirs, TVA)</option>
         </select>
         <span id="compta-statut" class="statut-save" role="status"></span>
         <span class="mc-actions compta-barre__fin">
@@ -71,6 +74,7 @@ require __DIR__ . '/includes/header.php';
 <div class="mc-seg compta-onglets" role="tablist" aria-label="Étapes">
     <button type="button" role="tab" data-onglet="depart">0. Bilan de départ</button>
     <button type="button" role="tab" data-onglet="journal" class="actif">1. Journal</button>
+    <button type="button" role="tab" data-onglet="factures" title="Facture, avoir, ristourne, déclaration de TVA">Factures &amp; TVA</button>
     <button type="button" role="tab" data-onglet="grand-livre">2. Grand livre</button>
     <button type="button" role="tab" data-onglet="balance">3. Balance</button>
     <button type="button" role="tab" data-onglet="resultat">4. Compte de résultat</button>
@@ -87,6 +91,7 @@ require __DIR__ . '/includes/header.php';
             <button type="button" class="mc-btn mc-btn--sm mc-btn--primary" data-c="nouveau"><?= icone('plus', 'mc-ico-sm') ?>Nouveau dossier</button>
             <button type="button" class="mc-btn mc-btn--sm" data-c="exemple-depart"><?= icone('livre', 'mc-ico-sm') ?>Exemple : du bilan de départ au bilan de fin</button>
             <button type="button" class="mc-btn mc-btn--sm" data-c="exemple"><?= icone('livre', 'mc-ico-sm') ?>Exemple : cas Brico Dépôt</button>
+            <button type="button" class="mc-btn mc-btn--sm" data-c="exemple-facturation"><?= icone('livre', 'mc-ico-sm') ?>Exemple : la facturation</button>
         </div>
     </div>
 </section>
@@ -154,6 +159,10 @@ require __DIR__ . '/includes/header.php';
                 <div class="mc-form-ligne">
                     <select id="op-type" class="mc-select mc-input--large"></select>
                     <input type="text" id="op-montant" class="mc-input mc-input--court" inputmode="decimal" placeholder="Montant" aria-label="Montant">
+                    <select id="op-taux" class="mc-select mc-input--court" aria-label="Taux de TVA" hidden>
+                        <option value="20">TVA 20 %</option><option value="10">TVA 10 %</option>
+                        <option value="5.5">TVA 5,5 %</option><option value="2.1">TVA 2,1 %</option>
+                    </select>
                     <input type="text" id="op-date" class="mc-input mc-input--court" placeholder="31/12" aria-label="Date">
                     <button type="submit" class="mc-btn mc-btn--sm">Ajouter</button>
                 </div>
@@ -161,7 +170,9 @@ require __DIR__ . '/includes/header.php';
             </form>
         </div>
         <p class="mc-meta">Une opération avec plusieurs comptes (TVA, salaires…) :
-            <button type="button" class="mc-link compta-lien" data-c="ecriture-vide">ajoute une écriture vide</button> et remplis ses lignes.</p>
+            <button type="button" class="mc-link compta-lien" data-c="ecriture-vide">ajoute une écriture vide</button> et remplis ses lignes.
+            Une facture avec remise, escompte, acompte ou un avoir :
+            <button type="button" class="mc-link compta-lien" data-c="aller-factures">onglet Factures &amp; TVA</button>.</p>
     </section>
 
     <section class="mc-card" aria-labelledby="titre-journal">
@@ -178,6 +189,137 @@ require __DIR__ . '/includes/header.php';
         </div>
         <div id="journal-papier" hidden></div>
     </section>
+</div>
+
+<!-- Factures et TVA (chapitre « Les échanges commerciaux et la facturation ») -->
+<div class="compta-panneau" data-panneau="factures" hidden>
+    <section class="mc-card" aria-labelledby="titre-facture" id="carte-facture">
+        <div class="mc-card__head">
+            <h2 class="mc-h" id="titre-facture"><?= icone('calculatrice', 'mc-ico-sm') ?>Facture → écritures</h2>
+            <label class="mc-sr" for="fact-type">Type de facture</label>
+            <select id="fact-type" class="mc-select compta-facture__type">
+                <option value="doit">Facture (de doit)</option>
+                <option value="retour">Avoir : retour de marchandises</option>
+                <option value="reduction">Avoir : réduction hors facture (ristourne, rabais, remise oubliée)</option>
+            </select>
+        </div>
+        <p class="mc-meta">Recopie la facture de l'énoncé : le net commercial, l'escompte, la TVA et le net à payer se calculent,
+            et les écritures sont données <b>chez le fournisseur</b> et <b>chez le client</b>, avec le pourquoi de chaque compte.
+            Pratique pour vérifier un corrigé ; « Ajouter au journal » les recopie dans le dossier ouvert.</p>
+        <div class="compta-facture">
+            <div class="compta-facture__saisie">
+                <div class="compta-facture__champs">
+                    <label class="compta-champ">Fournisseur <input type="text" id="fact-fournisseur" class="mc-input" placeholder="Fournisseur Y"></label>
+                    <label class="compta-champ">Client <input type="text" id="fact-client" class="mc-input" placeholder="Client X"></label>
+                    <label class="compta-champ compta-champ--court">N° <input type="text" id="fact-numero" class="mc-input" placeholder="123"></label>
+                    <label class="compta-champ compta-champ--court">Date <input type="text" id="fact-date" class="mc-input" placeholder="10/03"></label>
+                </div>
+                <table class="cpt-ecr__lignes compta-facture__lignes">
+                    <thead><tr><th>Désignation</th><th>Qté</th><th>PU HT</th><th>Montant</th><th></th></tr></thead>
+                    <tbody id="fact-lignes"></tbody>
+                </table>
+                <button type="button" class="mc-link compta-lien" data-f="ligne">+ ligne</button>
+                <div class="compta-facture__champs">
+                    <label class="compta-champ">Réductions commerciales (%)
+                        <input type="text" id="fact-remises" class="mc-input" placeholder="25 ou 10 + 5 ou rabais 5"
+                               title="Remise, rabais ou ristourne sur la facture, en %. Plusieurs : « 10 + 5 » (en cascade). Un montant : « 50 € »."></label>
+                    <label class="compta-champ compta-champ--court">Escompte (%)
+                        <input type="text" id="fact-escompte" class="mc-input" inputmode="decimal" placeholder="2"></label>
+                    <label class="compta-champ compta-champ--court" data-fact-doit>Frais de port HT
+                        <input type="text" id="fact-port" class="mc-input" inputmode="decimal" placeholder="0"></label>
+                    <label class="compta-champ compta-champ--court">TVA
+                        <select id="fact-tva" class="mc-select">
+                            <option value="20">20 %</option><option value="10">10 %</option>
+                            <option value="5.5">5,5 %</option><option value="2.1">2,1 %</option><option value="0">Sans TVA</option>
+                        </select></label>
+                </div>
+                <div class="compta-facture__champs" data-fact-doit>
+                    <label class="compta-champ compta-champ--court">Acompte versé
+                        <input type="text" id="fact-acompte" class="mc-input" inputmode="decimal" placeholder="0"></label>
+                    <label class="compta-facture__case"><input type="checkbox" id="fact-acompte-verse" class="mc-check" checked>
+                        Écrire aussi le versement de l'acompte (à la commande)</label>
+                </div>
+                <div class="compta-facture__champs">
+                    <label class="compta-champ">Ce qui est vendu
+                        <select id="fact-nature" class="mc-select"></select></label>
+                    <label class="compta-champ compta-champ--court">Vente
+                        <input type="text" id="fact-vente" class="mc-input mc-mono" list="pcg-liste" title="Compte de vente chez le fournisseur (707, 701, 706…)"></label>
+                    <label class="compta-champ compta-champ--court">Achat
+                        <input type="text" id="fact-achat" class="mc-input mc-mono" list="pcg-liste" title="Compte d'achat chez le client (607, 601, 61/62…, 2… pour une immobilisation)"></label>
+                    <label class="compta-champ">Règlement
+                        <select id="fact-reglement" class="mc-select">
+                            <option value="credit">À crédit (à payer plus tard)</option>
+                            <option value="512">Au comptant : chèque, CB, virement (512)</option>
+                            <option value="530">Au comptant : espèces (530)</option>
+                        </select></label>
+                </div>
+                <div class="mc-actions">
+                    <button type="button" class="mc-btn mc-btn--sm" data-f="copier" title="Copie la facture au format ```facture : à coller dans une note">
+                        <?= icone('note', 'mc-ico-sm') ?>Copier pour une note</button>
+                    <button type="button" class="mc-btn mc-btn--ghost mc-btn--sm" data-f="vider">Nouvelle facture</button>
+                    <button type="button" class="mc-btn mc-btn--ghost mc-btn--sm" data-f="exemple">Exemple du cours</button>
+                    <span class="mc-meta" id="fact-statut" role="status"></span>
+                </div>
+            </div>
+            <div class="compta-facture__apercu" id="fact-apercu"></div>
+        </div>
+    </section>
+
+    <div class="mc-two compta-facture__cotes">
+        <?php foreach (['fournisseur' => 'Chez le fournisseur', 'client' => 'Chez le client'] as $cote => $titre_cote): ?>
+            <section class="mc-card" aria-labelledby="titre-fact-<?= $cote ?>">
+                <div class="mc-card__head">
+                    <h2 class="mc-h" id="titre-fact-<?= $cote ?>"><?= $titre_cote ?></h2>
+                    <button type="button" class="mc-btn mc-btn--sm" data-f="ajouter" data-cote="<?= $cote ?>"
+                            title="Recopie ces écritures dans le journal du dossier ouvert"><?= icone('plus', 'mc-ico-sm') ?>Ajouter au journal</button>
+                </div>
+                <div id="fact-ecr-<?= $cote ?>"></div>
+                <ul class="guide compta-facture__pourquoi" id="fact-pourquoi-<?= $cote ?>"></ul>
+            </section>
+        <?php endforeach; ?>
+    </div>
+
+    <div class="mc-two">
+        <section class="mc-card" aria-labelledby="titre-ristourne">
+            <div class="mc-card__head"><h2 class="mc-h" id="titre-ristourne">Ristourne selon un barème</h2></div>
+            <p class="mc-meta">Chaque tranche du chiffre d'affaires HT a son taux (comme dans le cours). L'avoir se prépare ensuite en un clic.</p>
+            <div class="compta-facture__champs">
+                <label class="compta-champ compta-champ--court">CA HT de l'année
+                    <input type="text" id="rist-ca" class="mc-input" inputmode="decimal" placeholder="10 000"></label>
+                <label class="compta-champ">Calcul
+                    <select id="rist-mode" class="mc-select">
+                        <option value="tranches">Par tranches (chaque tranche à son taux)</option>
+                        <option value="global">Global (tout le CA au taux de la tranche atteinte)</option>
+                    </select></label>
+            </div>
+            <table class="cpt-ecr__lignes compta-facture__lignes">
+                <thead><tr><th>CA de</th><th>à</th><th>Taux %</th><th></th></tr></thead>
+                <tbody id="rist-tranches"></tbody>
+            </table>
+            <button type="button" class="mc-link compta-lien" data-f="tranche">+ tranche</button>
+            <p class="compta-facture__resultat" id="rist-resultat" aria-live="polite"></p>
+            <div class="mc-actions"><button type="button" class="mc-btn mc-btn--sm" data-f="avoir-ristourne">Préparer l'avoir de cette ristourne</button></div>
+        </section>
+
+        <section class="mc-card" aria-labelledby="titre-tva">
+            <div class="mc-card__head"><h2 class="mc-h" id="titre-tva">Déclaration de TVA (fin de mois)</h2>
+                <button type="button" class="mc-btn mc-btn--ghost mc-btn--sm" data-f="tva-soldes" title="Reprend les soldes des comptes de TVA du dossier">
+                    <?= icone('synchro', 'mc-ico-sm') ?>Soldes du dossier</button></div>
+            <p class="mc-meta">On solde les comptes de TVA du mois : <code>TVA à décaisser = TVA collectée − TVA déductible</code>.
+                Si la TVA déductible est plus forte, c'est un crédit de TVA (44567), imputé le mois suivant.</p>
+            <div class="compta-facture__champs">
+                <label class="compta-champ compta-champ--court">44571 collectée <input type="text" id="tva-collectee" class="mc-input" inputmode="decimal"></label>
+                <label class="compta-champ compta-champ--court">44566 déd. sur ABS <input type="text" id="tva-abs" class="mc-input" inputmode="decimal"></label>
+                <label class="compta-champ compta-champ--court">44562 déd. sur immo <input type="text" id="tva-immo" class="mc-input" inputmode="decimal"></label>
+                <label class="compta-champ compta-champ--court">44567 crédit antérieur <input type="text" id="tva-credit" class="mc-input" inputmode="decimal"></label>
+                <label class="compta-champ compta-champ--court">Date <input type="text" id="tva-date" class="mc-input" placeholder="31/03"></label>
+            </div>
+            <p class="compta-facture__resultat" id="tva-resultat" aria-live="polite"></p>
+            <div id="tva-ecriture"></div>
+            <div class="mc-actions"><button type="button" class="mc-btn mc-btn--sm" data-f="tva-ajouter"><?= icone('plus', 'mc-ico-sm') ?>Ajouter au journal</button>
+                <span class="mc-meta" id="tva-statut" role="status"></span></div>
+        </section>
+    </div>
 </div>
 
 <!-- 2. Grand livre -->
@@ -338,6 +480,112 @@ require __DIR__ . '/includes/header.php';
         </section>
     </div>
 
+    <section class="mc-card mc-aide" id="memo-facturation">
+        <div class="mc-card__head"><h2 class="mc-h"><?= icone('calculatrice', 'mc-ico-sm') ?>La facture : du montant brut au net à payer</h2>
+            <button type="button" class="mc-btn mc-btn--sm" data-c="aller-factures">Calculer une facture<?= icone('suivant', 'mc-ico-sm') ?></button></div>
+        <div class="compta-schema">
+            <div>
+                <table class="cpt-table compta-memo__table">
+                    <tbody>
+                        <tr><td>Montant brut HT</td><td>Σ quantité × prix unitaire HT</td></tr>
+                        <tr><td>− Réductions commerciales</td><td>remise, rabais, ristourne (en cascade)</td></tr>
+                        <tr class="cpt-total"><td>= Net commercial</td><td>montant enregistré en 707 / 607</td></tr>
+                        <tr><td>− Escompte de règlement</td><td>% du net commercial</td></tr>
+                        <tr class="cpt-total"><td>= Net financier</td><td></td></tr>
+                        <tr><td>+ Frais annexes HT</td><td>port, emballages…</td></tr>
+                        <tr><td>+ TVA</td><td>taux × (net financier + frais)</td></tr>
+                        <tr class="cpt-total"><td>= Montant TTC</td><td></td></tr>
+                        <tr><td>− Acompte déjà versé</td><td></td></tr>
+                        <tr class="cpt-total"><td>= Net à payer TTC</td><td>411 / 401</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div>
+                <p><b>Remise</b> : réduction pour la qualité du client (grosse commande, fidélité…).</p>
+                <p><b>Rabais</b> : réduction exceptionnelle (défaut, retard de livraison…).</p>
+                <p><b>Ristourne</b> : réduction sur l'ensemble des achats d'une période (souvent l'année), souvent par tranches de chiffre d'affaires.</p>
+                <p><b>Escompte</b> : réduction <em>financière</em> pour paiement rapide → 665 (fournisseur) / 765 (client).</p>
+                <p class="mc-meta">Sur la facture, les réductions commerciales ne se comptabilisent pas : on enregistre le net commercial.
+                    Après la facture (oubli, ristourne de fin d'année), elles passent par une <b>facture d'avoir</b> (709 / 609).</p>
+                <p class="mc-meta">Facture obligatoire entre professionnels, en deux exemplaires, en français. En-tête : vendeur, acheteur,
+                    date, numéro, date de règlement ; corps : désignation, prix, réductions, frais, TVA, conditions de vente.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="mc-card mc-aide">
+        <div class="mc-card__head"><h2 class="mc-h">Facturation : chez le fournisseur et chez le client</h2></div>
+        <p class="mc-meta">Même opération, vue des deux côtés : ce qui est une vente (7) et une créance (411) pour le fournisseur
+            est un achat (6) et une dette (401) pour le client.</p>
+        <div class="compta-memo__defile">
+        <table class="cpt-table compta-memo__table compta-memo__fact">
+            <thead><tr><th>Opération</th><th>Chez le fournisseur</th><th>Chez le client</th></tr></thead>
+            <tbody>
+                <tr><td><b>Facture de doit</b></td>
+                    <td>D 411 Clients (TTC)<br>C 707 Ventes (net commercial HT)<br>C 44571 TVA collectée</td>
+                    <td>D 607 Achats (net commercial HT)<br>D 44566 TVA déductible<br>C 401 Fournisseurs (TTC)</td></tr>
+                <tr><td><b>… avec escompte</b></td>
+                    <td>+ D 665 Escomptes accordés (escompte)</td>
+                    <td>+ C 765 Escomptes obtenus (escompte)</td></tr>
+                <tr><td><b>Acompte</b> versé à la commande</td>
+                    <td>D 512 Banque<br>C 4191 Clients – avances reçues</td>
+                    <td>D 4091 Fournisseurs – avances versées<br>C 512 Banque</td></tr>
+                <tr><td><b>Facture après acompte</b></td>
+                    <td>D 411 (solde) + D 4191 (acompte)<br>C 707 (HT), C 44571 (TVA)</td>
+                    <td>D 607 (HT), D 44566 (TVA)<br>C 4091 (acompte) + C 401 (solde)</td></tr>
+                <tr><td><b>Avoir</b> : réduction hors facture (ristourne…)</td>
+                    <td>D 709 RRR accordés (HT)<br>D 44571 (TVA)<br>C 411 (TTC)</td>
+                    <td>D 401 (TTC)<br>C 609 RRR obtenus (HT)<br>C 44566 (TVA)</td></tr>
+                <tr><td><b>Avoir</b> : retour de marchandises</td>
+                    <td>La vente « à l'envers » :<br>D 707 (HT), D 44571 / C 411</td>
+                    <td>L'achat « à l'envers » :<br>D 401 / C 607 (HT), C 44566</td></tr>
+                <tr><td><b>Règlement au comptant</b> (2<sup>e</sup> écriture)</td>
+                    <td>D 512 Banque ou 530 Caisse<br>C 411 Clients</td>
+                    <td>D 401 Fournisseurs<br>C 512 Banque ou 530 Caisse</td></tr>
+                <tr><td><b>Achat d'immobilisation</b></td>
+                    <td>(une vente normale : 411 / 707, 44571)</td>
+                    <td>D 2… Immobilisation (HT)<br>D 44562 TVA sur immobilisations<br>C 404 Fournisseurs d'immobilisations</td></tr>
+            </tbody>
+        </table>
+        </div>
+        <p class="mc-meta">Chèque, carte, virement, TIP → 512 Banque ; espèces → 530 Caisse. Retour : les biens sont repris au prix de vente,
+            moins la remise accordée sur la facture d'origine.</p>
+    </section>
+
+    <div class="mc-two">
+        <section class="mc-card mc-aide">
+            <div class="mc-card__head"><h2 class="mc-h">Les taux de TVA</h2></div>
+            <table class="cpt-table compta-memo__table">
+                <thead><tr><th>Taux</th><th>Pour quoi ?</th></tr></thead>
+                <tbody>
+                    <tr><td><b>20 %</b> normal</td><td>La majorité des biens et services (tout ce qui n'a pas d'autre taux).</td></tr>
+                    <tr><td><b>10 %</b> réduit</td><td>Restauration, transports de voyageurs, travaux d'amélioration du logement,
+                        produits agricoles non transformés, bois de chauffage, entrées des musées et zoos…</td></tr>
+                    <tr><td><b>5,5 %</b> réduit</td><td>Produits alimentaires, livres, abonnements gaz et électricité, cantines scolaires,
+                        équipements pour handicapés, billetterie du spectacle vivant, logements sociaux…</td></tr>
+                    <tr><td><b>2,1 %</b> particulier</td><td>Médicaments remboursables, presse, redevance télé, certains spectacles…</td></tr>
+                </tbody>
+            </table>
+            <p class="mc-meta">La TVA est un impôt sur la consommation : l'entreprise collecte la TVA sur ses ventes, déduit celle de ses
+                achats, et reverse la différence à l'État.</p>
+        </section>
+
+        <section class="mc-card mc-aide">
+            <div class="mc-card__head"><h2 class="mc-h">Déclaration de TVA (réel normal)</h2></div>
+            <p><code>TVA à décaisser = TVA collectée − TVA déductible</code></p>
+            <p class="mc-meta">Chaque mois (déclaration envoyée le mois suivant, souvent enregistrée en fin de mois), on solde les comptes de TVA :</p>
+            <table class="cpt-table compta-memo__table">
+                <thead><tr><th></th><th>TVA à décaisser</th><th>Crédit de TVA</th></tr></thead>
+                <tbody>
+                    <tr><td>Débit</td><td>44571 TVA collectée</td><td>44571 TVA collectée<br>44567 Crédit de TVA</td></tr>
+                    <tr><td>Crédit</td><td>44566 TVA déd. sur ABS<br>44562 TVA déd. sur immo<br>44551 TVA à décaisser</td>
+                        <td>44566 TVA déd. sur ABS<br>44562 TVA déd. sur immo</td></tr>
+                </tbody>
+            </table>
+            <p class="mc-meta">Paiement le mois suivant : D 44551 / C 512. Un crédit de TVA (44567) se déduit à la déclaration suivante.</p>
+        </section>
+    </div>
+
     <section class="mc-card mc-aide">
         <div class="mc-card__head"><h2 class="mc-h"><?= icone('maths', 'mc-ico-sm') ?>Formules à connaître</h2></div>
         <div class="compta-formules">
@@ -359,7 +607,13 @@ require __DIR__ . '/includes/header.php';
                 <p><code>Variation de stock (6037) = Stock initial − Stock final</code></p></div>
             <div><h3>TVA (taux normal 20 %)</h3>
                 <p><code>TTC = HT × 1,2</code> · <code>TVA = HT × 0,2</code> · <code>HT = TTC ÷ 1,2</code></p>
-                <p><code>TVA à décaisser = TVA collectée (44571) − TVA déductible (44566)</code></p></div>
+                <p>Autre taux t : <code>TTC = HT × (1 + t)</code> (10 % → × 1,1 ; 5,5 % → × 1,055)</p>
+                <p><code>TVA à décaisser = TVA collectée (44571) − TVA déductible (44566 + 44562)</code></p></div>
+            <div><h3>Facture</h3>
+                <p><code>Net commercial = Brut HT − Remises</code> (plusieurs remises : en cascade)</p>
+                <p><code>Net financier = Net commercial − Escompte</code></p>
+                <p><code>Net à payer = (Net financier + Port) × (1 + TVA) − Acompte</code></p>
+                <p>Ristourne par tranches : chaque part du CA à son taux (ex. <code>4 000 × 3 % + 2 000 × 5 % = 220</code>)</p></div>
             <div><h3>Amortissement linéaire</h3>
                 <p><code>Annuité = Valeur d'origine ÷ Durée d'utilisation</code> (× mois ÷ 12 la première année)</p>
                 <p><code>VNC = Valeur d'origine − Cumul des amortissements</code></p>
@@ -378,6 +632,13 @@ require __DIR__ . '/includes/header.php';
             <li>Le <strong>résultat</strong> va au passif dans les capitaux propres ; une perte y est inscrite en négatif.</li>
             <li>Un <strong>terrain ne s'amortit pas</strong> ; les amortissements (28) se retranchent de l'actif immobilisé.</li>
             <li>Une « facture à payer dans 30 jours » est une <strong>dette</strong> (401), pas un paiement : la banque ne bouge pas.</li>
+            <li>Sur une facture, les <strong>remises, rabais, ristournes ne se comptabilisent pas</strong> : on enregistre le net commercial.
+                Seul l'<strong>escompte</strong> (réduction financière) a son compte : 665 chez le fournisseur, 765 chez le client.</li>
+            <li>La <strong>TVA se calcule sur le net financier</strong> (après escompte), frais de port compris.</li>
+            <li>Un <strong>acompte</strong> n'est pas une vente : 4191 chez le fournisseur, 4091 chez le client ; à la facture,
+                le 411 / 401 ne reçoit que le solde.</li>
+            <li><strong>Avoir</strong> : réduction après la facture → 709 / 609 ; retour de marchandises → la facture « à l'envers » (707 / 607).</li>
+            <li>Immobilisation achetée : TVA en <strong>44562</strong> (pas 44566) et dette en <strong>404</strong> (pas 401).</li>
         </ul>
     </section>
 
