@@ -88,6 +88,16 @@ $sections = [
         ],
     ],
     [
+        'id' => 'facture',
+        'titre' => 'Comptabilité : factures et avoirs',
+        'intro' => 'Un bloc ```facture : une ligne « Désignation | Qté | Prix unitaire HT » par article, puis au choix Remise 25 % (ou Rabais, Ristourne ; plusieurs = en cascade), Escompte 2 %, Port 15, TVA 10 % (20 % par défaut), Acompte 200, Réglée par chèque / en espèces, Nature : services (ou Vente : 706, Achat : 615), Fournisseur : …, Client : …, Date : … Les totaux (net commercial, net financier, TVA, net à payer) sont calculés. « Avoir » (retour de marchandises) ou « Avoir ristourne » (réduction hors facture) en fait une facture d\'avoir. Ajoute « Écritures » (ou « Écritures client ») pour afficher la comptabilisation chez le fournisseur et chez le client. Calculateur complet : Comptabilité → Factures & TVA.',
+        'exemples' => [
+            "```facture Facture n° 1\nFournisseur : Fournisseur Y\nClient : Client X\nDate : 10/03/N\nProduit 1 | 5 | 26,20\nProduit 2 | 8 | 40\nProduit 3 | 3 | 75\nRemise 25 %\nEscompte 2 %\nTVA 20 %\nÉcritures\n```",
+            "```facture Facture d'avoir\nAvoir (retour de marchandises)\nProduit 2 | 1 | 40\nProduit 3 | 2 | 75\nRemise 25 %\nÉcritures client\n```",
+            "```facture\nAvoir ristourne\nRistourne annuelle | 220\nÉcritures\n```",
+        ],
+    ],
+    [
         'titre' => 'Images (ex. MCD draw.io)',
         'intro' => 'Exporte ton schéma en PNG, puis dans la note : « Fichiers joints » → Importer (ou colle-le avec Ctrl+V / glisse-le dans la zone de texte). L\'image est insérée à l\'endroit du curseur ; clique dessus dans l\'aperçu pour l\'agrandir.',
         'exemples' => [],

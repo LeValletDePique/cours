@@ -1,7 +1,8 @@
 /* ============================================================
    Comptabilité (Gestion de l'entreprise) : moteur partagé.
    Utilisé par l'atelier comptable (compta.php) ET par le rendu des
-   notes (blocs ```journal, ```comptes, ```balance, ```resultat, ```bilan).
+   notes (blocs ```journal, ```comptes, ```balance, ```resultat, ```bilan,
+   ```facture).
 
    - plan comptable général (PCG) : numéros et intitulés usuels
    - bilan de départ : ses montants ouvrent les comptes (à-nouveaux « AN »)
@@ -10,6 +11,9 @@
    - rendu HTML de ces documents (comptes en T, tableaux)
    - lecture des blocs Markdown et export d'un dossier en Markdown
    - opérations courantes (quel compte débiter / créditer, et pourquoi)
+   - facturation : facture ou avoir (remises, escompte, port, TVA, acompte)
+     -> écritures chez le fournisseur et chez le client ; ristourne selon
+     un barème ; déclaration de TVA
 
    Montants : calculs en centimes (entiers) pour éviter les erreurs
    d'arrondi des nombres à virgule.
@@ -124,7 +128,7 @@
         616: "Primes d'assurances", 617: 'Études et recherches', 618: 'Divers (documentation, séminaires…)',
         62: 'Autres services extérieurs', 621: "Personnel extérieur à l'entreprise",
         622: "Rémunérations d'intermédiaires et honoraires", 623: 'Publicité, publications, relations publiques',
-        624: 'Transports de biens et transports collectifs du personnel', 625: 'Déplacements, missions et réceptions',
+        624: 'Transports de biens et transports collectifs du personnel', 6241: 'Transports sur achats', 625: 'Déplacements, missions et réceptions',
         626: 'Frais postaux et de télécommunications', 627: 'Services bancaires et assimilés',
         628: 'Divers (cotisations…)',
         63: 'Impôts, taxes et versements assimilés', 631: 'Impôts et taxes sur rémunérations',
@@ -149,6 +153,7 @@
         // --- Classe 7 : produits ---
         70: 'Ventes de produits, prestations, marchandises', 701: 'Ventes de produits finis', 704: 'Travaux',
         706: 'Prestations de services', 707: 'Ventes de marchandises', 708: 'Produits des activités annexes',
+        7085: 'Ports et frais accessoires facturés',
         709: 'Rabais, remises et ristournes accordés', 7097: 'RRR accordés sur ventes de marchandises',
         71: 'Production stockée (ou déstockage)', 713: 'Variation des stocks (en-cours, produits)',
         72: 'Production immobilisée', 74: "Subventions d'exploitation",
@@ -174,6 +179,8 @@
             ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     }
     const cents = (x) => Math.round((Number(x) || 0) * 100);
+    // Arrondi au centime d'un calcul en centimes (taux), sans l'erreur des nombres à virgule (0,5 -> 1).
+    const arrondi = (x) => Math.round(x + (x >= 0 ? 1e-7 : -1e-7));
     const euros = (c) => c / 100;
 
     // Montant écrit « à la française » : 1 500 000 · 1500000 · 45 000,50 · -200 · (200) · 1.500
@@ -207,6 +214,8 @@
     }
     // Pour du texte brut (Markdown) : espaces normales, tiret.
     const fmtTexte = (n) => fmt(n).replace(/[  ]/g, ' ').replace('−', '-');
+    // Taux : 20 -> « 20 % », 5.5 -> « 5,5 % ».
+    const fmtTaux = (t) => String(Math.round(Number(t) * 100) / 100).replace('.', ',') + '\u00a0%';
 
     function normaliserCompte(s) {
         const num = String(s ?? '').replace(/\s+/g, '');
@@ -244,6 +253,12 @@
         interets: '661', 'interets d\'emprunt': '661', vente: '707', ventes: '707', 'ventes de marchandises': '707',
         prestations: '706', services: '706', subvention: '74', subventions: '74', 'produits financiers': '768',
         'impot sur les benefices': '695', is: '695',
+        // Facturation
+        'escomptes accordes': '665', 'escompte accorde': '665', 'escomptes obtenus': '765',
+        'escompte obtenu': '765', 'rrr accordes': '709', 'rrr obtenus': '609',
+        'acompte verse': '4091', 'acomptes verses': '4091', 'acompte recu': '4191', 'acomptes recus': '4191',
+        'tva deductible sur immobilisations': '44562', 'tva sur immobilisations': '44562',
+        'credit de tva': '44567', 'fournisseurs d\'immobilisations': '404', port: '7085',
         // Intitulés de bilan courants
         'creances clients': '411', 'dettes fournisseurs': '401', 'dettes fiscales': '44551', 'dettes sociales': '431',
         'emprunts bancaires': '164', 'dettes financieres': '164', disponibilites: '512', tresorerie: '512',
@@ -755,7 +770,7 @@
             const lignes = (ecr.lignes || []).filter((l) => normaliserCompte(l.compte) && (cents(l.debit) || cents(l.credit)));
             const tri = lignes.filter((l) => cents(l.debit)).concat(lignes.filter((l) => !cents(l.debit)));
             const numero = ecr.ouverture ? 'AN' : (ecritures[0] && ecritures[0].ouverture ? i : i + 1);
-            corps += '<tr class="cpt-j__date"><td colspan="5"><span>' + numero + ' · ' + echapper(ecr.date || '') + '</span></td></tr>';
+            corps += '<tr class="cpt-j__date"><td colspan="5"><span>' + numero + (ecr.date ? ' · ' + echapper(ecr.date) : '') + '</span></td></tr>';
             tri.forEach((l) => {
                 const n = normaliserCompte(l.compte), d = cents(l.debit), c = cents(l.credit);
                 td += d; tc += c;
@@ -974,6 +989,11 @@
                     return htmlDoc(parseDoc(code, 'bilan', titre));
                 case 'resultat': case 'résultat': case 'compte-de-resultat': case 'cr':
                     return htmlDoc(parseDoc(code, 'resultat', titre));
+                case 'facture': case 'avoir': {
+                    const r = parseFacture(code, titre);
+                    if (langage === 'avoir' && r.facture.type === 'doit') r.facture.type = 'retour';
+                    return htmlFacture(r.facture, titre, r.voir);
+                }
                 default:
                     return null;
             }
@@ -1071,7 +1091,7 @@
             pourquoi: 'Charge qui augmente → débit 607. L\'argent sort de la banque (actif qui diminue) → crédit 512.' },
         { groupe: 'Achats et charges', libelle: 'Achat de marchandises payé en espèces', lignes: [['607', 'D', 'm'], ['530', 'C', 'm']],
             pourquoi: 'Charge qui augmente → débit 607. La caisse diminue → crédit 530.' },
-        { groupe: 'Achats et charges', libelle: 'Achat de marchandises à crédit, TVA 20 %', tva: true,
+        { groupe: 'Achats et charges', libelle: 'Achat de marchandises à crédit, avec TVA', tva: true,
             lignes: [['607', 'D', 'ht'], ['44566', 'D', 'tva'], ['401', 'C', 'ttc']],
             pourquoi: 'La charge est enregistrée hors taxe (débit 607). La TVA payée sera récupérée sur l\'État : c\'est une créance (débit 44566). La dette fournisseur est du montant TTC (crédit 401).' },
         { groupe: 'Achats et charges', libelle: 'Achat de fournitures de bureau payé par chèque', lignes: [['6064', 'D', 'm'], ['512', 'C', 'm']],
@@ -1095,11 +1115,44 @@
             pourquoi: 'La caisse augmente → débit 530. Produit qui augmente → crédit 707.' },
         { groupe: 'Ventes', libelle: 'Vente de marchandises à crédit', lignes: [['411', 'D', 'm'], ['707', 'C', 'm']],
             pourquoi: 'Le client nous doit de l\'argent : créance qui augmente → débit 411. Produit qui augmente → crédit 707.' },
-        { groupe: 'Ventes', libelle: 'Vente de marchandises à crédit, TVA 20 %', tva: true,
+        { groupe: 'Ventes', libelle: 'Vente de marchandises à crédit, avec TVA', tva: true,
             lignes: [['411', 'D', 'ttc'], ['707', 'C', 'ht'], ['44571', 'C', 'tva']],
             pourquoi: 'Le client doit le TTC → débit 411. La vente est un produit hors taxe → crédit 707. La TVA encaissée est due à l\'État : dette → crédit 44571.' },
         { groupe: 'Ventes', libelle: 'Prestation de services à crédit', lignes: [['411', 'D', 'm'], ['706', 'C', 'm']],
             pourquoi: 'Créance client → débit 411. Prestations de services = produit → crédit 706.' },
+
+        { groupe: 'Facturation (avec TVA)', libelle: 'Achat de marchandises payé par chèque, avec TVA', tva: true,
+            lignes: [['607', 'D', 'ht'], ['44566', 'D', 'tva'], ['512', 'C', 'ttc']],
+            pourquoi: 'Achat au comptant : la charge HT (débit 607) et la TVA déductible (débit 44566) sont payées tout de suite, la banque diminue du TTC (crédit 512).' },
+        { groupe: 'Facturation (avec TVA)', libelle: 'Vente de marchandises payée par chèque, avec TVA', tva: true,
+            lignes: [['512', 'D', 'ttc'], ['707', 'C', 'ht'], ['44571', 'C', 'tva']],
+            pourquoi: 'Vente au comptant : la banque reçoit le TTC (débit 512), la vente est un produit HT (crédit 707), la TVA collectée est due à l\'État (crédit 44571).' },
+        { groupe: 'Facturation (avec TVA)', libelle: 'Prestation de services à crédit, avec TVA', tva: true,
+            lignes: [['411', 'D', 'ttc'], ['706', 'C', 'ht'], ['44571', 'C', 'tva']],
+            pourquoi: 'Le client doit le TTC (débit 411). Prestations de services = produit HT (crédit 706). TVA collectée = dette envers l\'État (crédit 44571).' },
+        { groupe: 'Facturation (avec TVA)', libelle: 'Facture d\'entretien et réparations à payer, avec TVA', tva: true,
+            lignes: [['615', 'D', 'ht'], ['44566', 'D', 'tva'], ['401', 'C', 'ttc']],
+            pourquoi: 'Service extérieur (61) = charge HT (débit 615). La TVA est récupérable (débit 44566). Dette fournisseur TTC (crédit 401).' },
+        { groupe: 'Facturation (avec TVA)', libelle: 'Achat d\'une immobilisation à crédit, avec TVA', tva: true,
+            lignes: [['2183', 'D', 'ht'], ['44562', 'D', 'tva'], ['404', 'C', 'ttc']],
+            pourquoi: 'Le bien est immobilisé pour son montant HT (débit 2183). Sur une immobilisation, la TVA déductible va au 44562 (et non 44566). La dette va au 404 Fournisseurs d\'immobilisations (et non 401).' },
+
+        { groupe: 'Acomptes et avoirs', libelle: 'Acompte versé à un fournisseur par chèque', lignes: [['4091', 'D', 'm'], ['512', 'C', 'm']],
+            pourquoi: 'L\'acompte versé à la commande est une avance (créance sur le fournisseur) → débit 4091. La banque diminue → crédit 512. À la facture, on créditera 4091 et le 401 ne sera crédité que du solde.' },
+        { groupe: 'Acomptes et avoirs', libelle: 'Acompte reçu d\'un client par chèque', lignes: [['512', 'D', 'm'], ['4191', 'C', 'm']],
+            pourquoi: 'La banque augmente → débit 512. Ce n\'est pas encore une vente : c\'est une dette envers le client (avance reçue) → crédit 4191. À la facture, on débitera 4191 et le 411 ne sera débité que du solde.' },
+        { groupe: 'Acomptes et avoirs', libelle: 'Avoir accordé à un client (réduction hors facture), avec TVA', tva: true,
+            lignes: [['709', 'D', 'ht'], ['44571', 'D', 'tva'], ['411', 'C', 'ttc']],
+            pourquoi: 'Ristourne, rabais ou remise accordé après la facture : il diminue les ventes → débit 709 (montant HT). La TVA collectée diminue → débit 44571. Le client nous doit moins → crédit 411 (TTC).' },
+        { groupe: 'Acomptes et avoirs', libelle: 'Avoir reçu d\'un fournisseur (réduction hors facture), avec TVA', tva: true,
+            lignes: [['401', 'D', 'ttc'], ['609', 'C', 'ht'], ['44566', 'C', 'tva']],
+            pourquoi: 'On doit moins au fournisseur → débit 401 (TTC). La réduction diminue les achats → crédit 609 RRR obtenus (HT). La TVA déductible diminue → crédit 44566.' },
+        { groupe: 'Acomptes et avoirs', libelle: 'Retour de marchandises par un client (avoir émis), avec TVA', tva: true,
+            lignes: [['707', 'D', 'ht'], ['44571', 'D', 'tva'], ['411', 'C', 'ttc']],
+            pourquoi: 'La vente est annulée en partie : c\'est l\'écriture de vente « à l\'envers ». Débit 707 (net commercial HT des biens repris) et 44571, crédit 411 (TTC).' },
+        { groupe: 'Acomptes et avoirs', libelle: 'Retour de marchandises à un fournisseur (avoir reçu), avec TVA', tva: true,
+            lignes: [['401', 'D', 'ttc'], ['607', 'C', 'ht'], ['44566', 'C', 'tva']],
+            pourquoi: 'L\'achat est annulé en partie : écriture d\'achat « à l\'envers ». Débit 401 (TTC), crédit 607 (net commercial HT) et 44566.' },
 
         { groupe: 'Règlements et trésorerie', libelle: 'Règlement d\'un fournisseur par chèque', lignes: [['401', 'D', 'm'], ['512', 'C', 'm']],
             pourquoi: 'La dette fournisseur diminue → débit 401. La banque diminue → crédit 512.' },
@@ -1145,12 +1198,434 @@
             pourquoi: 'La dette de TVA disparaît → débit 44551. La banque diminue → crédit 512.' },
     ];
 
-    // Écriture d'une opération courante pour un montant (HT si TVA).
-    function ecritureOperation(op, montant, date) {
-        const m = cents(montant), tva = Math.round(m * 0.2);
+    // Écriture d'une opération courante pour un montant (HT si TVA, au taux choisi : 20 % par défaut).
+    function ecritureOperation(op, montant, date, taux) {
+        taux = taux == null || taux === '' ? 20 : Number(taux);
+        const m = cents(montant), tva = arrondi(m * taux / 100);
         const parts = { m, ht: m, tva, ttc: m + tva };
-        return { date: date || '', libelle: op.libelle, lignes: op.lignes.map(([compte, sens, part]) => ({
+        const libelle = op.tva ? op.libelle.replace(/avec TVA$/, 'TVA ' + fmtTaux(taux)) : op.libelle;
+        return { date: date || '', libelle, lignes: op.lignes.map(([compte, sens, part]) => ({
             compte, debit: sens === 'D' ? euros(parts[part]) : null, credit: sens === 'C' ? euros(parts[part]) : null })) };
+    }
+
+    // =========================================================
+    //  Facturation : de la facture aux écritures, chez le fournisseur et chez le client
+    //  Facture : { type: 'doit' | 'retour' | 'reduction', numero, date, fournisseur, client,
+    //    lignes: [{ designation, qte, pu }], reductions: [{ libelle, taux } ou { libelle, montant }],
+    //    escompte (taux %) ou escompteMontant, port (HT), tva (taux %), acompte, acompteVerse,
+    //    compteVente, compteAchat, reglement: 'credit' | '512' | '530' }
+    //  Calcul : montant brut − remises en cascade = net commercial − escompte = net financier
+    //  (+ port) -> TVA -> TTC − acompte = net à payer.
+    // =========================================================
+    const NATURES_FACTURE = {
+        marchandises: { libelle: 'Marchandises', vente: '707', achat: '607' },
+        produits: { libelle: 'Produits finis (matières premières pour le client)', vente: '701', achat: '601' },
+        services: { libelle: 'Prestation de services', vente: '706', achat: '615' },
+        immobilisation: { libelle: 'Immobilisation pour le client (ordinateur, véhicule…)', vente: '707', achat: '2183' },
+    };
+    const TAUX_TVA = [20, 10, 5.5, 2.1];
+    const nombre = (x) => (x == null || x === '' || isNaN(Number(x)) ? null : Number(x));
+    const estAvoir = (f) => f.type === 'retour' || f.type === 'reduction';
+
+    function factureVide() {
+        return { type: 'doit', numero: '', date: '', fournisseur: '', client: '', lignes: [], reductions: [],
+            escompte: null, escompteMontant: null, port: null, tva: 20, acompte: null, acompteVerse: true,
+            compteVente: '707', compteAchat: '607', reglement: 'credit' };
+    }
+
+    // Calcul en centimes.
+    function calculFacture(f) {
+        const lignes = (f.lignes || []).map((l) => {
+            const qte = nombre(l.qte), pu = nombre(l.pu);
+            return { designation: String(l.designation || '').trim(), qte, pu,
+                montant: arrondi((qte == null ? 1 : qte) * (pu || 0) * 100) };
+        }).filter((l) => l.designation || l.pu);
+        const brut = lignes.reduce((t, l) => t + l.montant, 0);
+        let base = brut;
+        const reductions = (f.reductions || []).filter((r) => nombre(r.taux) || nombre(r.montant)).map((r) => {
+            const taux = nombre(r.taux);
+            const m = taux ? arrondi(base * taux / 100) : cents(r.montant);
+            base -= m;
+            return { libelle: r.libelle || 'Remise', taux, montant: m };
+        });
+        const netCom = base;
+        const tauxEsc = nombre(f.escompte);
+        const esc = tauxEsc ? arrondi(netCom * tauxEsc / 100) : cents(f.escompteMontant);
+        const netFin = netCom - esc;
+        const port = cents(f.port);
+        const baseTva = netFin + port;
+        const taux = nombre(f.tva) == null ? 20 : nombre(f.tva);
+        const tva = arrondi(baseTva * taux / 100);
+        const ttc = baseTva + tva;
+        const acompte = estAvoir(f) ? 0 : cents(f.acompte);
+        return { lignes, brut, reductions, netCom, tauxEsc, esc, netFin, port, baseTva, taux, tva, ttc, acompte, net: ttc - acompte };
+    }
+
+    // Même calcul, en euros (pour l'affichage et les tests).
+    function calculerFacture(f) {
+        const c = calculFacture(f);
+        return {
+            lignes: c.lignes.map((l) => Object.assign({}, l, { montant: euros(l.montant) })),
+            brut: euros(c.brut), reductions: c.reductions.map((r) => Object.assign({}, r, { montant: euros(r.montant) })),
+            netCommercial: euros(c.netCom), tauxEscompte: c.tauxEsc, escompte: euros(c.esc), netFinancier: euros(c.netFin),
+            port: euros(c.port), baseTva: euros(c.baseTva), tauxTva: c.taux, tva: euros(c.tva), ttc: euros(c.ttc),
+            acompte: euros(c.acompte), netAPayer: euros(c.net),
+        };
+    }
+
+    // Comptes utilisés : une immobilisation passe par 44562 et 404 ; une réduction hors facture par 709 / 609.
+    function comptesFacture(f) {
+        const reduc = f.type === 'reduction';
+        let achat = normaliserCompte(f.compteAchat) || '607';
+        const immo = achat[0] === '2';
+        if (reduc && !immo) achat = '609';
+        return {
+            vente: reduc ? '709' : normaliserCompte(f.compteVente) || '707', achat, immo,
+            client: '411', fournisseur: immo ? '404' : '401',
+            tvaCollectee: '44571', tvaDeductible: immo ? '44562' : '44566',
+            tresorerie: f.reglement === '530' ? '530' : '512',
+        };
+    }
+
+    // Écritures de la facture vue par le fournisseur (cote = 'fournisseur') ou par le client ('client') :
+    // versement de l'acompte (s'il y en a un), facture, puis règlement si elle est payée au comptant.
+    // Un avoir s'enregistre comme la facture « à l'envers ».
+    function ecrituresFacture(f, cote) {
+        const c = calculFacture(f), k = comptesFacture(f);
+        const chezFournisseur = cote !== 'client', avoir = estAvoir(f);
+        const tiers = chezFournisseur ? k.client : k.fournisseur;
+        const autre = chezFournisseur ? f.client : f.fournisseur;
+        const avec = autre ? ' – ' + autre : '';
+        const ecritures = [];
+        const ecrire = (libelle, lignes, inverser) => {
+            let l = lignes.filter((x) => x[2] > 0);
+            if (inverser) l = l.map(([n, s, m]) => [n, s === 'D' ? 'C' : 'D', m]);
+            l = l.filter((x) => x[1] === 'D').concat(l.filter((x) => x[1] === 'C'));
+            ecritures.push({ date: f.date || '', libelle, lignes: l.map(([compte, s, m]) => ({
+                compte, debit: s === 'D' ? euros(m) : null, credit: s === 'C' ? euros(m) : null })) });
+        };
+        if (c.acompte && f.acompteVerse !== false) {
+            ecrire(chezFournisseur ? 'Acompte reçu à la commande' + avec : 'Acompte versé à la commande' + avec,
+                chezFournisseur ? [['512', 'D', c.acompte], ['4191', 'C', c.acompte]]
+                    : [['4091', 'D', c.acompte], ['512', 'C', c.acompte]]);
+        }
+        const solde = c.ttc - c.acompte;
+        const lignes = chezFournisseur
+            ? [[tiers, 'D', solde], ['4191', 'D', c.acompte], ['665', 'D', c.esc],
+                [k.vente, 'C', c.netCom], ['7085', 'C', c.port], [k.tvaCollectee, 'C', c.tva]]
+            : [[k.achat, 'D', c.netCom], ['6241', 'D', c.port], [k.tvaDeductible, 'D', c.tva],
+                ['765', 'C', c.esc], ['4091', 'C', c.acompte], [tiers, 'C', solde]];
+        const nom = f.type === 'retour' ? 'Avoir – retour de marchandises'
+            : f.type === 'reduction' ? 'Avoir – réduction hors facture' : 'Facture';
+        ecrire(nom + (f.numero ? ' n° ' + f.numero : '') + avec, lignes, avoir);
+        if ((f.reglement === '512' || f.reglement === '530') && solde > 0) {
+            const moyen = f.reglement === '530' ? 'en espèces' : 'par chèque';
+            ecrire((avoir ? 'Remboursement de l\'avoir ' : 'Règlement de la facture au comptant ') + moyen + avec,
+                chezFournisseur ? [[k.tresorerie, 'D', solde], [tiers, 'C', solde]]
+                    : [[tiers, 'D', solde], [k.tresorerie, 'C', solde]], avoir);
+        }
+        return ecritures;
+    }
+
+    // Pourquoi chaque compte (même ordre d'idées que le cours).
+    function expliquerFacture(f, cote) {
+        const c = calculFacture(f), k = comptesFacture(f);
+        const F = (x) => fmt(euros(x)) + ' €';
+        const chezFournisseur = cote !== 'client';
+        const out = [];
+        if (f.type === 'retour') {
+            out.push('Retour de marchandises : on enregistre la facture « à l\'envers » pour les biens retournés, '
+                + 'repris à leur prix de vente moins la réduction accordée sur la facture d\'origine.');
+        }
+        if (f.type === 'reduction') {
+            out.push(chezFournisseur
+                ? '709 RRR accordés au débit (' + F(c.netCom) + ') : la réduction accordée après la facture diminue les ventes (HT). '
+                    + 'La TVA collectée diminue (débit 44571) et le client doit moins (crédit 411 du TTC).'
+                : '609 RRR obtenus au crédit (' + F(c.netCom) + ') : la réduction obtenue après la facture diminue les achats (HT). '
+                    + 'La TVA déductible diminue (crédit 44566) et on doit moins au fournisseur (débit 401 du TTC).');
+        }
+        if (c.reductions.length && f.type !== 'reduction') {
+            out.push('Remises, rabais et ristournes portés sur la facture ne se comptabilisent pas : on enregistre directement le net commercial ('
+                + F(c.netCom) + ').');
+        }
+        if (!estAvoir(f)) {
+            if (chezFournisseur) {
+                out.push(k.vente + ' ' + nomCompte(k.vente) + ' au crédit : la vente est un produit, pour le net commercial HT.');
+                out.push('44571 TVA collectée au crédit : ' + fmtTaux(c.taux) + ' × ' + F(c.baseTva)
+                    + (c.esc || c.port ? ' (' + [c.esc ? 'calculée après escompte' : '', c.port ? 'port compris' : ''].filter(Boolean).join(', ') + ')' : '')
+                    + ', une dette envers l\'État.');
+                out.push('411 Clients au débit : le client doit ' + (c.acompte ? 'le TTC moins l\'acompte déjà reçu' : 'le net à payer TTC')
+                    + ' (' + F(c.net) + '), c\'est une créance.');
+            } else {
+                out.push(k.achat + ' ' + nomCompte(k.achat) + ' au débit : '
+                    + (k.immo ? 'le bien reste dans l\'entreprise, c\'est une immobilisation (classe 2), pour son net commercial HT.'
+                        : 'l\'achat est une charge, pour le net commercial HT.'));
+                out.push(k.tvaDeductible + ' au débit : TVA déductible ' + fmtTaux(c.taux) + ' × ' + F(c.baseTva)
+                    + ', une créance sur l\'État' + (k.immo ? ' (44562 pour une immobilisation).' : '.'));
+                out.push(k.fournisseur + ' ' + nomCompte(k.fournisseur) + ' au crédit : on doit '
+                    + (c.acompte ? 'le TTC moins l\'acompte déjà versé' : 'le net à payer TTC') + ' (' + F(c.net) + '), c\'est une dette.');
+            }
+            if (c.esc) {
+                out.push(chezFournisseur
+                    ? '665 Escomptes accordés au débit (' + F(c.esc) + ') : réduction pour paiement rapide = charge financière.'
+                    : '765 Escomptes obtenus au crédit (' + F(c.esc) + ') : réduction pour paiement rapide = produit financier.');
+            }
+            if (c.port) {
+                out.push(chezFournisseur ? '7085 au crédit : le port facturé au client est un produit (soumis à TVA).'
+                    : '6241 Transports sur achats au débit : le port payé est une charge.');
+            }
+            if (c.acompte) {
+                out.push(chezFournisseur
+                    ? '4191 au débit (' + F(c.acompte) + ') : l\'acompte reçu à la commande avait été crédité au 4191 (une dette envers le client) ; la facture le solde.'
+                    : '4091 au crédit (' + F(c.acompte) + ') : l\'acompte versé à la commande avait été débité au 4091 (une créance sur le fournisseur) ; la facture le solde.');
+            }
+        }
+        if (f.reglement === '512' || f.reglement === '530') {
+            const t = f.reglement === '530' ? '530 Caisse' : '512 Banque';
+            out.push('Au comptant : une 2e écriture solde le compte ' + (chezFournisseur ? '411' : k.fournisseur) + ' par le ' + t + '.');
+        }
+        return out;
+    }
+
+    const fmtQte = (x) => (x == null ? '' : Number(x).toLocaleString('fr-FR', { maximumFractionDigits: 3 }));
+
+    // Facture présentée comme dans le cours ; voir = { fournisseur, client } ajoute les écritures.
+    function htmlFacture(f, titre, voir) {
+        const c = calculFacture(f), F = (x) => fmt(euros(x));
+        const avoir = estAvoir(f);
+        const entete = [
+            f.fournisseur ? 'Fournisseur : <b>' + echapper(f.fournisseur) + '</b>' : '',
+            f.numero ? 'N° ' + echapper(f.numero) : '',
+            f.date ? 'Date : ' + echapper(f.date) : '',
+            f.client ? 'Client : <b>' + echapper(f.client) + '</b>' : '',
+        ].filter(Boolean).join(' · ');
+        const corps = c.lignes.map((l) => '<tr><td>' + echapper(l.designation) + '</td><td class="cpt-mt">' + fmtQte(l.qte)
+            + '</td><td class="cpt-mt">' + (l.qte == null ? '' : fmt(l.pu)) + '</td><td class="cpt-mt">' + F(l.montant) + '</td></tr>').join('')
+            || '<tr><td colspan="4" class="cpt-vide">Aucune ligne : « Désignation | Qté | Prix unitaire HT ».</td></tr>';
+        const tot = (lib, m, cls) => '<tr class="cpt-fact__tot' + (cls ? ' ' + cls : '') + '"><td colspan="3">' + lib
+            + '</td><td class="cpt-mt">' + F(m) + '</td></tr>';
+        let pied = tot('Montant HT', c.brut, c.reductions.length || c.esc || c.port ? '' : 'cpt-fact__st');
+        c.reductions.forEach((r) => { pied += tot(echapper(r.libelle) + (r.taux ? ' ' + fmtTaux(r.taux) : ''), -r.montant); });
+        if (c.reductions.length) pied += tot('Net commercial', c.netCom, 'cpt-fact__st');
+        if (c.esc) {
+            pied += tot('Escompte' + (c.tauxEsc ? ' ' + fmtTaux(c.tauxEsc) : ''), -c.esc);
+            pied += tot('Net financier', c.netFin, 'cpt-fact__st');
+        }
+        if (c.port) {
+            pied += tot('Frais de port', c.port);
+            pied += tot('Total HT', c.baseTva, 'cpt-fact__st');
+        }
+        pied += tot('TVA ' + fmtTaux(c.taux), c.tva);
+        if (c.acompte) {
+            pied += tot('Montant TTC', c.ttc, 'cpt-fact__st');
+            pied += tot('Acompte', -c.acompte);
+        }
+        pied += tot(avoir ? 'Avoir TTC' : 'Net à payer TTC', c.net, 'cpt-fact__net');
+        const legende = titre || (avoir ? 'Facture d\'avoir' : 'Facture');
+        let html = '<div class="cpt-doc cpt-fact"><table class="cpt-table cpt-fact__table"><caption>' + echapper(legende) + '</caption><thead>'
+            + (entete ? '<tr><th colspan="4" class="cpt-fact__entete">' + entete + '</th></tr>' : '')
+            + '<tr><th>Désignation</th><th>Qté</th><th>PU HT</th><th>Montant</th></tr></thead><tbody>' + corps + pied
+            + '</tbody></table></div>';
+        [['fournisseur', f.fournisseur], ['client', f.client]].forEach(([cote, nom]) => {
+            if (voir && voir[cote]) {
+                // « Chez le client X », mais « Chez Fournisseur Y » (pas « le fournisseur Fournisseur Y »)
+                const qui = !nom ? 'le ' + cote : new RegExp('^' + cote + '\\b', 'i').test(nom) ? nom : 'le ' + cote + ' ' + nom;
+                html += '<p class="cpt-fact__qui">Chez ' + echapper(qui) + ' :</p>'
+                    + htmlJournal(ecrituresFacture(f, cote));
+            }
+        });
+        return html;
+    }
+
+    // ```facture : « Désignation | Qté | PU », puis Remise 25 %, Escompte 2 %, Port 15, TVA 20 %,
+    // Acompte 200, Avoir, Nature : services, Réglée par chèque, Écritures… (voir l'aide).
+    function parseFacture(code, titre) {
+        const f = factureVide();
+        const voir = { fournisseur: false, client: false };
+        const typeAvoir = (t) => (/(rrr|reduc|ristourne|rabais|remise|hors facture)/.test(t) ? 'reduction' : 'retour');
+        if (/avoir/i.test(titre || '')) f.type = typeAvoir(sansAccents(titre));
+        const RE_VAL = new RegExp('(' + NUM + ')\\s*(%)?');
+        lignesDe(code).forEach((brute) => {
+            const l = brute.trim();
+            if (!l || /^[|:\s-]+$/.test(l)) return;
+            const cellules = l.replace(/^\||\|$/g, '').split('|').map((x) => x.trim());
+            const tete = cellules[0], t = sansAccents(tete);
+            // « Client : X » ou « Client X » -> « X »
+            const apres = (tete.includes(':') ? tete.replace(/^[^:]*:\s*/, '') : tete.replace(/^\S+\s*/, '')).trim();
+            const derniere = cellules.length > 1 ? cellules[cellules.length - 1] : '';
+            const val = (premiereSeulement) => {
+                for (const x of premiereSeulement ? [tete] : [tete, derniere]) {
+                    const m = String(x).match(RE_VAL);
+                    if (m) return { n: Math.abs(parseMontant(m[1])), pct: !!m[2], negatif: /^[-−–]/.test(m[1]) };
+                }
+                return null;
+            };
+            if (/^(montant|total|net|sous-total|base|ttc)\b/.test(t)) return;   // calculés
+            if (/^(remise|rabais|ristourne|reduction)s?\b/.test(t)) {
+                const v = val();
+                // « Ristourne annuelle | 220 » est une ligne de l'avoir, pas une réduction.
+                if (v && (cellules.length === 1 || v.pct || v.negatif)) {
+                    const libelle = tete.match(/^\S+/)[0];
+                    f.reductions.push(v.pct ? { libelle: libelle.charAt(0).toUpperCase() + libelle.slice(1).toLowerCase(), taux: v.n }
+                        : { libelle: libelle.charAt(0).toUpperCase() + libelle.slice(1).toLowerCase(), montant: v.n });
+                    return;
+                }
+            }
+            if (/^escompte/.test(t)) {
+                const v = val();
+                if (v) { if (v.pct) f.escompte = v.n; else f.escompteMontant = v.n; }
+                return;
+            }
+            if (/^(sans tva|exonere)/.test(t)) { f.tva = 0; return; }
+            if (/^tva\b/.test(t)) {
+                const v = val(true);
+                if (v) f.tva = v.n;
+                return;
+            }
+            if (/^(frais de )?(port|transport|livraison|emballages?)\b/.test(t) && !(cellules.length >= 3)) {
+                const v = val();
+                if (v) f.port = v.n;
+                return;
+            }
+            if (/^acompte/.test(t)) {
+                const v = val();
+                if (v) f.acompte = v.n;
+                if (/(deja|sans ecriture)/.test(t)) f.acompteVerse = false;
+                return;
+            }
+            if (/^avoir\b/.test(t) && cellules.length === 1) { f.type = typeAvoir(t); return; }
+            if (/^(facture\s*)?(n°|no\b|n\.|numero\b)/.test(t) && cellules.length === 1) {
+                f.numero = tete.replace(/^(facture\s*)?(n°|no\b|n\.|numéro\b|numero\b)/i, '').replace(/^[.:\s]+/, '');
+                return;
+            }
+            if (/^facture\b/.test(t) && cellules.length === 1) { if (/avoir/.test(t)) f.type = typeAvoir(t); return; }
+            if (/^(nature|type)\b/.test(t)) {
+                const n = /immo/.test(t) ? 'immobilisation' : /(service|prestation)/.test(t) ? 'services'
+                    : /produit/.test(t) ? 'produits' : 'marchandises';
+                f.compteVente = NATURES_FACTURE[n].vente;
+                f.compteAchat = NATURES_FACTURE[n].achat;
+                return;
+            }
+            let m = t.match(/^(?:compte (?:de )?)?ventes?\s*:?\s*([1-9]\d{1,7})\b/);
+            if (m && cellules.length === 1) { f.compteVente = m[1]; return; }
+            m = t.match(/^(?:compte d.?)?achats?\s*:?\s*([1-9]\d{1,7})\b/);
+            if (m && cellules.length === 1) { f.compteAchat = m[1]; return; }
+            if (/^(reglement|regle|reglee|paiement|paye|payee|au comptant|comptant)\b/.test(t) && cellules.length === 1) {
+                f.reglement = /espece/.test(t) ? '530' : /(credit|terme|jours)/.test(t) ? 'credit' : '512';
+                return;
+            }
+            if (/^(ecritures?|comptabilisation|correction)\b/.test(t) && cellules.length === 1) {
+                const f1 = /fournisseur/.test(t), c1 = /client/.test(t);
+                voir.fournisseur = f1 || !c1;
+                voir.client = c1 || !f1;
+                return;
+            }
+            if (cellules.length === 1) {
+                if (/^date\b/.test(t)) f.date = apres;
+                else if (/^fournisseur\b/.test(t)) f.fournisseur = apres;
+                else if (/^client\b/.test(t)) f.client = apres;
+                return;
+            }
+            // Ligne d'article : « Désignation | Qté | PU [| Montant] » ou « Désignation | Montant ».
+            const n = cellules.slice(1).map((x) => parseMontant(x));
+            if (!n.some((x) => x != null)) return;   // ligne d'en-tête
+            if (cellules.length === 2) f.lignes.push({ designation: tete, qte: null, pu: n[0] });
+            else if (n[0] != null && n[1] != null) f.lignes.push({ designation: tete, qte: n[0], pu: n[1] });
+            else f.lignes.push({ designation: tete, qte: null, pu: n.filter((x) => x != null).pop() });
+        });
+        return { facture: f, voir };
+    }
+
+    // Facture -> bloc ```facture d'une note (même syntaxe que ci-dessus).
+    function factureVersBloc(f, voir) {
+        const nb = (x) => String(Math.round(Number(x) * 1000) / 1000).replace('.', ',');
+        const out = ['```facture' + (f.numero ? ' Facture n° ' + f.numero : estAvoir(f) ? ' Facture d\'avoir' : '')];
+        if (f.fournisseur) out.push('Fournisseur : ' + f.fournisseur);
+        if (f.client) out.push('Client : ' + f.client);
+        if (f.date) out.push('Date : ' + f.date);
+        if (f.type === 'retour') out.push('Avoir (retour de marchandises)');
+        if (f.type === 'reduction') out.push('Avoir (réduction hors facture)');
+        (f.lignes || []).forEach((l) => {
+            if (!l.designation && nombre(l.pu) == null) return;
+            out.push((l.designation || 'Article') + ' | ' + (nombre(l.qte) == null ? nb(l.pu) : nb(l.qte) + ' | ' + nb(l.pu)));
+        });
+        (f.reductions || []).forEach((r) => {
+            if (nombre(r.taux)) out.push((r.libelle || 'Remise') + ' ' + nb(r.taux) + ' %');
+            else if (nombre(r.montant)) out.push((r.libelle || 'Remise') + ' ' + nb(r.montant));
+        });
+        if (nombre(f.escompte)) out.push('Escompte ' + nb(f.escompte) + ' %');
+        else if (nombre(f.escompteMontant)) out.push('Escompte ' + nb(f.escompteMontant));
+        if (nombre(f.port)) out.push('Port ' + nb(f.port));
+        out.push('TVA ' + nb(nombre(f.tva) == null ? 20 : f.tva) + ' %');
+        if (!estAvoir(f) && nombre(f.acompte)) out.push('Acompte ' + nb(f.acompte) + (f.acompteVerse === false ? ' (déjà enregistré)' : ''));
+        if ((f.compteVente || '707') !== '707') out.push('Vente : ' + f.compteVente);
+        if ((f.compteAchat || '607') !== '607') out.push('Achat : ' + f.compteAchat);
+        if (f.reglement === '512') out.push('Réglée au comptant par chèque');
+        if (f.reglement === '530') out.push('Réglée au comptant en espèces');
+        if (voir && (voir.fournisseur || voir.client)) {
+            out.push(voir.fournisseur && voir.client ? 'Écritures' : 'Écritures chez le ' + (voir.fournisseur ? 'fournisseur' : 'client'));
+        }
+        out.push('```');
+        return out.join('\n');
+    }
+
+    // Ristourne selon un barème : par tranches (chaque tranche à son taux, comme dans le cours)
+    // ou globale (tout le chiffre d'affaires au taux de la tranche atteinte).
+    // tranches = [{ de, a, taux }] (a vide = sans limite).
+    function ristourneBareme(ca, tranches, global) {
+        const total = cents(ca);
+        const t = (tranches || []).map((x) => ({ de: cents(x.de), a: nombre(x.a) == null ? Infinity : cents(x.a), taux: Number(x.taux) || 0 }))
+            .filter((x) => x.taux);
+        const detail = [];
+        if (global) {
+            const tr = t.filter((x) => total >= x.de && total <= x.a).pop();
+            if (tr) detail.push({ base: total, taux: tr.taux, montant: arrondi(total * tr.taux / 100) });
+        } else {
+            t.forEach((x) => {
+                const base = Math.max(0, Math.min(total, x.a) - x.de);
+                if (base) detail.push({ base, taux: x.taux, montant: arrondi(base * x.taux / 100) });
+            });
+        }
+        const somme = detail.reduce((s, d) => s + d.montant, 0);
+        const texte = detail.length
+            ? detail.map((d) => fmtTexte(euros(d.base)) + ' × ' + fmtTaux(d.taux)).join(' + ')
+                + (detail.length > 1 ? ' = ' + detail.map((d) => fmtTexte(euros(d.montant))).join(' + ') : '')
+                + ' = ' + fmtTexte(euros(somme)) + ' €'
+            : 'Pas de ristourne : le chiffre d\'affaires n\'atteint aucune tranche.';
+        return { montant: euros(somme), detail: detail.map((d) => ({ base: euros(d.base), taux: d.taux, montant: euros(d.montant) })), texte };
+    }
+
+    // =========================================================
+    //  Déclaration de TVA (régime du réel normal) : on solde les comptes de TVA du mois
+    //  TVA à décaisser = TVA collectée − TVA déductible (− crédit du mois précédent)
+    // =========================================================
+    function soldesTVA(dossier) {
+        const comptes = grandLivre(dossier);
+        const s = (p) => comptes.filter((c) => c.num.startsWith(p)).reduce((t, c) => t + cents(c.solde), 0);
+        return { collectee: euros(-s('44571')), abs: euros(s('44566')), immo: euros(s('44562')), credit: euros(s('44567')) };
+    }
+
+    function declarationTVA(v, date) {
+        const col = cents(v.collectee), abs = cents(v.abs), immo = cents(v.immo), cred = cents(v.credit);
+        const reste = col - abs - immo - cred;   // > 0 : TVA à décaisser ; < 0 : crédit de TVA
+        const lignes = [];
+        // Montant signé : positif du côté normal, négatif de l'autre côté.
+        const ligne = (compte, m, sens) => {
+            if (!m) return;
+            const d = (sens === 'D') === (m > 0);
+            lignes.push({ compte, debit: d ? euros(Math.abs(m)) : null, credit: d ? null : euros(Math.abs(m)) });
+        };
+        ligne('44571', col, 'D');
+        ligne('44567', Math.max(0, -reste) - cred, 'D');
+        ligne('44566', abs, 'C');
+        ligne('44562', immo, 'C');
+        ligne('44551', Math.max(0, reste), 'C');
+        const tri = lignes.filter((l) => l.debit).concat(lignes.filter((l) => !l.debit));
+        return {
+            reste: euros(reste),
+            ecriture: { date: date || '', libelle: reste > 0 ? 'Déclaration de TVA : TVA à décaisser'
+                : reste < 0 ? 'Déclaration de TVA : crédit de TVA' : 'Déclaration de TVA', lignes: tri },
+        };
     }
 
     // =========================================================
@@ -1228,8 +1703,43 @@
         };
     }
 
+    // =========================================================
+    //  Exemple : chapitre « La facturation », chez le fournisseur Y (factures du cours)
+    // =========================================================
+    function exempleFacturation() {
+        const produits = [
+            { designation: 'Produit 1', qte: 5, pu: 26.2 }, { designation: 'Produit 2', qte: 8, pu: 40 },
+            { designation: 'Produit 3', qte: 3, pu: 75 },
+        ];
+        const base = (autre) => Object.assign(factureVide(), { fournisseur: 'Fournisseur Y', client: 'Client X',
+            date: '10/03', lignes: produits }, autre);
+        const remise = [{ libelle: 'Remise', taux: 25 }];
+        const factures = [
+            base({ numero: '1' }),
+            base({ numero: '2', reductions: remise }),
+            base({ numero: '3', reductions: remise, escompte: 2 }),
+            base({ numero: '4', reductions: remise, acompte: 200 }),
+            base({ type: 'retour', date: '20/03', lignes: [{ designation: 'Produit 2', qte: 1, pu: 40 },
+                { designation: 'Produit 3', qte: 2, pu: 75 }], reductions: remise }),
+            base({ type: 'reduction', date: '31/12', lignes: [{ designation: 'Ristourne annuelle', qte: null, pu: 220 }] }),
+            base({ numero: '5', reglement: '512' }),
+        ];
+        const ecritures = [].concat(...factures.map((f) => ecrituresFacture(f, 'fournisseur')));
+        const tva = declarationTVA(soldesTVA({ ecritures }), '31/03').ecriture;
+        return {
+            version: 1,
+            titre: 'Exemple : la facturation (chez le fournisseur Y)',
+            entreprise: 'Fournisseur Y',
+            cloture: '31/12/N',
+            comptes: {},
+            ecritures: ecritures.concat([tva]),
+        };
+    }
+
     const Compta = {
         PCG, CLASSES, OPERATIONS,
+        NATURES_FACTURE, TAUX_TVA, fmtTaux, factureVide, calculerFacture, ecrituresFacture, expliquerFacture,
+        htmlFacture, parseFacture, factureVersBloc, ristourneBareme, soldesTVA, declarationTVA, exempleFacturation,
         echapper, parseMontant, fmt, fmtTexte, normaliserCompte, nomCompte, chercherCompte, suggestionsComptes,
         grandLivre, ecartEcriture, balance, compteResultat, docResultat, bilan, docBilan, completerDoc,
         analyse, calculer, classerBilan,

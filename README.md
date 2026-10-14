@@ -91,21 +91,35 @@ Ouvre <http://localhost/cours/>.
    l'intitulé ; une nouvelle ligne reçoit le montant qui équilibre l'écriture.
 2. **Grand livre** (comptes en T), 3. **Balance**, 4. **Compte de résultat**, 5. **Bilan** :
    calculés à partir du journal, avec vérification (balance et bilan équilibrés).
+- **Factures & TVA** (chapitre « Les échanges commerciaux et la facturation ») : on recopie une
+  facture (lignes qté × PU, remises en cascade, escompte, port, TVA 20 / 10 / 5,5 / 2,1 %, acompte)
+  ou un **avoir** (retour de marchandises, réduction hors facture) ; net commercial, net financier,
+  TVA et net à payer sont calculés, et les écritures sont données **chez le fournisseur et chez le
+  client** (411 / 707 / 44571 / 665 / 4191 et 607 / 44566 / 765 / 4091 / 401, 709 / 609, 44562 / 404
+  pour une immobilisation, règlement au comptant 512 / 530) avec le pourquoi de chaque compte,
+  à ajouter au journal en un clic. Aussi : **ristourne selon un barème** (par tranches ou globale,
+  puis l'avoir correspondant) et **déclaration de TVA** (soldes du dossier → 44551 TVA à décaisser
+  ou 44567 crédit de TVA). Les opérations courantes avec TVA laissent choisir le taux, et de
+  nouvelles opérations couvrent acomptes, avoirs et immobilisations.
 - **Analyse** : fonds de roulement, BFR, trésorerie nette (avec commentaire), soldes
   intermédiaires de gestion (marge, VA, EBE…) et ratios (marge, rentabilités, autonomie,
   liquidité, délais clients / fournisseurs).
 - **Aide-mémoire** : méthode, débit / crédit, classes du plan comptable, structure du bilan
-  et du compte de résultat, formules, pièges fréquents, opérations courantes, plan
-  comptable avec recherche.
+  et du compte de résultat, facturation (du brut au net à payer, remise / rabais / ristourne /
+  escompte, écritures chez le fournisseur et chez le client, taux et déclaration de TVA),
+  formules, pièges fréquents, opérations courantes, plan comptable avec recherche.
 - **Bilan** : comparaison avec le bilan de départ, et « Exercice suivant » qui crée un dossier
   dont le bilan de départ est ce bilan de fin (résultat en 120 / 129).
-- **Exemples** : « du bilan de départ au bilan de fin » et cas Brico Dépôt (grand livre au
-  30/12 + opérations du 31/12) pour vérifier son corrigé.
+- **Exemples** : « du bilan de départ au bilan de fin », cas Brico Dépôt (grand livre au
+  30/12 + opérations du 31/12) et « la facturation » (les factures et avoirs du cours chez le
+  fournisseur Y, puis la déclaration de TVA) pour vérifier son corrigé.
 - **Créer une note** : copie tout le dossier dans une note (rangée dans la matière de gestion).
 
 **Dans les notes** (menu **Compta** de l'éditeur) : blocs ```` ```comptes ```` (comptes en T),
-```` ```journal ````, ```` ```balance ````, ```` ```resultat ```` et ```` ```bilan ```` ; totaux,
-soldes et résultat sont calculés à l'affichage (syntaxe dans la page Aide).
+```` ```journal ````, ```` ```balance ````, ```` ```resultat ````, ```` ```bilan ```` et ```` ```facture ```` ;
+totaux, soldes et résultat sont calculés à l'affichage (syntaxe dans la page Aide). Une facture :
+`Produit 1 | 5 | 26,20` par ligne, puis `Remise 25 %`, `Escompte 2 %`, `TVA 20 %`, `Acompte 200`,
+`Avoir`… et `Écritures` pour afficher la comptabilisation des deux côtés.
 **Le numéro suffit** : `512` s'affiche « 512 Banque » ; dans l'éditeur, `@banque` ou `@512`
 insère « 512 Banque », et dans un tableau ou un bloc de compta le numéro seul propose
 l'intitulé (Entrée / Tab). Le menu Compta a aussi une recherche de compte.
@@ -241,3 +255,4 @@ export.php / imprimer.php   exports Markdown / PDF
 - [x] Agenda : emploi du temps iCal, réunions, tâches
 - [x] Nouvelle interface : design system, accueil « Aujourd'hui », palette Ctrl K
 - [x] Comptabilité : atelier (journal, grand livre, balance, résultat, bilan, analyse), blocs dans les notes, souligné
+- [x] Facturation : factures et avoirs (fournisseur / client), ristourne, déclaration de TVA, bloc ```` ```facture ````

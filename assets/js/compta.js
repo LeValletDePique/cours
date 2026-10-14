@@ -6,6 +6,8 @@
      courantes expliquées, écritures à plusieurs lignes
    - onglets calculés à l'affichage : grand livre, balance, compte de
      résultat, bilan, analyse (calculs : compta-moteur.js)
+   - factures et TVA : facture ou avoir -> écritures chez le fournisseur et
+     chez le client, ristourne selon un barème, déclaration de TVA
    - aide-mémoire : opérations courantes et plan comptable
    - « Créer une note » : tout le dossier en Markdown dans une note
    ============================================================ */
@@ -151,7 +153,7 @@
             b.classList.toggle('actif', actif);
             b.setAttribute('aria-selected', actif ? 'true' : 'false');
         });
-        const sansDossier = !etat.d && nom !== 'memo';
+        const sansDossier = !etat.d && nom !== 'memo' && nom !== 'factures';
         $('#compta-vide').hidden = !sansDossier;
         $$('.compta-panneau').forEach((p) => { p.hidden = sansDossier || p.dataset.panneau !== nom; });
         if (!sansDossier) dessinerOnglet(nom);
@@ -159,6 +161,7 @@
     }
 
     function dessinerOnglet(nom) {
+        if (nom === 'factures') dessinerFactures();
         if (nom === 'memo' || !etat.d) return;
         const calc = C.calculer(etat.d);
         const cloture = etat.d.cloture || '31/12/N';
@@ -607,6 +610,7 @@
         const op = C.OPERATIONS[$('#op-type').value];
         const el = $('#op-pourquoi');
         $('#op-montant').placeholder = op && op.tva ? 'Montant HT' : 'Montant';
+        $('#op-taux').hidden = !(op && op.tva);
         if (!op) { el.innerHTML = ''; return; }
         el.innerHTML = op.lignes.map(([compte, sens, part]) => '<span class="cpt-sens cpt-sens--' + sens + '">'
             + (sens === 'D' ? 'Débit' : 'Crédit') + ' <b>' + ech(compte) + '</b> ' + ech(C.nomCompte(compte))
@@ -621,9 +625,322 @@
         const montant = C.parseMontant($('#op-montant').value);
         if (!op) { $('#op-type').focus(); return; }
         if (!montant) { $('#op-montant').focus(); return; }
-        ajouterEcriture(C.ecritureOperation(op, montant, $('#op-date').value.trim() || dateParDefaut()));
+        ajouterEcriture(C.ecritureOperation(op, montant, $('#op-date').value.trim() || dateParDefaut(), $('#op-taux').value));
         $('#op-montant').value = '';
         $('#op-montant').focus();
+    });
+
+    // =========================================================
+    //  Factures et TVA : facture -> écritures (fournisseur / client),
+    //  ristourne selon un barème, déclaration de TVA
+    //  (la saisie est gardée dans le navigateur, pas dans le dossier)
+    // =========================================================
+    const CLE_FACTURES = 'compta-factures';
+    const nb = (x) => (x == null || x === '' ? '' : String(Math.round(Number(x) * 1000) / 1000).replace('.', ','));
+    const ristourneDefaut = () => ({ ca: 10000, mode: 'tranches', tranches: [{ de: 4000, a: 8000, taux: 3 }, { de: 8000, a: 15000, taux: 5 }] });
+    const factureNeuve = () => Object.assign(C.factureVide(), { lignes: [{ designation: '', qte: null, pu: null }] });
+    function factureExemple() {
+        return Object.assign(C.factureVide(), { fournisseur: 'Fournisseur Y', client: 'Client X', date: '10/03', lignes: [
+            { designation: 'Produit 1', qte: 5, pu: 26.2 }, { designation: 'Produit 2', qte: 8, pu: 40 },
+            { designation: 'Produit 3', qte: 3, pu: 75 }], reductions: [{ libelle: 'Remise', taux: 25 }], escompte: 2 });
+    }
+    const fact = { f: factureNeuve(), rist: ristourneDefaut(), tvaManuelle: false };
+    try {
+        const sauve = JSON.parse(localStorage.getItem(CLE_FACTURES) || 'null');
+        if (sauve && sauve.f) fact.f = Object.assign(C.factureVide(), sauve.f);
+        if (sauve && sauve.rist) fact.rist = Object.assign(ristourneDefaut(), sauve.rist);
+    } catch (e) {}
+    const garderFactures = () => {
+        try { localStorage.setItem(CLE_FACTURES, JSON.stringify({ f: fact.f, rist: fact.rist })); } catch (e) {}
+    };
+
+    // « 25 », « 10 + 5 », « rabais 5 + remise 10 », « 50 € » -> réductions en cascade.
+    function lireReductions(texte) {
+        return String(texte || '').split(/[+;]|\bpuis\b/i).map((morceau) => {
+            const m = morceau.trim().match(/^([A-Za-zÀ-ÿ]+)?\s*([\d\s.,]+)\s*(€)?\s*%?$/);
+            if (!m) return null;
+            const v = C.parseMontant(m[2]);
+            if (!v) return null;
+            const mot = (m[1] || 'Remise').toLowerCase();
+            const libelle = /^rab/.test(mot) ? 'Rabais' : /^ris/.test(mot) ? 'Ristourne' : 'Remise';
+            return m[3] ? { libelle, montant: v } : { libelle, taux: v };
+        }).filter(Boolean);
+    }
+    const ecrireReductions = (r) => (r || []).map((x) => (x.libelle && x.libelle !== 'Remise' ? x.libelle + ' ' : '')
+        + (x.taux ? nb(x.taux) : nb(x.montant) + ' €')).join(' + ');
+
+    function htmlLigneFacture(l, j) {
+        return '<tr data-l="' + j + '">'
+            + '<td><input class="cpt-in" data-champ="designation" value="' + ech(l.designation || '') + '" placeholder="Produit ' + (j + 1) + '" aria-label="Désignation"></td>'
+            + '<td><input class="cpt-in cpt-in--mt" data-champ="qte" inputmode="decimal" value="' + ech(nb(l.qte)) + '" placeholder="1" aria-label="Quantité"></td>'
+            + '<td><input class="cpt-in cpt-in--mt" data-champ="pu" inputmode="decimal" value="' + ech(nb(l.pu)) + '" placeholder="0,00" aria-label="Prix unitaire HT"></td>'
+            + '<td class="cpt-mt compta-facture__montant"></td>'
+            + '<td><button type="button" class="mc-btn mc-btn--ghost mc-btn--sm" data-f="suppr-ligne" title="Retirer la ligne" aria-label="Retirer la ligne">'
+            + icone('fermer', 'mc-ico-sm') + '</button></td></tr>';
+    }
+
+    function dessinerFormFacture() {
+        const f = fact.f;
+        $('#fact-type').value = f.type || 'doit';
+        [['#fact-fournisseur', 'fournisseur'], ['#fact-client', 'client'], ['#fact-numero', 'numero'], ['#fact-date', 'date']]
+            .forEach(([sel, cle]) => { $(sel).value = f[cle] || ''; });
+        $('#fact-remises').value = ecrireReductions(f.reductions);
+        $('#fact-escompte').value = nb(f.escompte);
+        $('#fact-port').value = nb(f.port);
+        $('#fact-tva').value = String(f.tva == null ? 20 : f.tva);
+        $('#fact-acompte').value = nb(f.acompte);
+        $('#fact-acompte-verse').checked = f.acompteVerse !== false;
+        $('#fact-vente').value = f.compteVente || '707';
+        $('#fact-achat').value = f.compteAchat || '607';
+        $('#fact-reglement').value = f.reglement || 'credit';
+        if (!f.lignes.length) f.lignes.push({ designation: '', qte: null, pu: null });
+        $('#fact-lignes').innerHTML = f.lignes.map(htmlLigneFacture).join('');
+        majFacture();
+    }
+
+    function majFacture() {
+        const f = fact.f;
+        const avoir = f.type !== 'doit';
+        $$('[data-fact-doit]').forEach((el) => { el.hidden = avoir; });
+        const nature = Object.keys(C.NATURES_FACTURE).find((k) => C.NATURES_FACTURE[k].vente === f.compteVente
+            && C.NATURES_FACTURE[k].achat === f.compteAchat);
+        $('#fact-nature').value = nature || 'autre';
+        const calc = C.calculerFacture(f);
+        $$('#fact-lignes tr').forEach((tr, j) => {
+            const l = f.lignes[j];
+            const vide = !l || (!l.designation && l.pu == null);
+            tr.querySelector('.compta-facture__montant').textContent = vide ? ''
+                : C.fmt(Math.round((l.qte == null ? 1 : l.qte) * (l.pu || 0) * 100) / 100);
+        });
+        $('#fact-apercu').innerHTML = C.htmlFacture(f, f.numero ? (avoir ? 'Avoir' : 'Facture') + ' n° ' + f.numero : '');
+        ['fournisseur', 'client'].forEach((cote) => {
+            const ecritures = calc.lignes.length ? C.ecrituresFacture(f, cote) : [];
+            $('#fact-ecr-' + cote).innerHTML = ecritures.length ? C.htmlJournal(ecritures, {})
+                : '<p class="cpt-vide">Remplis au moins une ligne de la facture.</p>';
+            $('#fact-pourquoi-' + cote).innerHTML = ecritures.length
+                ? C.expliquerFacture(f, cote).map((t) => '<li>' + ech(t) + '</li>').join('') : '';
+        });
+        $$('[data-f="ajouter"]').forEach((b) => {
+            b.disabled = !etat.d || !calc.lignes.length;
+            b.title = etat.d ? 'Recopie ces écritures dans le journal de « ' + etat.d.titre + ' »' : 'Ouvre ou crée d\'abord un dossier';
+        });
+        garderFactures();
+    }
+
+    const carteFacture = $('#carte-facture');
+    carteFacture.addEventListener('input', (e) => {
+        const f = fact.f, el = e.target;
+        const tr = el.closest('#fact-lignes [data-l]');
+        if (tr) {
+            const l = f.lignes[+tr.dataset.l], champ = el.dataset.champ;
+            if (champ === 'designation') l.designation = el.value;
+            else {
+                const brut = el.value.trim(), v = C.parseMontant(brut);
+                el.setAttribute('aria-invalid', brut && v == null ? 'true' : 'false');
+                l[champ] = v;
+            }
+        } else {
+            const champs = { 'fact-fournisseur': 'fournisseur', 'fact-client': 'client', 'fact-numero': 'numero', 'fact-date': 'date' };
+            const nombres = { 'fact-escompte': 'escompte', 'fact-port': 'port', 'fact-acompte': 'acompte' };
+            if (champs[el.id]) f[champs[el.id]] = el.value.trim();
+            else if (nombres[el.id]) f[nombres[el.id]] = C.parseMontant(el.value);
+            else if (el.id === 'fact-remises') f.reductions = lireReductions(el.value);
+            else if (el.id === 'fact-vente') f.compteVente = C.normaliserCompte(el.value) || '707';
+            else if (el.id === 'fact-achat') f.compteAchat = C.normaliserCompte(el.value) || '607';
+            else return;
+        }
+        majFacture();
+    });
+    carteFacture.addEventListener('change', (e) => {
+        const f = fact.f, el = e.target;
+        if (el.id === 'fact-type') f.type = el.value;
+        else if (el.id === 'fact-tva') f.tva = Number(el.value);
+        else if (el.id === 'fact-reglement') f.reglement = el.value;
+        else if (el.id === 'fact-acompte-verse') f.acompteVerse = el.checked;
+        else if (el.id === 'fact-nature') {
+            const n = C.NATURES_FACTURE[el.value];
+            if (!n) return;
+            f.compteVente = n.vente;
+            f.compteAchat = n.achat;
+            $('#fact-vente').value = n.vente;
+            $('#fact-achat').value = n.achat;
+        } else if (el.dataset.champ === 'qte' || el.dataset.champ === 'pu') {
+            const l = f.lignes[+el.closest('[data-l]').dataset.l];
+            if (l[el.dataset.champ] != null) el.value = nb(l[el.dataset.champ]);
+            return;
+        } else return;
+        majFacture();
+    });
+    // Entrée dans la dernière ligne : nouvelle ligne.
+    $('#fact-lignes').addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        const j = +e.target.closest('[data-l]').dataset.l;
+        if (j === fact.f.lignes.length - 1) ajouterLigneFacture();
+        else $('#fact-lignes [data-l="' + (j + 1) + '"] [data-champ="' + e.target.dataset.champ + '"]').focus();
+    });
+    function ajouterLigneFacture() {
+        fact.f.lignes.push({ designation: '', qte: null, pu: null });
+        $('#fact-lignes').insertAdjacentHTML('beforeend', htmlLigneFacture(fact.f.lignes[fact.f.lignes.length - 1], fact.f.lignes.length - 1));
+        $('#fact-lignes tr:last-child [data-champ="designation"]').focus();
+        majFacture();
+    }
+
+    // Ajout des écritures au journal du dossier ouvert.
+    function ajouterAuJournal(ecritures, statutEl) {
+        if (!etat.d || !ecritures.length) return;
+        const premier = etat.d.ecritures.length + 1;
+        const date = dateParDefaut();
+        ecritures.forEach((ecr) => etat.d.ecritures.push(JSON.parse(JSON.stringify(Object.assign(ecr, { date: ecr.date || date })))));
+        modifie();
+        dessinerJournal();
+        const dernier = etat.d.ecritures.length;
+        statutEl.innerHTML = 'Ajouté au journal : écriture' + (dernier > premier ? 's n° ' + premier + ' à ' + dernier : ' n° ' + premier)
+            + '. <button type="button" class="mc-link compta-lien" data-c="aller-journal">Voir le journal</button>';
+    }
+
+    // ---------- Ristourne ----------
+    function htmlTranche(t, j) {
+        return '<tr data-l="' + j + '">'
+            + '<td><input class="cpt-in cpt-in--mt" data-champ="de" inputmode="decimal" value="' + ech(nb(t.de)) + '" placeholder="0" aria-label="CA de"></td>'
+            + '<td><input class="cpt-in cpt-in--mt" data-champ="a" inputmode="decimal" value="' + ech(nb(t.a)) + '" placeholder="et plus" aria-label="à"></td>'
+            + '<td><input class="cpt-in cpt-in--mt" data-champ="taux" inputmode="decimal" value="' + ech(nb(t.taux)) + '" placeholder="%" aria-label="Taux en %"></td>'
+            + '<td><button type="button" class="mc-btn mc-btn--ghost mc-btn--sm" data-f="suppr-tranche" title="Retirer la tranche" aria-label="Retirer la tranche">'
+            + icone('fermer', 'mc-ico-sm') + '</button></td></tr>';
+    }
+    function dessinerRistourne() {
+        $('#rist-ca').value = nb(fact.rist.ca);
+        $('#rist-mode').value = fact.rist.mode;
+        $('#rist-tranches').innerHTML = fact.rist.tranches.map(htmlTranche).join('');
+        majRistourne();
+    }
+    function majRistourne() {
+        const r = C.ristourneBareme(fact.rist.ca, fact.rist.tranches, fact.rist.mode === 'global');
+        $('#rist-resultat').innerHTML = 'Ristourne = <b>' + ech(r.texte) + '</b>';
+        $('[data-f="avoir-ristourne"]').disabled = !r.montant;
+        garderFactures();
+        return r;
+    }
+    const carteRistourne = $('#rist-ca').closest('.mc-card');
+    carteRistourne.addEventListener('input', (e) => {
+        const el = e.target;
+        if (el.id === 'rist-ca') fact.rist.ca = C.parseMontant(el.value);
+        else if (el.dataset.champ) fact.rist.tranches[+el.closest('[data-l]').dataset.l][el.dataset.champ] = C.parseMontant(el.value);
+        majRistourne();
+    });
+    $('#rist-mode').addEventListener('change', (e) => { fact.rist.mode = e.target.value; majRistourne(); });
+
+    // ---------- Déclaration de TVA ----------
+    const CHAMPS_TVA = [['#tva-collectee', 'collectee'], ['#tva-abs', 'abs'], ['#tva-immo', 'immo'], ['#tva-credit', 'credit']];
+    function remplirSoldesTVA() {
+        if (!etat.d) return;
+        const s = C.soldesTVA(etat.d);
+        CHAMPS_TVA.forEach(([sel, cle]) => { $(sel).value = s[cle] ? C.fmt(s[cle]) : ''; });
+        if (!$('#tva-date').value) $('#tva-date').value = dateParDefaut();
+        fact.tvaManuelle = false;
+    }
+    function lireTVA() {
+        const v = {};
+        CHAMPS_TVA.forEach(([sel, cle]) => { v[cle] = C.parseMontant($(sel).value) || 0; });
+        return v;
+    }
+    function majTVA() {
+        const v = lireTVA();
+        const d = C.declarationTVA(v, $('#tva-date').value.trim());
+        const ded = [v.abs ? C.fmt(v.abs) : '', v.immo ? C.fmt(v.immo) : '', v.credit ? C.fmt(v.credit) : ''].filter(Boolean);
+        $('#tva-resultat').innerHTML = !d.ecriture.lignes.length ? 'Aucune TVA à déclarer : les comptes de TVA sont soldés.'
+            : C.fmt(v.collectee) + (ded.length ? ' − ' + ded.join(' − ') : '') + ' = <b>' + C.fmt(Math.abs(d.reste)) + ' € '
+                + (d.reste > 0 ? 'de TVA à décaisser</b> (44551, à payer à l\'État le mois suivant)'
+                    : d.reste < 0 ? 'de crédit de TVA</b> (44567, à déduire le mois suivant)' : '</b>(rien à payer)');
+        $('#tva-ecriture').innerHTML = d.ecriture.lignes.length ? C.htmlJournal([d.ecriture], {}) : '';
+        $('[data-f="tva-ajouter"]').disabled = !etat.d || !d.ecriture.lignes.length;
+        return d;
+    }
+    const carteTVA = $('#tva-collectee').closest('.mc-card');
+    carteTVA.addEventListener('input', (e) => {
+        if (e.target.id !== 'tva-date') fact.tvaManuelle = true;
+        majTVA();
+    });
+
+    function dessinerFactures() {
+        if (!fact.dessine) {
+            $('#fact-nature').innerHTML = Object.keys(C.NATURES_FACTURE).map((k) => '<option value="' + k + '">'
+                + ech(C.NATURES_FACTURE[k].libelle) + '</option>').join('') + '<option value="autre">Autre (comptes ci-contre)</option>';
+            dessinerFormFacture();
+            dessinerRistourne();
+            fact.dessine = true;
+        } else {
+            majFacture();
+        }
+        if (!fact.tvaManuelle) remplirSoldesTVA();
+        majTVA();
+    }
+
+    $('[data-panneau="factures"]').addEventListener('click', async (e) => {
+        const b = e.target.closest('[data-f]');
+        if (!b) return;
+        switch (b.dataset.f) {
+            case 'ligne':
+                ajouterLigneFacture();
+                break;
+            case 'suppr-ligne':
+                fact.f.lignes.splice(+b.closest('[data-l]').dataset.l, 1);
+                dessinerFormFacture();
+                break;
+            case 'vider':
+                fact.f = Object.assign(factureNeuve(), { fournisseur: fact.f.fournisseur, client: fact.f.client });
+                dessinerFormFacture();
+                $('#fact-lignes [data-champ="designation"]').focus();
+                break;
+            case 'exemple':
+                fact.f = factureExemple();
+                dessinerFormFacture();
+                break;
+            case 'copier': {
+                const texte = C.factureVersBloc(fact.f, { fournisseur: true, client: true });
+                try {
+                    await navigator.clipboard.writeText(texte);
+                    $('#fact-statut').textContent = 'Copié : colle-le dans une note (Ctrl+V).';
+                } catch (err) {
+                    prompt('Copie ce texte dans ta note :', texte);
+                }
+                break;
+            }
+            case 'ajouter':
+                ajouterAuJournal(C.ecrituresFacture(fact.f, b.dataset.cote), $('#fact-statut'));
+                if (!fact.tvaManuelle) { remplirSoldesTVA(); majTVA(); }
+                break;
+            case 'tranche': {
+                const t = fact.rist.tranches;
+                t.push({ de: t.length ? t[t.length - 1].a : 0, a: null, taux: null });
+                dessinerRistourne();
+                $('#rist-tranches tr:last-child [data-champ="taux"]').focus();
+                break;
+            }
+            case 'suppr-tranche':
+                fact.rist.tranches.splice(+b.closest('[data-l]').dataset.l, 1);
+                dessinerRistourne();
+                break;
+            case 'avoir-ristourne': {
+                const r = majRistourne();
+                fact.f = Object.assign(C.factureVide(), { type: 'reduction', fournisseur: fact.f.fournisseur, client: fact.f.client,
+                    lignes: [{ designation: 'Ristourne annuelle', qte: null, pu: r.montant }] });
+                dessinerFormFacture();
+                carteFacture.scrollIntoView({ block: 'start', behavior: 'smooth' });
+                break;
+            }
+            case 'tva-soldes':
+                remplirSoldesTVA();
+                majTVA();
+                break;
+            case 'tva-ajouter': {
+                const d = majTVA();
+                ajouterAuJournal([d.ecriture], $('#tva-statut'));
+                remplirSoldesTVA();
+                majTVA();
+                break;
+            }
+        }
     });
 
     // =========================================================
@@ -723,6 +1040,7 @@
         e.target.value = '';
         if (choix === 'brico') await creer(C.exempleBricoDepot());
         if (choix === 'depart' && await creer(C.exempleBilanDepart())) afficherOnglet('depart');
+        if (choix === 'facturation' && await creer(C.exempleFacturation())) afficherOnglet('journal');
     });
     [['#compta-titre', 'titre'], ['#compta-entreprise', 'entreprise'], ['#compta-cloture', 'cloture']].forEach(([sel, cle]) => {
         $(sel).addEventListener('input', (e) => { if (etat.d) { etat.d[cle] = e.target.value; modifie(); } });
@@ -765,6 +1083,12 @@
                 break;
             case 'exemple-depart':
                 if (await creer(C.exempleBilanDepart())) afficherOnglet('depart');
+                break;
+            case 'exemple-facturation':
+                if (await creer(C.exempleFacturation())) afficherOnglet('journal');
+                break;
+            case 'aller-factures':
+                afficherOnglet('factures');
                 break;
             case 'aller-journal':
                 afficherOnglet('journal');

@@ -32,6 +32,9 @@
         ['Balance', '```balance', '```balance\n512 Banque | 60 000 | 25 000\n401 Fournisseurs | 25 000 | 39 000\n607 Achats de marchandises | 39 000 |\n707 Ventes de marchandises | | 60 000\n```', '512 Banque | 60 000 | 25 000'],
         ['Compte de résultat', '```resultat', '```resultat Compte de résultat N\nCharges\n607 Achats de marchandises 554 000\n641 Salaires 558 500\nProduits\n707 Ventes de marchandises 1 257 000\n```', '607 Achats de marchandises 554 000'],
         ['Bilan', '```bilan', '```bilan Bilan au 31/12/N\nActif\n# Actif immobilisé\n211 Terrains 300 000\n# Actif circulant\n37 Stocks 250 000\n512 Banque 91 500\nPassif\n# Capitaux propres\n101 Capital 500 000\nRésultat de l\'exercice : ?\n# Dettes\n164 Emprunts 100 000\n```', '211 Terrains 300 000'],
+        ['Facture', '```facture', '```facture Facture n° 1\nFournisseur : Fournisseur Y\nClient : Client X\nDate : 10/03/N\nProduit 1 | 5 | 26,20\nProduit 2 | 8 | 40\nProduit 3 | 3 | 75\nRemise 25 %\nEscompte 2 %\nTVA 20 %\nAcompte 200\nÉcritures\n```', 'Produit 1 | 5 | 26,20'],
+        ['Facture d\'avoir', 'retour ou ristourne', '```facture Facture d\'avoir\nAvoir (retour de marchandises)\nProduit 2 | 1 | 40\nProduit 3 | 2 | 75\nRemise 25 %\nTVA 20 %\nÉcritures\n```', 'Produit 2 | 1 | 40'],
+        ['Déclaration de TVA', '```journal', '```journal\n31/03 Déclaration de TVA\n44571 TVA collectée | 1 000 |\n44566 TVA déductible sur ABS | | 300\n44562 TVA déductible sur immobilisations | | 100\n44551 TVA à décaisser | | 600\n```', '44571 TVA collectée | 1 000 |'],
         ['Formules FR / BFR / trésorerie', 'rappel', '> **FR** = capitaux permanents (capitaux propres + dettes financières) − actif immobilisé\n> **BFR** = (stocks + créances) − dettes d\'exploitation\n> **Trésorerie nette** = FR − BFR = disponibilités − concours bancaires', ''],
     ];
 
@@ -1137,7 +1140,8 @@
                 const aide = document.createElement('p');
                 aide.className = 'menu-aide';
                 aide.innerHTML = 'Les totaux, soldes et le résultat se calculent tout seuls. '
-                    + 'Montants : <code>1 500 000</code>. Dans un bilan, <code>Résultat : ?</code> est calculé pour équilibrer.';
+                    + 'Montants : <code>1 500 000</code>. Dans un bilan, <code>Résultat : ?</code> est calculé pour équilibrer. '
+                    + 'Une facture calcule net commercial, escompte, TVA et net à payer ; <code>Écritures</code> ajoute le corrigé.';
                 menuCompta.append(lien, aide);
             }
 

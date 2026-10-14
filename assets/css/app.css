@@ -759,7 +759,7 @@ button.compta-lien { border: 0; background: none; padding: 0; cursor: pointer; f
 .compta-pcg__num { width: 1%; white-space: nowrap; }
 
 /* Bilan de départ */
-.compta-barre__exemple { flex: 0 1 230px; }
+.compta-barre__exemple { flex: 0 1 230px; min-width: 0; }
 .compta-depart__date { flex: 0 0 120px; }
 .compta-depart { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(360px, 100%), 1fr)); gap: var(--space-4); margin-top: var(--space-3); }
 .compta-depart__cote { display: grid; gap: var(--space-2); align-content: start; padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-md); min-width: 0; overflow-x: auto; }
@@ -784,6 +784,40 @@ button.compta-lien { border: 0; background: none; padding: 0; cursor: pointer; f
 .compta-an { margin: -8px 0 var(--space-3); padding: 8px 12px; border-radius: var(--radius-md); background: var(--ue-2-soft); color: var(--ink); }
 .compta-bilan__pied { margin-top: var(--space-4); }
 
+/* Facture (notes et atelier) : présentée comme dans le cours, totaux alignés à droite */
+.cpt-fact__table { max-width: 560px; }
+.cpt-fact__table th.cpt-fact__entete { text-align: left; font-weight: 400; background: var(--surface); }
+.cpt-fact__table td:nth-child(2), .cpt-fact__table td:nth-child(3) { width: 1%; white-space: nowrap; }
+.cpt-fact__table td:last-child { width: 22%; }
+.cpt-fact__tot td:first-child { text-align: right; color: var(--ink-muted); }
+.cpt-fact__st td { font-weight: 600; } .cpt-fact__st td:first-child { color: var(--ink); }
+.cpt-fact__net td { font-weight: 700; background: var(--surface-sunk); } .cpt-fact__net td:first-child { color: var(--ink); }
+.cpt-fact__qui { margin: 1em 0 0; font-weight: 600; }
+
+/* Atelier : onglet Factures et TVA */
+.compta-facture__type { flex: 0 1 380px; }
+.compta-facture { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: var(--space-5); align-items: start; margin-top: var(--space-3); }
+.compta-facture__saisie { display: grid; gap: var(--space-3); min-width: 0; }
+.compta-facture__apercu .cpt-doc { margin-top: 0; }
+.compta-facture__champs { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); align-items: flex-end; }
+.compta-facture__champs .compta-champ--court { flex: 1 1 110px; max-width: 170px; }
+.compta-facture__case { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--ink-muted); padding-bottom: 8px; }
+.compta-facture__lignes td:nth-child(2) { width: 70px; } .compta-facture__lignes td:nth-child(3), .compta-facture__lignes td:nth-child(4) { width: 110px; }
+.compta-facture__lignes td:last-child { width: 32px; }
+.compta-facture__montant { padding: 0 6px !important; color: var(--ink-muted); font-size: 14px; }
+.compta-facture__lignes .cpt-in { border-color: var(--line-strong); background: var(--surface); }
+.compta-facture__lignes .cpt-in:focus { border-color: var(--accent); }
+.compta-facture__lignes .cpt-in[aria-invalid="true"] { border-color: var(--warning); background: var(--warning-soft); }
+.compta-facture__cotes { align-items: start; gap: var(--space-5); }
+.compta-facture__pourquoi { margin: var(--space-3) 0 0; font-size: 13px; line-height: 19px; color: var(--ink-muted); }
+.compta-facture__pourquoi:empty { display: none; }
+.compta-facture__resultat { margin: var(--space-3) 0; font-size: 14px; line-height: 21px; }
+.compta-facture__resultat b { color: var(--accent); }
+.compta-memo__defile { overflow-x: auto; }
+.compta-memo__fact td { white-space: normal !important; min-width: 180px; }
+.compta-memo__fact td:first-child { min-width: 150px; }
+@media (max-width: 900px) { .compta-facture { grid-template-columns: minmax(0, 1fr); } }
+
 /* Éditeur : menu Compta et suggestions de comptes */
 .menu-compta { width: min(380px, 92vw); max-height: 70vh; overflow-y: auto; }
 .menu-compta .maths-recherche { height: 32px; padding: 0 8px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--ink); font: 400 13px/18px var(--font-sans); }
@@ -803,7 +837,9 @@ button.compta-lien { border: 0; background: none; padding: 0; cursor: pointer; f
 /* Impression de l'atelier : seulement l'onglet affiché (le journal en version « papier »). */
 @media print {
     .mc-rail, .mc-topbar, .compta-barre, .compta-onglets, .compta-entete p, .compta-saisie-carte,
-    #ecritures, .compta-ecritures__pied, .compta-filtre, .mc-palette-fond { display: none !important; }
+    #ecritures, .compta-ecritures__pied, .compta-filtre, .mc-palette-fond,
+    .compta-facture__saisie, [data-panneau="factures"] .mc-btn, [data-panneau="factures"] .compta-lien { display: none !important; }
+    .compta-facture { grid-template-columns: 1fr; }
     .mc-app { display: block; background: none; }
     .mc-main { padding: 0; }
     .mc-card { box-shadow: none; border: 0; padding: 0; }
