@@ -781,6 +781,16 @@ button.compta-lien { border: 0; background: none; padding: 0; cursor: pointer; f
 .compta-coller summary, .compta-comparer summary { cursor: pointer; font-weight: 500; font-size: 14px; color: var(--accent); }
 .compta-coller[open] { display: grid; gap: var(--space-2); }
 .compta-coller textarea { width: 100%; resize: vertical; }
+.compta-enonce__ops { display: grid; gap: var(--space-2); max-height: 55vh; overflow-y: auto; margin: 0; padding-left: 28px; font-size: 14px; line-height: 21px; }
+.compta-enonce__ops li.fait .compta-enonce__op span { color: var(--ink-muted); text-decoration: line-through; }
+.compta-enonce__op { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; }
+.compta-enonce__op .mc-check { margin-top: 3px; flex: none; }
+.compta-enonce__facture { margin: 4px 0 0 26px; }
+.compta-enonce__facture summary { cursor: pointer; font-size: 13px; color: var(--accent); }
+.compta-enonce__facture[open] { display: grid; gap: var(--space-2); }
+.compta-enonce__facture .cpt-fact { max-width: 520px; }
+.compta-enonce__questions { margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--line); }
+.compta-enonce__questions .mc-eyebrow { margin: 0 0 6px; }
 .compta-an { margin: -8px 0 var(--space-3); padding: 8px 12px; border-radius: var(--radius-md); background: var(--ue-2-soft); color: var(--ink); }
 .compta-bilan__pied { margin-top: var(--space-4); }
 

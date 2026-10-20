@@ -114,6 +114,34 @@ Ouvre <http://localhost/cours/>.
   30/12 + opérations du 31/12) et « la facturation » (les factures et avoirs du cours chez le
   fournisseur Y, puis la déclaration de TVA) pour vérifier son corrigé.
 - **Créer une note** : copie tout le dossier dans une note (rangée dans la matière de gestion).
+- **Énoncés** : un exercice recopié une fois pour toutes dans `enonces/compta/*.json` apparaît dans
+  « Ouvrir un exemple… » (groupe « Énoncés à faire ») ; le bouton **Importer un énoncé** prend un
+  tel fichier depuis l'ordinateur. Le dossier créé a l'entreprise, la date de clôture, le plan
+  comptable de l'énoncé (« 411001 Client BETA »…) et une carte **Énoncé** en haut du journal :
+  les opérations à enregistrer (à cocher une fois faites), chaque facture affichée comme dans le
+  sujet (« Vérifier dans Factures & TVA » la charge dans l'onglet), puis les questions suivantes.
+  Les écritures restent à faire soi-même. Format du fichier :
+
+  ```json
+  {
+      "titre": "Exercice 5 – La facturation (ALPHA)", "entreprise": "ALPHA", "cloture": "31/12/N",
+      "comptes": { "411001": "Client BETA", "607000": "Achats de marchandises" },
+      "ouverture": { "date": "01/01/N", "actif": [], "passif": [] },
+      "enonce": {
+          "source": "Exercice_5.pdf", "intro": "Enregistrez les opérations suivantes…",
+          "operations": [
+              { "date": "01/12", "texte": "Versement d'un acompte par chèque de 1 500 € à OMEGA." },
+              { "date": "03/12", "texte": "Facture d'ALPHA à BETA.", "facture": { "fournisseur": "ALPHA",
+                  "client": "BETA", "lignes": [ { "designation": "Produit 1", "qte": 40, "pu": 25 } ],
+                  "reductions": [ { "libelle": "Rabais", "montant": 550 } ], "escompte": 5, "tva": 20 } }
+          ],
+          "questions": ["Calculez la TVA du mois de décembre…"]
+      }
+  }
+  ```
+  Tout est facultatif sauf au moins une opération, une question ou un compte. Une facture prend les
+  champs de l'onglet Factures & TVA (`type` : `doit`, `retour` ou `reduction` ; `reductions` en
+  `taux` % ou en `montant` ; `escompte`, `port`, `tva`, `acompte`, `acompteVerse`, `reglement`).
 
 **Dans les notes** (menu **Compta** de l'éditeur) : blocs ```` ```comptes ```` (comptes en T),
 ```` ```journal ````, ```` ```balance ````, ```` ```resultat ````, ```` ```bilan ```` et ```` ```facture ```` ;

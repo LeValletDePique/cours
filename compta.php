@@ -23,6 +23,7 @@ $stmt = db()->prepare(
 $stmt->execute([$uid]);
 $matieres = $stmt->fetchAll();
 $matiere_defaut = matiere_gestion($uid);
+$enonces = enonces_compta();
 
 $titre_page = 'Comptabilité';
 $matiere_page = $matiere_defaut;   // « Nouvelle note » depuis cette page : rangée en gestion
@@ -45,7 +46,17 @@ require __DIR__ . '/includes/header.php';
             <option value="depart">Du bilan de départ au bilan de fin</option>
             <option value="brico">Cas Brico Dépôt (grand livre au 30/12)</option>
             <option value="facturation">La facturation (factures, avoirs, TVA)</option>
+            <?php if ($enonces): ?>
+                <optgroup label="Énoncés à faire">
+                    <?php foreach ($enonces as $fichier => $titre_enonce): ?>
+                        <option value="enonce:<?= e($fichier) ?>"><?= e($titre_enonce) ?></option>
+                    <?php endforeach; ?>
+                </optgroup>
+            <?php endif; ?>
         </select>
+        <button type="button" class="mc-btn mc-btn--ghost mc-btn--sm" data-c="importer-enonce"
+                title="Crée un dossier à partir d'un fichier d'énoncé (.json) : opérations, factures et plan comptable"><?= icone('importer', 'mc-ico-sm') ?>Importer un énoncé</button>
+        <input type="file" id="compta-fichier-enonce" accept=".json,application/json" hidden>
         <span id="compta-statut" class="statut-save" role="status"></span>
         <span class="mc-actions compta-barre__fin">
             <button type="button" class="mc-btn mc-btn--sm" data-c="note" data-dossier-requis title="Crée une note avec le journal, le grand livre, la balance, le compte de résultat et le bilan"><?= icone('note', 'mc-ico-sm') ?>Créer une note</button>
@@ -141,6 +152,19 @@ require __DIR__ . '/includes/header.php';
 
 <!-- 1. Journal -->
 <div class="compta-panneau" data-panneau="journal">
+    <section class="mc-card compta-enonce" id="compta-enonce" aria-labelledby="titre-enonce" hidden>
+        <div class="mc-card__head">
+            <h2 class="mc-h" id="titre-enonce"><?= icone('livre', 'mc-ico-sm') ?>Énoncé</h2>
+            <span class="mc-meta" id="enonce-avancement"></span>
+        </div>
+        <p class="mc-meta" id="enonce-intro"></p>
+        <ol class="compta-enonce__ops" id="enonce-operations"></ol>
+        <div class="compta-enonce__questions" id="enonce-questions-bloc">
+            <p class="mc-eyebrow">Ensuite</p>
+            <ul class="guide" id="enonce-questions"></ul>
+        </div>
+    </section>
+
     <section class="mc-card compta-saisie-carte" aria-labelledby="titre-saisie">
         <div class="mc-card__head"><h2 class="mc-h" id="titre-saisie"><?= icone('crayon', 'mc-ico-sm') ?>Enregistrer une opération</h2></div>
         <div class="compta-saisie">
