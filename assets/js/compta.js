@@ -8,6 +8,8 @@
      résultat, bilan, analyse (calculs : compta-moteur.js)
    - factures et TVA : facture ou avoir -> écritures chez le fournisseur et
      chez le client, ristourne selon un barème, déclaration de TVA
+   - énoncé importé (enonces/compta/*.json ou fichier) : opérations à
+     enregistrer, cochées une fois faites, factures à ouvrir dans l'onglet
    - aide-mémoire : opérations courantes et plan comptable
    - « Créer une note » : tout le dossier en Markdown dans une note
    ============================================================ */
@@ -139,6 +141,7 @@
             dessinerDepart();
             dessinerJournal();
         }
+        dessinerEnonce();
         afficherOnglet(etat.onglet);
     }
 
@@ -944,6 +947,110 @@
     });
 
     // =========================================================
+    //  Énoncé : un dossier créé depuis enonces/compta/*.json ou un fichier
+    //  importé garde ses opérations (cochées une fois enregistrées), ses
+    //  factures (à ouvrir dans « Factures & TVA ») et ses questions.
+    // =========================================================
+    const chaine = (x) => (typeof x === 'string' ? x.trim() : '');
+    const objet = (x) => !!x && typeof x === 'object' && !Array.isArray(x);
+
+    // Fichier d'énoncé (JSON) -> dossier ; lève une erreur si ce n'en est pas un.
+    function dossierDepuisEnonce(o) {
+        if (!objet(o)) throw new Error('format');
+        const d = dossierVide(chaine(o.titre) || 'Énoncé importé');
+        d.entreprise = chaine(o.entreprise);
+        if (chaine(o.cloture)) d.cloture = chaine(o.cloture);
+        if (objet(o.comptes)) {
+            Object.keys(o.comptes).forEach((num) => {
+                const n = C.normaliserCompte(num);
+                if (n && chaine(o.comptes[num])) d.comptes[n] = chaine(o.comptes[num]);
+            });
+        }
+        if (objet(o.ouverture)) d.ouverture = Object.assign(ouvertureVide(), o.ouverture);
+        if (Array.isArray(o.ecritures)) d.ecritures = o.ecritures.filter((ecr) => objet(ecr) && Array.isArray(ecr.lignes));
+        const e = objet(o.enonce) ? o.enonce : {};
+        const operations = (Array.isArray(e.operations) ? e.operations : []).filter((op) => objet(op) && chaine(op.texte)).map((op) => {
+            const r = { date: chaine(op.date), texte: chaine(op.texte), fait: false };
+            if (objet(op.facture)) {
+                r.facture = Object.assign(C.factureVide(), op.facture);
+                ['lignes', 'reductions'].forEach((cle) => { if (!Array.isArray(r.facture[cle])) r.facture[cle] = []; });
+            }
+            return r;
+        });
+        const questions = (Array.isArray(e.questions) ? e.questions : []).map(chaine).filter(Boolean);
+        if (operations.length || questions.length) {
+            d.enonce = { source: chaine(e.source), intro: chaine(e.intro), operations, questions };
+        } else if (!d.ecritures.length && !Object.keys(d.comptes).length) {
+            throw new Error('vide');
+        }
+        return d;
+    }
+
+    async function ouvrirEnonce(fichier) {
+        let d;
+        try {
+            const rep = await fetch('enonces/compta/' + encodeURIComponent(fichier));
+            if (!rep.ok) throw new Error(rep.status);
+            d = dossierDepuisEnonce(await rep.json());
+        } catch (e) {
+            alert('Impossible de lire cet énoncé.');
+            return;
+        }
+        if (await creer(d)) afficherOnglet('journal');
+    }
+
+    function majAvancement() {
+        const ops = etat.d.enonce.operations;
+        const faites = ops.filter((op) => op.fait).length;
+        $('#enonce-avancement').textContent = ops.length
+            ? 'Opérations enregistrées : ' + faites + ' / ' + ops.length + (faites === ops.length ? ' ✓' : '') : '';
+    }
+
+    function dessinerEnonce() {
+        const en = etat.d && etat.d.enonce;
+        $('#compta-enonce').hidden = !en;
+        if (!en) return;
+        if (!Array.isArray(en.operations)) en.operations = [];
+        if (!Array.isArray(en.questions)) en.questions = [];
+        $('#enonce-intro').textContent = (en.intro || '') + (en.source ? ' (d\'après ' + en.source + ')' : '');
+        $('#enonce-intro').hidden = !en.intro && !en.source;
+        $('#enonce-operations').innerHTML = en.operations.map((op, i) => '<li data-op-enonce="' + i + '"' + (op.fait ? ' class="fait"' : '') + '>'
+            + '<label class="compta-enonce__op"><input type="checkbox" class="mc-check" data-champ="fait"' + (op.fait ? ' checked' : '')
+            + ' aria-label="Opération enregistrée"><span>' + (op.date ? '<b>' + ech(op.date) + '</b> : ' : '') + ech(op.texte) + '</span></label>'
+            + (op.facture ? '<details class="compta-enonce__facture"><summary>Voir la facture</summary>' + C.htmlFacture(op.facture)
+                + '<div class="mc-actions"><button type="button" class="mc-btn mc-btn--sm" data-c="enonce-facture"'
+                + ' title="Charge cette facture dans l\'onglet Factures & TVA (les écritures attendues y sont données)">'
+                + 'Vérifier dans Factures &amp; TVA</button></div></details>' : '')
+            + '</li>').join('');
+        $('#enonce-questions').innerHTML = en.questions.map((q) => '<li>' + ech(q) + '</li>').join('');
+        $('#enonce-questions-bloc').hidden = !en.questions.length;
+        majAvancement();
+    }
+
+    $('#enonce-operations').addEventListener('change', (e) => {
+        const li = e.target.closest('[data-op-enonce]');
+        if (!li || e.target.dataset.champ !== 'fait' || !etat.d) return;
+        etat.d.enonce.operations[+li.dataset.opEnonce].fait = e.target.checked;
+        li.classList.toggle('fait', e.target.checked);
+        majAvancement();
+        modifie();
+    });
+
+    $('#compta-fichier-enonce').addEventListener('change', async (e) => {
+        const fichier = e.target.files[0];
+        e.target.value = '';
+        if (!fichier) return;
+        let d;
+        try {
+            d = dossierDepuisEnonce(JSON.parse(await fichier.text()));
+        } catch (err) {
+            alert('Ce fichier n\'est pas un énoncé lisible (un fichier .json est attendu, voir le README).');
+            return;
+        }
+        if (await creer(d)) afficherOnglet('journal');
+    });
+
+    // =========================================================
     //  Grand livre, analyse
     // =========================================================
     function dessinerGrandLivre(calc) {
@@ -1041,6 +1148,7 @@
         if (choix === 'brico') await creer(C.exempleBricoDepot());
         if (choix === 'depart' && await creer(C.exempleBilanDepart())) afficherOnglet('depart');
         if (choix === 'facturation' && await creer(C.exempleFacturation())) afficherOnglet('journal');
+        if (choix.startsWith('enonce:')) await ouvrirEnonce(choix.slice('enonce:'.length));
     });
     [['#compta-titre', 'titre'], ['#compta-entreprise', 'entreprise'], ['#compta-cloture', 'cloture']].forEach(([sel, cle]) => {
         $(sel).addEventListener('input', (e) => { if (etat.d) { etat.d[cle] = e.target.value; modifie(); } });
@@ -1090,6 +1198,18 @@
             case 'aller-factures':
                 afficherOnglet('factures');
                 break;
+            case 'importer-enonce':
+                $('#compta-fichier-enonce').click();
+                break;
+            case 'enonce-facture': {
+                const op = etat.d && etat.d.enonce.operations[+b.closest('[data-op-enonce]').dataset.opEnonce];
+                if (!op || !op.facture) return;
+                fact.f = JSON.parse(JSON.stringify(op.facture));
+                if (fact.dessine) dessinerFormFacture();
+                afficherOnglet('factures');
+                carteFacture.scrollIntoView({ block: 'start', behavior: 'smooth' });
+                break;
+            }
             case 'aller-journal':
                 afficherOnglet('journal');
                 break;

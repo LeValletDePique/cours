@@ -53,3 +53,21 @@ function matiere_gestion(int $uid): ?int
     $id = $stmt->fetchColumn();
     return $id ? (int) $id : null;
 }
+
+/**
+ * Énoncés prêts à faire (enonces/compta/*.json) : nom du fichier => titre.
+ * Le fichier est un dossier (titre, entreprise, comptes…) avec son énoncé
+ * (opérations à enregistrer, factures, questions) ; voir le README.
+ */
+function enonces_compta(): array
+{
+    $enonces = [];
+    foreach (glob(__DIR__ . '/../enonces/compta/*.json') ?: [] as $chemin) {
+        $donnees = json_decode((string) file_get_contents($chemin), true);
+        if (is_array($donnees)) {
+            $enonces[basename($chemin)] = (string) ($donnees['titre'] ?? basename($chemin, '.json'));
+        }
+    }
+    asort($enonces, SORT_NATURAL | SORT_FLAG_CASE);
+    return $enonces;
+}
